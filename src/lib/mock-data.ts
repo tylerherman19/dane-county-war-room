@@ -125,7 +125,7 @@ export const generateMockPrecinctResults = (raceNumber: number) => {
             });
 
             results.push({
-                precinctName: `Ward ${wardNum}`,
+                precinctName: `City of Madison Ward ${wardNum}`,
                 wardNumber: wardNum,
                 candidateName: candidates[1].candidateName,
                 votes: repVotes,

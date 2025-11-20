@@ -10,9 +10,10 @@ interface SidebarProps {
     turnoutData: HistoricalTurnout | undefined;
     precinctResults: PrecinctResult[] | undefined;
     isLoading: boolean;
+    onSelectWard: (ward: { name: string; num: string }) => void;
 }
 
-export default function Sidebar({ raceResult, turnoutData, precinctResults, isLoading }: SidebarProps) {
+export default function Sidebar({ raceResult, turnoutData, precinctResults, isLoading, onSelectWard }: SidebarProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
     if (isLoading) {
@@ -112,7 +113,11 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                     </div>
                     <div className="overflow-y-auto p-2 space-y-1">
                         {uniqueWards.map(ward => (
-                            <button key={`${ward.name}-${ward.num}`} className="w-full text-left p-3 hover:bg-slate-700/30 rounded-lg transition-colors group">
+                            <button
+                                key={`${ward.name}-${ward.num}`}
+                                onClick={() => onSelectWard({ name: ward.name, num: ward.num })}
+                                className="w-full text-left p-3 hover:bg-slate-700/30 rounded-lg transition-colors group"
+                            >
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm font-medium text-slate-200">{ward.name} Ward {ward.num}</span>
                                     <span className="text-xs text-slate-500 group-hover:text-blue-400 transition-colors">View</span>

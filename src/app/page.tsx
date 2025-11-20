@@ -18,6 +18,7 @@ export default function Home() {
   // State
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
+  const [selectedWard, setSelectedWard] = useState<{ name: string; num: string } | null>(null);
 
   // Data Hooks
   const { elections } = useElections();
@@ -56,6 +57,7 @@ export default function Home() {
           turnoutData={turnoutData}
           precinctResults={precinctResults}
           isLoading={isLoading}
+          onSelectWard={setSelectedWard}
         />
       }
       lastUpdated={lastPublished?.lastPublished}
@@ -67,8 +69,9 @@ export default function Home() {
           onSelectRace={setSelectedRaceId}
         />
         <MapWrapper
-          precinctResults={precinctResults}
+          precinctResults={precinctResults || []}
           isLoading={isLoading}
+          selectedWard={selectedWard}
         />
       </div>
     </Layout>

@@ -3,16 +3,17 @@
 import dynamic from 'next/dynamic';
 import { PrecinctResult } from '@/lib/api';
 
-const Map = dynamic(() => import('./Map'), {
+const DynamicMap = dynamic(() => import('./Map'), {
     ssr: false,
-    loading: () => <div className="w-full h-full bg-slate-950 flex items-center justify-center text-slate-500">Loading Map...</div>
-});
+    loading: () => <div className="w-full h-full bg-slate-900 animate-pulse flex items-center justify-center text-slate-500">Loading Map...</div>
+}) as any;
 
 interface MapWrapperProps {
-    precinctResults: PrecinctResult[] | undefined;
+    precinctResults: any[];
     isLoading: boolean;
+    selectedWard?: { name: string; num: string } | null;
 }
 
-export default function MapWrapper(props: MapWrapperProps) {
-    return <Map {...props} />;
+export default function MapWrapper({ precinctResults, isLoading, selectedWard }: MapWrapperProps) {
+    return <DynamicMap precinctResults={precinctResults} isLoading={isLoading} selectedWard={selectedWard} />;
 }

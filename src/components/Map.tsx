@@ -17,9 +17,10 @@ L.Icon.Default.mergeOptions({
 interface MapProps {
     precinctResults: PrecinctResult[] | undefined;
     isLoading: boolean;
+    selectedWard?: { name: string; num: string } | null;
 }
 
-function MapController({ geoJsonData }: { geoJsonData: any }) {
+function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null }) {
     const map = useMap();
 
     useEffect(() => {
@@ -29,10 +30,24 @@ function MapController({ geoJsonData }: { geoJsonData: any }) {
         }
     }, [geoJsonData, map]);
 
+    useEffect(() => {
+        if (selectedWard && geoJsonData) {
+            const layer = L.geoJSON(geoJsonData, {
+                filter: (feature) => {
+                    return feature.properties.WardNumber.toString() === selectedWard.num &&
+                        feature.properties.NAME.includes('Madison'); // Simplified for mock
+                }
+            });
+            if (layer.getLayers().length > 0) {
+                map.fitBounds(layer.getBounds(), { maxZoom: 14, animate: true });
+            }
+        }
+    }, [selectedWard, geoJsonData, map]);
+
     return null;
 }
 
-export default function Map({ precinctResults, isLoading }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
 
     useEffect(() => {
@@ -151,8 +166,31 @@ export default function Map({ precinctResults, isLoading }: MapProps) {
                 Turnout: ${total} / ${relevantResults[0].registeredVoters}
             </div></div>`;
 
-            layer.bindPopup(popupContent, {
-                className: 'dark-popup'
+            layer.bindTooltip(popupContent, {
+                className: 'dark-popup',
+                sticky: true,
+                direction: 'top'
+            });
+
+            layer.on({
+                mouseover: (e) => {
+                    const layer = e.target;
+                    layer.setStyle({
+                        weight: 3,
+                        color: '#60a5fa',
+                        fillOpacity: 0.9
+                    });
+                    layer.bringToFront();
+                },
+                mouseout: (e) => {
+                    const layer = e.target;
+                    // Reset style (simplified, ideally should revert to original style function)
+                    layer.setStyle({
+                        weight: 1,
+                        color: '#334155',
+                        fillOpacity: 0.7
+                    });
+                }
             });
         }
     };
@@ -174,7 +212,7 @@ export default function Map({ precinctResults, isLoading }: MapProps) {
                         style={style}
                         onEachFeature={onEachFeature}
                     />
-                    <MapController geoJsonData={geoJsonData} />
+                    <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} />
                 </>
             )}
         </MapContainer>

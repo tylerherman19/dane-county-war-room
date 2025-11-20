@@ -55,6 +55,7 @@ export interface HistoricalTurnout {
     expectedBallots: number;
     outstandingEstimate: number;
     confidence: 'Low' | 'Medium' | 'High';
+    percentageReported: number;
 }
 
 async function fetchAPI<T>(endpoint: string): Promise<T> {
@@ -100,26 +101,24 @@ export async function getPrecinctResults(electionId: string, raceNumber: number)
     return fetchAPI<PrecinctResult[]>(`/api/v1/elections/precinctresults/${electionId}/${raceNumber}`);
 }
 
-export async function getHistoricalTurnout(raceId: number, currentVotes: number): Promise<HistoricalTurnout> {
-    // Mock logic for now. In a real app, this would query a historical DB.
-    // Estimate based on race type.
+export async function getHistoricalTurnout(raceId: number | null, currentTotalVotes: number): Promise<HistoricalTurnout> {
+    // Mock implementation
+    // In a real app, this would fetch from an API or use a lookup table
 
-    // Example: County Exec usually gets ~150k-200k votes in Spring, but this is Fall General logic for test
-    // 2024 General had ~360k votes.
+    let expectedBallots = 300000; // Default for top of ticket (President)
 
-    let expected = 360000; // Default for General
+    // Adjust based on race ID (mock logic)
+    if (raceId === 102) expectedBallots = 290000; // Senate
+    if (raceId === 103) expectedBallots = 280000; // Rep
+    if (raceId && raceId > 200) expectedBallots = 150000; // Local races
 
-    // Adjust based on race type if we had it, but for now simple logic
-    if (TEST_MODE) {
-        // In test mode (2024), we know the total was around 365k
-        expected = 366000;
-    }
-
-    const outstanding = Math.max(0, expected - currentVotes);
+    // Ensure we don't show negative outstanding
+    const outstanding = Math.max(0, expectedBallots - currentTotalVotes);
 
     return {
-        expectedBallots: expected,
+        expectedBallots,
         outstandingEstimate: outstanding,
-        confidence: 'Medium'
+        confidence: 'Medium', // Keep existing confidence for now
+        percentageReported: (currentTotalVotes / expectedBallots) * 100
     };
 }
