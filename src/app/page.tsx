@@ -72,6 +72,7 @@ export default function Home() {
           precinctResults={precinctResults || []}
           isLoading={isLoading}
           selectedWard={selectedWard}
+          raceResult={raceResult}
         />
       </div>
     </Layout>

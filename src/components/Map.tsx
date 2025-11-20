@@ -18,6 +18,7 @@ interface MapProps {
     precinctResults: PrecinctResult[] | undefined;
     isLoading: boolean;
     selectedWard?: { name: string; num: string } | null;
+    raceResult?: any;
 }
 
 function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null }) {
@@ -47,7 +48,7 @@ function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; select
     return null;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
 
     useEffect(() => {
@@ -94,9 +95,11 @@ export default function Map({ precinctResults, isLoading, selectedWard }: MapPro
         const municipality = feature.properties.NAME;
         const wardNum = feature.properties.WardNumber;
 
+        // Filter results for this ward
+        // Note: Mock data now uses "City of Madison" as precinctName, so we match on that or partial
         const relevantResults = precinctResults?.filter(r =>
             parseInt(r.wardNumber) === parseInt(wardNum) &&
-            r.precinctName.toLowerCase().includes(municipality.toLowerCase())
+            (r.precinctName.toLowerCase().includes(municipality.toLowerCase()) || municipality.toLowerCase().includes(r.precinctName.toLowerCase()))
         ) || [];
 
         if (relevantResults.length === 0) {
@@ -112,28 +115,42 @@ export default function Map({ precinctResults, isLoading, selectedWard }: MapPro
         const total = relevantResults[0].ballotscast;
         const sorted = relevantResults.sort((a, b) => b.votes - a.votes);
         const winner = sorted[0];
+        const runnerUp = sorted[1];
 
-        const name = winner.candidateName.toLowerCase();
+        // Determine Margin
+        // If only one candidate, margin is 100% (1.0)
+        // Otherwise (Winner - RunnerUp) / Total
+        const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+
+        // Determine Color based on Party
         let color = '#64748b'; // Default slate
 
-        if (name.includes('harris') || name.includes('baldwin') || name.includes('pocan') || name.includes('hong') || name.includes('agard') || name.includes('yes')) {
-            const pct = winner.votes / total;
-            if (pct > 0.8) color = '#1d4ed8';
-            else if (pct > 0.6) color = '#3b82f6';
-            else color = '#60a5fa';
-        } else if (name.includes('trump') || name.includes('hovde') || name.includes('theron') || name.includes('no')) {
-            const pct = winner.votes / total;
-            if (pct > 0.8) color = '#b91c1c';
-            else if (pct > 0.6) color = '#ef4444';
-            else color = '#f87171';
+        // Try to find party from raceResult candidates
+        const candidateInfo = raceResult?.candidates.find((c: any) => c.candidateName === winner.candidateName);
+        const party = candidateInfo?.party?.toLowerCase() || '';
+
+        if (party.includes('democrat') || party.includes('liber') || party.includes('green')) { // Grouping left-leaning for now or just Dem
+            color = '#3b82f6'; // Blue
+        } else if (party.includes('republican')) {
+            color = '#ef4444'; // Red
+        } else if (winner.candidateName.toLowerCase().includes('yes')) {
+            color = '#3b82f6'; // Yes = Blue
+        } else if (winner.candidateName.toLowerCase().includes('no')) {
+            color = '#ef4444'; // No = Red
         }
+
+        // Calculate Opacity based on Margin (Gradient)
+        // Min opacity 0.4 (close race), Max 0.9 (landslide)
+        // Margin 0.0 -> 0.4
+        // Margin 0.5+ -> 0.9
+        const opacity = 0.4 + (Math.min(margin, 0.5) * 1.0);
 
         return {
             fillColor: color,
             weight: 1,
             opacity: 1,
             color: '#334155',
-            fillOpacity: 0.7
+            fillOpacity: opacity
         };
     };
 

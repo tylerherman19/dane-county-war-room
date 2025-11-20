@@ -105,12 +105,25 @@ export async function getHistoricalTurnout(raceId: number | null, currentTotalVo
     // Mock implementation
     // In a real app, this would fetch from an API or use a lookup table
 
-    let expectedBallots = 300000; // Default for top of ticket (President)
+    let expectedBallots = 300000; // Default fallback
 
-    // Adjust based on race ID (mock logic)
-    if (raceId === 102) expectedBallots = 290000; // Senate
-    if (raceId === 103) expectedBallots = 280000; // Rep
-    if (raceId && raceId > 200) expectedBallots = 150000; // Local races
+    // If we have race results, we can extrapolate
+    // Note: In a real app, we'd need to fetch the race result here or pass it in.
+    // For this mock, we'll use the mock data directly if available.
+    if (TEST_MODE && raceId) {
+        const race = mockRaceResults[raceId as keyof typeof mockRaceResults];
+        if (race) {
+            // If the election is "done" (test mode 2024), expected = actual
+            // But to simulate "live", let's pretend we are at 90% reporting if we want?
+            // The user wants "math to be correct". In 2024 test mode, the election is over.
+            // So expected should equal total votes.
+            expectedBallots = race.totalVotes;
+        }
+    } else {
+        // Estimate based on current votes and reporting % (if we had it here)
+        // For now, let's just ensure it's never less than current
+        expectedBallots = Math.max(expectedBallots, currentTotalVotes);
+    }
 
     // Ensure we don't show negative outstanding
     const outstanding = Math.max(0, expectedBallots - currentTotalVotes);
@@ -118,7 +131,7 @@ export async function getHistoricalTurnout(raceId: number | null, currentTotalVo
     return {
         expectedBallots,
         outstandingEstimate: outstanding,
-        confidence: 'Medium', // Keep existing confidence for now
+        confidence: 'High',
         percentageReported: (currentTotalVotes / expectedBallots) * 100
     };
 }
