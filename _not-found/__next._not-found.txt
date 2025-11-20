@@ -1,4 +1,4 @@
 1:"$Sreact.fragment"
-2:I[39756,["/dane-county-war-room/_next/static/chunks/501f4f1c6c42cd35.js"],"default"]
-3:I[37457,["/dane-county-war-room/_next/static/chunks/501f4f1c6c42cd35.js"],"default"]
-0:{"buildId":"6c3wUfHK80YoFBwTQu-4h","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}
+2:I[39756,["/_next/static/chunks/501f4f1c6c42cd35.js"],"default"]
+3:I[37457,["/_next/static/chunks/501f4f1c6c42cd35.js"],"default"]
+0:{"buildId":"R8qHTRytqN4BaybLMRLLC","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}
