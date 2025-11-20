@@ -1,148 +1,76 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import { DashboardHeader } from '@/components/DashboardHeader';
-import { RaceCard } from '@/components/RaceCard';
-import { MadisonTable } from '@/components/MadisonTable';
-import { ReportingUnits } from '@/components/ReportingUnits';
-import { mockElections, mockLastPublished, mockRaces, mockRaceResults, generateMockPrecinctResults } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
+import Layout from '@/components/Layout';
+import MapWrapper from '@/components/MapWrapper';
+import Sidebar from '@/components/Sidebar';
+import RaceSelector from '@/components/RaceSelector';
+import {
+  useElections,
+  useRaces,
+  useRaceResults,
+  usePrecinctResults,
+  useHistoricalTurnout,
+  useLastPublished
+} from '@/hooks/useElectionData';
 
-const DynamicWardMap = dynamic(() => import('@/components/WardMap').then(mod => mod.WardMap), {
-  ssr: false,
-  loading: () => <p className="text-white text-center">Loading map...</p>,
-});
+export default function Home() {
+  // State
+  const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
+  const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
 
-const REFRESH_INTERVAL = 30000; // 30 seconds
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+  // Data Hooks
+  const { elections } = useElections();
 
-// Key races we care about (matching race numbers to friendly names)
-const KEY_RACES = [1, 2, 3, 4, 5, 6]; // Presidential, Senate, Supreme Court, County Exec, Mayor, Referendum
-
-export default function Dashboard() {
-  const [lastUpdated, setLastUpdated] = useState(new Date().toISOString());
-  const [electionData, setElectionData] = useState({
-    electionName: mockElections[0].electionName,
-    electionDate: mockElections[0].electionDate,
-    electionId: mockElections[0].electionId,
-  });
-
-  // Calculate overall reporting percentage
-  const totalPrecincts = 277;
-  const reportedPrecincts = mockRaceResults[1]?.precinctsReporting || 245;
-  const reportingPercentage = (reportedPrecincts / totalPrecincts) * 100;
-
-  // Process Madison ward data for table
-  const madisonWardData = (() => {
-    const precinctResults = generateMockPrecinctResults(1);
-    const wardMap = new Map();
-
-    precinctResults.forEach(result => {
-      if (!wardMap.has(result.wardNumber)) {
-        wardMap.set(result.wardNumber, {
-          wardNumber: result.wardNumber,
-          demCandidate: '',
-          demVotes: 0,
-          demPercentage: 0,
-          totalVotes: 0,
-          turnoutPercentage: 0,
-          winner: '',
-          registeredVoters: result.registeredVoters,
-          ballotscast: result.ballotscast,
-        });
-      }
-
-      const ward = wardMap.get(result.wardNumber);
-      ward.totalVotes += result.votes;
-
-      if (result.candidateName.includes('Harris')) {
-        ward.demCandidate = result.candidateName;
-        ward.demVotes = result.votes;
-      }
-    });
-
-    return Array.from(wardMap.values()).map(ward => ({
-      ...ward,
-      demPercentage: (ward.demVotes / ward.totalVotes) * 100,
-      turnoutPercentage: (ward.ballotscast / ward.registeredVoters) * 100,
-      winner: ward.demVotes > (ward.totalVotes - ward.demVotes) ? ward.demCandidate : 'Trump / Vance',
-    }));
-  })();
-
-  // Process ward results for map
-  const wardMapResults = madisonWardData.map(ward => ({
-    wardNumber: ward.wardNumber,
-    winner: ward.winner,
-    margin: Math.abs(ward.demPercentage - (100 - ward.demPercentage)),
-  }));
-
-  // Generate outstanding units data
-  const outstandingUnits = Array.from({ length: 277 }, (_, i) => ({
-    name: `Ward ${(i + 1).toString().padStart(3, '0')}`,
-    registeredVoters: Math.floor(Math.random() * 1000) + 500,
-    hasReported: i < reportedPrecincts,
-  }));
-
-  // Auto-refresh logic
+  // Auto-select first election
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLastUpdated(new Date().toISOString());
-      // In production, this would check for new data and refresh
-    }, REFRESH_INTERVAL);
+    if (elections && elections.length > 0 && !selectedElectionId) {
+      setSelectedElectionId(elections[0].electionId);
+    }
+  }, [elections, selectedElectionId]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const { races } = useRaces(selectedElectionId);
+
+  // Auto-select first race
+  useEffect(() => {
+    if (races && races.length > 0 && !selectedRaceId) {
+      setSelectedRaceId(races[0].raceNumber);
+    }
+  }, [races, selectedRaceId]);
+
+  const { results: raceResult, isLoading: isLoadingRace } = useRaceResults(selectedElectionId, selectedRaceId);
+  const { precinctResults, isLoading: isLoadingPrecincts } = usePrecinctResults(selectedElectionId, selectedRaceId);
+  const { lastPublished } = useLastPublished(selectedElectionId);
+
+  // Calculate current total votes for turnout estimation
+  const currentTotalVotes = raceResult?.totalVotes || 0;
+  const { turnoutData } = useHistoricalTurnout(selectedRaceId, currentTotalVotes);
+
+  const isLoading = isLoadingRace || isLoadingPrecincts;
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      <DashboardHeader
-        electionName={electionData.electionName}
-        electionDate={electionData.electionDate}
-        lastUpdated={lastUpdated}
-        reportingPercentage={reportingPercentage}
-      />
-
-      <main className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Key County-Wide Races */}
-        <section>
-          <h2 className="text-4xl font-bold text-white mb-6">Key Races</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {KEY_RACES.map(raceNum => {
-              const race = mockRaceResults[raceNum as keyof typeof mockRaceResults];
-              if (!race) return null;
-
-              return (
-                <RaceCard
-                  key={raceNum}
-                  raceName={race.raceName}
-                  candidates={race.candidates}
-                  totalVotes={race.totalVotes}
-                  precinctsReporting={race.precinctsReporting}
-                  totalPrecincts={race.totalPrecincts}
-                />
-              );
-            })}
-          </div>
-        </section>
-
-        {/* City of Madison Deep-Dive */}
-        <section>
-          <h2 className="text-4xl font-bold text-white mb-6">City of Madison</h2>
-          <div className="space-y-6">
-            <DynamicWardMap wardResults={wardMapResults} />
-            <MadisonTable wardData={madisonWardData} />
-          </div>
-        </section>
-
-        {/* Reporting Units Watch */}
-        <section>
-          <ReportingUnits
-            totalUnits={totalPrecincts}
-            reportedUnits={reportedPrecincts}
-            outstandingUnits={outstandingUnits}
-          />
-        </section>
-      </main>
-    </div>
+    <Layout
+      sidebar={
+        <Sidebar
+          raceResult={raceResult}
+          turnoutData={turnoutData}
+          precinctResults={precinctResults}
+          isLoading={isLoading}
+        />
+      }
+      lastUpdated={lastPublished?.lastPublished}
+    >
+      <div className="relative w-full h-full">
+        <RaceSelector
+          races={races}
+          selectedRaceId={selectedRaceId}
+          onSelectRace={setSelectedRaceId}
+        />
+        <MapWrapper
+          precinctResults={precinctResults}
+          isLoading={isLoading}
+        />
+      </div>
+    </Layout>
   );
 }

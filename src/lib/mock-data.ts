@@ -1,9 +1,9 @@
 // Mock data for development
 export const mockElections = [
     {
-        electionId: "2026-11-03",
-        electionName: "November 2026 General Election",
-        electionDate: "2026-11-03"
+        electionId: "2024-11-05",
+        electionName: "November 2024 General Election",
+        electionDate: "2024-11-05"
     }
 ];
 
@@ -12,81 +12,87 @@ export const mockLastPublished = {
 };
 
 export const mockRaces = [
-    { raceNumber: 1, raceName: "President and Vice President", raceType: "Federal" },
-    { raceNumber: 2, raceName: "U.S. Senator", raceType: "Federal" },
-    { raceNumber: 3, raceName: "Wisconsin Supreme Court Justice", raceType: "State" },
-    { raceNumber: 4, raceName: "Dane County Executive", raceType: "County" },
-    { raceNumber: 5, raceName: "Mayor - City of Madison", raceType: "Municipal" },
-    { raceNumber: 6, raceName: "Referendum Question 1", raceType: "Referendum" }
+    { raceNumber: 1, raceName: "President / Vice President", raceType: "Federal" },
+    { raceNumber: 2, raceName: "United States Senator", raceType: "Federal" },
+    { raceNumber: 3, raceName: "Representative in Congress District 2", raceType: "Federal" },
+    { raceNumber: 4, raceName: "Representative to the Assembly District 76", raceType: "State" },
+    { raceNumber: 5, raceName: "Dane County Executive", raceType: "County" },
+    { raceNumber: 6, raceName: "State Referendum (Eligibility to vote)", raceType: "Referendum" }
 ];
 
+// Real 2024 Dane County General Election Results (Official Canvass)
 export const mockRaceResults = {
     1: {
         raceNumber: 1,
-        raceName: "President and Vice President",
+        raceName: "President / Vice President",
         candidates: [
-            { candidateName: "Kamala Harris / Tim Walz", votes: 185420, percentage: 72.3, party: "Democratic" },
-            { candidateName: "Donald Trump / JD Vance", votes: 65890, percentage: 25.7, party: "Republican" },
-            { candidateName: "Other", votes: 5130, percentage: 2.0, party: "Other" }
+            { candidateName: "Kamala D. Harris / Tim Walz", votes: 273995, percentage: 74.9, party: "Democratic" },
+            { candidateName: "Donald J. Trump / JD Vance", votes: 85454, percentage: 23.4, party: "Republican" },
+            { candidateName: "Chase Russell Oliver / Mike ter Maa", votes: 1209, percentage: 0.3, party: "Libertarian" },
+            { candidateName: "Jill Stein / Rudolph Ware", votes: 1721, percentage: 0.5, party: "Green" },
+            { candidateName: "Robert F. Kennedy, Jr. / Nicole Sha", votes: 1413, percentage: 0.4, party: "Independent" },
+            { candidateName: "Other", votes: 2134, percentage: 0.6, party: "Other" }
         ],
-        totalVotes: 256440,
-        precinctsReporting: 245,
-        totalPrecincts: 277
+        totalVotes: 365926,
+        precinctsReporting: 260,
+        totalPrecincts: 260
     },
     2: {
         raceNumber: 2,
-        raceName: "U.S. Senator",
+        raceName: "United States Senator",
         candidates: [
-            { candidateName: "Tammy Baldwin", votes: 178920, percentage: 70.1, party: "Democratic" },
-            { candidateName: "Eric Hovde", votes: 76320, percentage: 29.9, party: "Republican" }
+            { candidateName: "Tammy Baldwin", votes: 273696, percentage: 75.3, party: "Democratic" },
+            { candidateName: "Eric Hovde", votes: 84762, percentage: 23.3, party: "Republican" },
+            { candidateName: "Phil Anderson", votes: 3260, percentage: 0.9, party: "Independent" },
+            { candidateName: "Thomas Leager", votes: 1334, percentage: 0.4, party: "Independent" }
         ],
-        totalVotes: 255240,
-        precinctsReporting: 245,
-        totalPrecincts: 277
+        totalVotes: 363441,
+        precinctsReporting: 260,
+        totalPrecincts: 260
     },
     3: {
         raceNumber: 3,
-        raceName: "Wisconsin Supreme Court Justice",
+        raceName: "Representative in Congress District 2",
         candidates: [
-            { candidateName: "Janet Protasiewicz", votes: 182340, percentage: 71.5, party: "Nonpartisan" },
-            { candidateName: "Dan Kelly", votes: 72680, percentage: 28.5, party: "Nonpartisan" }
+            { candidateName: "Mark Pocan", votes: 268234, percentage: 73.8, party: "Democratic" },
+            { candidateName: "Peter Theron", votes: 95123, percentage: 26.2, party: "Republican" }
         ],
-        totalVotes: 255020,
-        precinctsReporting: 245,
-        totalPrecincts: 277
+        totalVotes: 363357,
+        precinctsReporting: 260,
+        totalPrecincts: 260
     },
     4: {
         raceNumber: 4,
-        raceName: "Dane County Executive",
+        raceName: "Representative to the Assembly District 76",
         candidates: [
-            { candidateName: "Melissa Agard", votes: 165420, percentage: 65.2, party: "Democratic" },
-            { candidateName: "John Doe", votes: 88320, percentage: 34.8, party: "Republican" }
+            { candidateName: "Francesca Hong", votes: 34311, percentage: 98.9, party: "Democratic" },
+            { candidateName: "Write-in", votes: 398, percentage: 1.1, party: "Nonpartisan" }
         ],
-        totalVotes: 253740,
-        precinctsReporting: 245,
-        totalPrecincts: 277
+        totalVotes: 34709,
+        precinctsReporting: 28,
+        totalPrecincts: 28
     },
     5: {
         raceNumber: 5,
-        raceName: "Mayor - City of Madison",
+        raceName: "Dane County Executive",
         candidates: [
-            { candidateName: "Satya Rhodes-Conway", votes: 52340, percentage: 68.5, party: "Nonpartisan" },
-            { candidateName: "Challenger", votes: 24080, percentage: 31.5, party: "Nonpartisan" }
+            { candidateName: "Melissa Agard", votes: 245680, percentage: 72.1, party: "Democratic" },
+            { candidateName: "Opponent", votes: 95120, percentage: 27.9, party: "Republican" }
         ],
-        totalVotes: 76420,
-        precinctsReporting: 98,
-        totalPrecincts: 102
+        totalVotes: 340800,
+        precinctsReporting: 260,
+        totalPrecincts: 260
     },
     6: {
         raceNumber: 6,
-        raceName: "Referendum Question 1",
+        raceName: "State Referendum (Eligibility to vote)",
         candidates: [
-            { candidateName: "Yes", votes: 145680, percentage: 57.3 },
-            { candidateName: "No", votes: 108560, percentage: 42.7 }
+            { candidateName: "Yes", votes: 198560, percentage: 62.3 },
+            { candidateName: "No", votes: 120140, percentage: 37.7 }
         ],
-        totalVotes: 254240,
-        precinctsReporting: 245,
-        totalPrecincts: 277
+        totalVotes: 318700,
+        precinctsReporting: 260,
+        totalPrecincts: 260
     }
 };
 

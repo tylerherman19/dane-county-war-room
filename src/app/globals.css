@@ -1,4 +1,31 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --background: #020617;
+  --foreground: #e2e8f0;
+}
+
+/* Leaflet Dark Mode Overrides */
+.leaflet-container {
+    background: #020617 !important;
+    font-family: var(--font-inter), sans-serif;
+}
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-popup-content {
+    margin: 0 !important;
+}
+
+.dark-popup .leaflet-popup-content-wrapper {
+    border-radius: 0.5rem;
+}
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
