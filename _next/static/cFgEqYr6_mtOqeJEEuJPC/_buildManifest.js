@@ -1,7 +1,12 @@
 self.__BUILD_MANIFEST = {
   "__rewrites": {
     "afterFiles": [],
-    "beforeFiles": [],
+    "beforeFiles": [
+      {
+        "source": "/dane-county-war-room//_next/:path+",
+        "destination": "/dane-county-war-room/_next/:path+"
+      }
+    ],
     "fallback": []
   },
   "sortedPages": [
