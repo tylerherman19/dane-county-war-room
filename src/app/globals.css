@@ -8,24 +8,51 @@
 
 /* Leaflet Dark Mode Overrides */
 .leaflet-container {
-    background: #020617 !important;
-    font-family: var(--font-inter), sans-serif;
+  background: #020617 !important;
+  font-family: var(--font-inter), sans-serif;
 }
 
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
-    background: #0f172a !important;
-    color: #e2e8f0 !important;
-    border: 1px solid #334155;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 
 .leaflet-popup-content {
-    margin: 0 !important;
+  margin: 0 !important;
 }
 
 .dark-popup .leaflet-popup-content-wrapper {
-    border-radius: 0.5rem;
+  border-radius: 0.5rem;
 }
+
+@keyframes pulse-highlight {
+  0% {
+    fill-opacity: 0.7;
+    stroke-width: 1;
+    stroke: #334155;
+  }
+
+  50% {
+    fill-opacity: 0.9;
+    stroke-width: 3;
+    stroke: #fbbf24;
+  }
+
+  /* Amber-400 pulse */
+  100% {
+    fill-opacity: 0.7;
+    stroke-width: 1;
+    stroke: #334155;
+  }
+}
+
+.ward-pulse {
+  animation: pulse-highlight 1s infinite;
+}
+
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));

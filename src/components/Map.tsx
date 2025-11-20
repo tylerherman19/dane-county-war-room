@@ -160,7 +160,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
 
         const relevantResults = precinctResults?.filter(r =>
             parseInt(r.wardNumber) === parseInt(wardNum) &&
-            r.precinctName.toLowerCase().includes(municipality.toLowerCase())
+            (r.precinctName.toLowerCase().includes(municipality.toLowerCase()) || municipality.toLowerCase().includes(r.precinctName.toLowerCase()))
         ) || [];
 
         if (relevantResults.length > 0) {
@@ -168,6 +168,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             const sorted = relevantResults.sort((a, b) => b.votes - a.votes);
 
             let popupContent = `<div class="p-2 font-sans text-sm">
+                <div class="text-xs text-slate-400 mb-1 uppercase tracking-wider">${raceResult?.raceName || 'Election Results'}</div>
                 <h3 class="font-bold border-b pb-1 mb-2">${municipality} Ward ${wardNum}</h3>
                 <div class="space-y-1">`;
 
@@ -189,6 +190,19 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 direction: 'top'
             });
 
+            // Handle Pulse Effect
+            if (selectedWard && selectedWard.num === wardNum.toString() && municipality.includes('Madison')) { // Simplified check
+                const path = layer as L.Path;
+                // Add class via DOM element if possible, or manual style animation
+                // Leaflet doesn't easily support adding classes to paths via API for SVG, but we can access the element
+                if (path.getElement()) {
+                    path.getElement()?.classList.add('ward-pulse');
+                    setTimeout(() => {
+                        path.getElement()?.classList.remove('ward-pulse');
+                    }, 5000);
+                }
+            }
+
             layer.on({
                 mouseover: (e) => {
                     const layer = e.target;
@@ -202,6 +216,8 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 mouseout: (e) => {
                     const layer = e.target;
                     // Reset style (simplified, ideally should revert to original style function)
+                    // Check if we are pulsing, if so don't fully reset? 
+                    // Actually CSS animation overrides inline styles usually, so it might be fine.
                     layer.setStyle({
                         weight: 1,
                         color: '#334155',
