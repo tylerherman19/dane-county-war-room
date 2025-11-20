@@ -97,43 +97,66 @@ export const mockRaceResults = {
 };
 
 // Generate mock precinct results for Madison wards
+// Generate mock precinct results for Dane County
 export const generateMockPrecinctResults = (raceNumber: number) => {
-    const results = [];
-    const numWards = 102;
+    const results: any[] = [];
 
-    for (let i = 1; i <= numWards; i++) {
-        const wardNum = i.toString().padStart(3, '0');
-        const registeredVoters = Math.floor(Math.random() * 1000) + 500;
-        const turnout = 0.6 + Math.random() * 0.3; // 60-90% turnout
-        const ballotscast = Math.floor(registeredVoters * turnout);
+    // Helper to add results for a municipality
+    const addMunicipality = (name: string, numWards: number, demBias: number) => {
+        for (let i = 1; i <= numWards; i++) {
+            const wardNum = i.toString().padStart(3, '0'); // e.g. 001
+            // Some GeoJSON might use different formatting, but let's stick to this for now
+            // The Map component does partial matching on name, so "City of Sun Prairie" matches "Sun Prairie"
 
-        // Democratic candidate gets 60-85% in Madison
-        const demPercentage = 0.60 + Math.random() * 0.25;
-        const demVotes = Math.floor(ballotscast * demPercentage);
-        const repVotes = ballotscast - demVotes;
+            const registeredVoters = Math.floor(Math.random() * 1000) + 500;
+            const turnout = 0.6 + Math.random() * 0.3; // 60-90% turnout
+            const ballotscast = Math.floor(registeredVoters * turnout);
 
-        const candidates = mockRaceResults[raceNumber as keyof typeof mockRaceResults]?.candidates || [];
+            // Calculate votes based on bias
+            const demPercentage = demBias + (Math.random() * 0.1 - 0.05); // Bias +/- 5%
+            const demVotes = Math.floor(ballotscast * demPercentage);
+            const repVotes = ballotscast - demVotes;
 
-        if (candidates.length >= 2) {
-            results.push({
-                precinctName: `City of Madison`,
-                wardNumber: wardNum,
-                candidateName: candidates[0].candidateName,
-                votes: demVotes,
-                registeredVoters,
-                ballotscast
-            });
+            const candidates = mockRaceResults[raceNumber as keyof typeof mockRaceResults]?.candidates || [];
 
-            results.push({
-                precinctName: `City of Madison`,
-                wardNumber: wardNum,
-                candidateName: candidates[1].candidateName,
-                votes: repVotes,
-                registeredVoters,
-                ballotscast
-            });
+            if (candidates.length >= 2) {
+                results.push({
+                    precinctName: name,
+                    wardNumber: wardNum,
+                    candidateName: candidates[0].candidateName,
+                    votes: demVotes,
+                    registeredVoters,
+                    ballotscast
+                });
+
+                results.push({
+                    precinctName: name,
+                    wardNumber: wardNum,
+                    candidateName: candidates[1].candidateName,
+                    votes: repVotes,
+                    registeredVoters,
+                    ballotscast
+                });
+            }
         }
-    }
+    };
+
+    // Madison (Deep Blue)
+    addMunicipality('City of Madison', 100, 0.75);
+
+    // Suburbs (Purple/Blue)
+    addMunicipality('City of Sun Prairie', 20, 0.60);
+    addMunicipality('City of Fitchburg', 15, 0.65);
+    addMunicipality('City of Middleton', 10, 0.65);
+    addMunicipality('City of Verona', 8, 0.55);
+    addMunicipality('Village of Waunakee', 10, 0.52);
+
+    // Rural/Outer (Red/Purple)
+    addMunicipality('Town of Burke', 5, 0.45);
+    addMunicipality('Town of Westport', 5, 0.50);
+    addMunicipality('Village of Oregon', 8, 0.55);
+    addMunicipality('City of Stoughton', 10, 0.58);
+    addMunicipality('Village of Mount Horeb', 6, 0.55);
 
     return results;
 };

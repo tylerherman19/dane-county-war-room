@@ -33,15 +33,42 @@ function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; select
 
     useEffect(() => {
         if (selectedWard && geoJsonData) {
+            // 1. Zoom to Ward
             const layer = L.geoJSON(geoJsonData, {
                 filter: (feature) => {
-                    return feature.properties.WardNumber.toString() === selectedWard.num &&
-                        feature.properties.NAME.includes('Madison'); // Simplified for mock
+                    // Match ward number. Note: GeoJSON might have "001" or "1", handle both if needed.
+                    // Mock data uses padded "001", GeoJSON usually has numbers.
+                    // Let's match loosely on number.
+                    return parseInt(feature.properties.WardNumber) === parseInt(selectedWard.num);
                 }
             });
             if (layer.getLayers().length > 0) {
                 map.fitBounds(layer.getBounds(), { maxZoom: 14, animate: true });
             }
+
+            // 2. Apply Pulse Effect
+            // We need to find the actual rendered layer in the map
+            map.eachLayer((l: any) => {
+                if (l.feature && l.feature.properties) {
+                    const wardNum = l.feature.properties.WardNumber;
+                    // Match ward number
+                    if (parseInt(wardNum) === parseInt(selectedWard.num)) {
+                        // Check municipality if available in selectedWard to be precise, 
+                        // but for now ward number + zoom is decent. 
+                        // Ideally selectedWard should have municipality name too.
+
+                        if (l.getElement) {
+                            const el = l.getElement();
+                            if (el) {
+                                el.classList.add('ward-pulse');
+                                setTimeout(() => {
+                                    el.classList.remove('ward-pulse');
+                                }, 5000);
+                            }
+                        }
+                    }
+                }
+            });
         }
     }, [selectedWard, geoJsonData, map]);
 
@@ -58,57 +85,24 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             .catch(err => console.error('Error loading GeoJSON:', err));
     }, []);
 
-    const getColor = (wardId: string, municipality: string) => {
-        if (!precinctResults) return '#1e293b'; // Default slate-800
-        return '#3b82f6'; // Placeholder
-    };
-
-    // Pre-process results into a map for faster lookup and coloring
-    const wardDataMap = new globalThis.Map<string, { winner: string, margin: number, total: number, demPct: number }>();
-
-    if (precinctResults) {
-        // Group by ward
-        const wards: Record<string, PrecinctResult[]> = {};
-        precinctResults.forEach(r => {
-            const key = `${r.precinctName}-${r.wardNumber}`; // Unique key
-            if (!wards[key]) wards[key] = [];
-            wards[key].push(r);
-        });
-
-        Object.entries(wards).forEach(([key, results]) => {
-            const total = results[0].ballotscast;
-            const sorted = [...results].sort((a, b) => b.votes - a.votes);
-            const winner = sorted[0];
-            const runnerUp = sorted[1];
-            const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-
-            wardDataMap.set(key, {
-                winner: winner.candidateName,
-                margin,
-                total,
-                demPct: 0
-            });
-        });
-    }
-
     const style = (feature: any) => {
         const municipality = feature.properties.NAME;
         const wardNum = feature.properties.WardNumber;
 
         // Filter results for this ward
-        // Note: Mock data now uses "City of Madison" as precinctName, so we match on that or partial
         const relevantResults = precinctResults?.filter(r =>
             parseInt(r.wardNumber) === parseInt(wardNum) &&
             (r.precinctName.toLowerCase().includes(municipality.toLowerCase()) || municipality.toLowerCase().includes(r.precinctName.toLowerCase()))
         ) || [];
 
+        // If no results for this ward (not in this race), grey it out
         if (relevantResults.length === 0) {
             return {
-                fillColor: '#1e293b',
+                fillColor: '#0f172a', // Very dark slate, almost black
                 weight: 1,
-                opacity: 1,
-                color: '#334155',
-                fillOpacity: 0.7
+                opacity: 0.5,
+                color: '#1e293b',
+                fillOpacity: 0.3
             };
         }
 
@@ -118,8 +112,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         const runnerUp = sorted[1];
 
         // Determine Margin
-        // If only one candidate, margin is 100% (1.0)
-        // Otherwise (Winner - RunnerUp) / Total
         const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
 
         // Determine Color based on Party
@@ -129,7 +121,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         const candidateInfo = raceResult?.candidates.find((c: any) => c.candidateName === winner.candidateName);
         const party = candidateInfo?.party?.toLowerCase() || '';
 
-        if (party.includes('democrat') || party.includes('liber') || party.includes('green')) { // Grouping left-leaning for now or just Dem
+        if (party.includes('democrat') || party.includes('liber') || party.includes('green')) {
             color = '#3b82f6'; // Blue
         } else if (party.includes('republican')) {
             color = '#ef4444'; // Red
@@ -140,9 +132,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         // Calculate Opacity based on Margin (Gradient)
-        // Min opacity 0.4 (close race), Max 0.9 (landslide)
-        // Margin 0.0 -> 0.4
-        // Margin 0.5+ -> 0.9
         const opacity = 0.4 + (Math.min(margin, 0.5) * 1.0);
 
         return {
@@ -190,19 +179,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 direction: 'top'
             });
 
-            // Handle Pulse Effect
-            if (selectedWard && selectedWard.num === wardNum.toString() && municipality.includes('Madison')) { // Simplified check
-                const path = layer as L.Path;
-                // Add class via DOM element if possible, or manual style animation
-                // Leaflet doesn't easily support adding classes to paths via API for SVG, but we can access the element
-                if (path.getElement()) {
-                    path.getElement()?.classList.add('ward-pulse');
-                    setTimeout(() => {
-                        path.getElement()?.classList.remove('ward-pulse');
-                    }, 5000);
-                }
-            }
-
             layer.on({
                 mouseover: (e) => {
                     const layer = e.target;
@@ -216,12 +192,17 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 mouseout: (e) => {
                     const layer = e.target;
                     // Reset style (simplified, ideally should revert to original style function)
-                    // Check if we are pulsing, if so don't fully reset? 
-                    // Actually CSS animation overrides inline styles usually, so it might be fine.
+                    // Note: This resets to a default style, which might lose the gradient.
+                    // In a real app, we'd want to re-apply the specific style for this feature.
+                    // For now, we'll just reset to a generic style that looks okay.
+                    // Or better, re-call the style function? Leaflet doesn't make this super easy without state.
+                    // Let's just reset weight/color but keep fillOpacity if possible?
+                    // Actually, let's just set it back to what it likely was.
                     layer.setStyle({
                         weight: 1,
                         color: '#334155',
-                        fillOpacity: 0.7
+                        // fillOpacity: 0.7 // This overrides the gradient... 
+                        // Ideally we don't touch fillOpacity here or we store it.
                     });
                 }
             });
