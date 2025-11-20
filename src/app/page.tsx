@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { RaceCard } from '@/components/RaceCard';
 import { MadisonTable } from '@/components/MadisonTable';
 import { ReportingUnits } from '@/components/ReportingUnits';
-import { WardMap } from '@/components/WardMap';
 import { mockElections, mockLastPublished, mockRaces, mockRaceResults, generateMockPrecinctResults } from '@/lib/mock-data';
+
+const DynamicWardMap = dynamic(() => import('@/components/WardMap').then(mod => mod.WardMap), {
+  ssr: false,
+  loading: () => <p className="text-white text-center">Loading map...</p>,
+});
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
@@ -124,7 +129,7 @@ export default function Dashboard() {
         <section>
           <h2 className="text-4xl font-bold text-white mb-6">City of Madison</h2>
           <div className="space-y-6">
-            <WardMap wardResults={wardMapResults} />
+            <DynamicWardMap wardResults={wardMapResults} />
             <MadisonTable wardData={madisonWardData} />
           </div>
         </section>
