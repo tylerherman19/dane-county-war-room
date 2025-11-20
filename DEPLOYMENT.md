@@ -1,75 +1,82 @@
-# Dane County War Room - Deployment Guide
+# Dane County War Room - GitHub Pages Deployment
 
-## Quick Deploy to Vercel (Recommended)
+## 🚀 Quick Deploy Instructions
 
-### Option 1: Deploy via Vercel Dashboard (Easiest)
+### Step 1: Create GitHub Repository
+1. Go to [github.com/new](https://github.com/new)
+2. Name it: `dane-county-war-room`
+3. Keep it **Public** (required for GitHub Pages on free plan)
+4. Don't initialize with README (we already have code)
+5. Click "Create repository"
 
-1. **Push to GitHub**:
-   ```bash
-   cd /Users/tylerherman/Desktop/AntiGravity/dane-county-war-room
-   
-   # Create a new repository on GitHub, then:
-   git remote add origin https://github.com/YOUR_USERNAME/dane-county-war-room.git
-   git branch -M main
-   git push -u origin main
-   ```
-
-2. **Import to Vercel**:
-   - Go to [vercel.com/new](https://vercel.com/new)
-   - Click "Import Git Repository"
-   - Select your `dane-county-war-room` repository
-   - Click "Deploy"
-   - Done! You'll get a live URL like `https://dane-county-war-room.vercel.app`
-
-3. **Configure Environment Variable** (to use live API):
-   - In Vercel dashboard, go to your project → Settings → Environment Variables
-   - Add: `NEXT_PUBLIC_USE_MOCK_DATA` = `false`
-   - Redeploy
-
-### Option 2: Deploy via Vercel CLI
-
-If you want to use the CLI, try this alternative approach:
-
+### Step 2: Push Code to GitHub
 ```bash
 cd /Users/tylerherman/Desktop/AntiGravity/dane-county-war-room
 
-# Login with email instead
-npx vercel login --email your-email@example.com
+# Add your GitHub repo as remote (replace YOUR_USERNAME)
+git remote add origin https://github.com/YOUR_USERNAME/dane-county-war-room.git
 
-# Then deploy
-npx vercel --yes
+# Push to GitHub
+git branch -M main
+git push -u origin main
 ```
 
-## Current Status
+### Step 3: Enable GitHub Pages
+1. Go to your repository on GitHub
+2. Click **Settings** → **Pages** (in left sidebar)
+3. Under "Build and deployment":
+   - Source: **GitHub Actions**
+4. The deployment will start automatically!
 
-✅ Application is fully built and tested locally
-✅ Running at http://localhost:3001
-✅ Git repository initialized and committed
-✅ Ready for deployment
+### Step 4: Get Your Live URL
+After ~2-3 minutes, your dashboard will be live at:
+```
+https://YOUR_USERNAME.github.io/dane-county-war-room/
+```
 
-## Switch Between Mock and Live Data
+## ✅ What's Already Configured
 
-**Mock Data (Current)**:
-- Set in `.env.local`: `NEXT_PUBLIC_USE_MOCK_DATA=true`
-- Uses generated mock election data
+- ✅ Next.js configured for static export
+- ✅ GitHub Actions workflow created (`.github/workflows/deploy.yml`)
+- ✅ Automatic deployment on every push to `main`
+- ✅ Mock data enabled by default
+- ✅ SSR issues fixed (Leaflet map uses dynamic import)
 
-**Live API**:
-- Set in Vercel: `NEXT_PUBLIC_USE_MOCK_DATA=false`
-- Fetches from `https://electionresults.countyofdane.com`
+## 🔄 Updating the Dashboard
 
-## Sharing the Dashboard
+Every time you push to the `main` branch, GitHub Actions will automatically rebuild and redeploy:
 
-Once deployed to Vercel, you'll get a URL like:
-- `https://dane-county-war-room.vercel.app`
-- `https://dane-county-war-room-your-username.vercel.app`
+```bash
+# Make changes, then:
+git add .
+git commit -m "Update dashboard"
+git push
+```
 
-This URL is:
-- ✅ Publicly accessible
-- ✅ Shareable with anyone
-- ✅ Auto-updates when you push changes to GitHub
-- ✅ Free on Vercel's hobby plan
+## 🌐 Switching to Live API
 
-## Local Development
+To use real Dane County election data instead of mock data:
+
+1. Edit `.github/workflows/deploy.yml`
+2. Change line 36 from:
+   ```yaml
+   NEXT_PUBLIC_USE_MOCK_DATA: true
+   ```
+   to:
+   ```yaml
+   NEXT_PUBLIC_USE_MOCK_DATA: false
+   ```
+3. Commit and push
+
+## 📱 Sharing the Dashboard
+
+Once deployed, anyone can access your dashboard at:
+- `https://YOUR_USERNAME.github.io/dane-county-war-room/`
+- Works on all devices (mobile, tablet, desktop)
+- No login required
+- Updates automatically when you push changes
+
+## 🛠️ Local Development
 
 ```bash
 cd /Users/tylerherman/Desktop/AntiGravity/dane-county-war-room
@@ -77,3 +84,10 @@ npm run dev
 ```
 
 Visit http://localhost:3001
+
+## 📊 Current Build Status
+
+✅ Build successful (static export)
+✅ All components working
+✅ Map loads dynamically (no SSR issues)
+✅ Ready to deploy
