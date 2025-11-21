@@ -13,6 +13,8 @@ interface RaceSelectorProps {
 export default function RaceSelector({ races, selectedRaceId, onSelectRace }: RaceSelectorProps) {
     const [category, setCategory] = useState<'All' | 'Federal' | 'State' | 'Local'>('All');
 
+    const [isOpen, setIsOpen] = useState(false);
+
     if (!races) return null;
 
     const selectedRace = races.find(r => r.id === selectedRaceId);
@@ -27,48 +29,64 @@ export default function RaceSelector({ races, selectedRaceId, onSelectRace }: Ra
 
     return (
         <div className="absolute top-4 left-16 z-[1000] w-80">
-            <div className="relative group">
-                <button className="w-full bg-slate-900/90 backdrop-blur border border-slate-700 text-white px-4 py-3 rounded-lg shadow-xl flex items-center justify-between hover:bg-slate-800 transition-colors text-left">
+            {/* Backdrop to close on click outside */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
+
+            <div className="relative z-50">
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="w-full bg-slate-900/90 backdrop-blur border border-slate-700 text-white px-4 py-3 rounded-lg shadow-xl flex items-center justify-between hover:bg-slate-800 transition-colors text-left"
+                >
                     <div>
                         <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Current Race</div>
                         <div className="font-bold truncate">{selectedRace?.name || 'Select a Race'}</div>
                     </div>
-                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                <div className="absolute top-full left-0 w-full mt-2 bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden hidden group-hover:block">
-                    {/* Category Tabs */}
-                    <div className="flex border-b border-slate-800 bg-slate-950">
-                        {(['All', 'Federal', 'State', 'Local'] as const).map(cat => (
-                            <button
-                                key={cat}
-                                onClick={(e) => { e.stopPropagation(); setCategory(cat); }}
-                                className={`flex-1 py-2 text-xs font-medium transition-colors ${category === cat ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-500 hover:text-slate-300'
-                                    }`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
-                    </div>
+                {isOpen && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+                        {/* Category Tabs */}
+                        <div className="flex border-b border-slate-800 bg-slate-950">
+                            {(['All', 'Federal', 'State', 'Local'] as const).map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={(e) => { e.stopPropagation(); setCategory(cat); }}
+                                    className={`flex-1 py-2 text-xs font-medium transition-colors ${category === cat ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-500 hover:text-slate-300'
+                                        }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
 
-                    {/* Race List */}
-                    <div className="max-h-[50vh] overflow-y-auto">
-                        {filteredRaces.map(race => (
-                            <button
-                                key={race.id}
-                                onClick={() => onSelectRace(race.id)}
-                                className={`w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-0 ${selectedRaceId === race.id ? 'bg-slate-800/50 text-blue-400' : 'text-slate-300'
-                                    }`}
-                            >
-                                <div className="font-medium">{race.name}</div>
-                                <div className="text-xs text-slate-500">{race.type}</div>
-                            </button>
-                        ))}
-                        {filteredRaces.length === 0 && (
-                            <div className="p-4 text-center text-slate-500 text-sm">No races found</div>
-                        )}
+                        {/* Race List */}
+                        <div className="max-h-[50vh] overflow-y-auto">
+                            {filteredRaces.map(race => (
+                                <button
+                                    key={race.id}
+                                    onClick={() => {
+                                        onSelectRace(race.id);
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-0 ${selectedRaceId === race.id ? 'bg-slate-800/50 text-blue-400' : 'text-slate-300'
+                                        }`}
+                                >
+                                    <div className="font-medium">{race.name}</div>
+                                    <div className="text-xs text-slate-500">{race.type}</div>
+                                </button>
+                            ))}
+                            {filteredRaces.length === 0 && (
+                                <div className="p-4 text-center text-slate-500 text-sm">No races found</div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

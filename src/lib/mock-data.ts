@@ -105,54 +105,132 @@ export const mockRaces: Race[] = [
         precinctsReporting: 100,
         candidates: [],
         lastUpdated: new Date().toISOString()
-    }
+    },
+
+    // 2022 General
+    { id: "gov-2022", electionId: "2022-11-08", name: "Governor / Lieutenant Governor", type: 'Governor', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+    { id: "sen-2022", electionId: "2022-11-08", name: "United States Senator", type: 'Senate', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+
+    // 2020 General
+    { id: "pres-2020", electionId: "2020-11-03", name: "President / Vice President", type: 'Presidential', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+
+    // 2018 General
+    { id: "gov-2018", electionId: "2018-11-06", name: "Governor / Lieutenant Governor", type: 'Governor', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+    { id: "sen-2018", electionId: "2018-11-06", name: "United States Senator", type: 'Senate', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+
+    // 2016 General
+    { id: "pres-2016", electionId: "2016-11-08", name: "President / Vice President", type: 'Presidential', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+    { id: "sen-2016", electionId: "2016-11-08", name: "United States Senator", type: 'Senate', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() }
 ];
 
 // Helper to get candidates for a race
 const getCandidatesForRace = (race: Race) => {
-    if (race.type === 'Presidential') {
-        return [
-            { candidateName: "Kamala D. Harris / Tim Walz", votes: 0, percentage: 0, party: "Democratic" },
-            { candidateName: "Donald J. Trump / JD Vance", votes: 0, percentage: 0, party: "Republican" }
-        ];
+    // 2024
+    if (race.electionId === "2024-11-05") {
+        if (race.type === 'Presidential') {
+            return [
+                { candidateName: "Kamala D. Harris / Tim Walz", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Donald J. Trump / JD Vance", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'Senate') {
+            return [
+                { candidateName: "Tammy Baldwin", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Eric Hovde", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'Congress') {
+            return [
+                { candidateName: "Mark Pocan", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Peter Theron", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'StateSenate') {
+            return [
+                { candidateName: "Democratic Candidate", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Republican Candidate", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'Assembly') {
+            return [
+                { candidateName: "Democratic Candidate", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Republican Candidate", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'Referendum') {
+            return [
+                { candidateName: "Yes", votes: 0, percentage: 0 },
+                { candidateName: "No", votes: 0, percentage: 0 }
+            ];
+        }
     }
-    if (race.type === 'Senate') {
-        return [
-            { candidateName: "Tammy Baldwin", votes: 0, percentage: 0, party: "Democratic" },
-            { candidateName: "Eric Hovde", votes: 0, percentage: 0, party: "Republican" }
-        ];
-    }
-    if (race.type === 'Congress') {
-        return [
-            { candidateName: "Mark Pocan", votes: 0, percentage: 0, party: "Democratic" },
-            { candidateName: "Peter Theron", votes: 0, percentage: 0, party: "Republican" }
-        ];
-    }
-    if (race.type === 'StateSenate') {
-        return [
-            { candidateName: "Democratic Candidate", votes: 0, percentage: 0, party: "Democratic" },
-            { candidateName: "Republican Candidate", votes: 0, percentage: 0, party: "Republican" }
-        ];
-    }
-    if (race.type === 'Assembly') {
-        // Some are uncontested, but for map visualization we'll add a challenger
-        return [
-            { candidateName: "Democratic Candidate", votes: 0, percentage: 0, party: "Democratic" },
-            { candidateName: "Republican Candidate", votes: 0, percentage: 0, party: "Republican" }
-        ];
-    }
-    if (race.type === 'Referendum') {
-        return [
-            { candidateName: "Yes", votes: 0, percentage: 0 },
-            { candidateName: "No", votes: 0, percentage: 0 }
-        ];
-    }
-    if (race.type === 'Mayor') {
+
+    // 2023
+    if (race.id === 'mayor-2023') {
         return [
             { candidateName: "Satya Rhodes-Conway", votes: 0, percentage: 0, party: "Non-Partisan" },
             { candidateName: "Gloria Reyes", votes: 0, percentage: 0, party: "Non-Partisan" }
         ];
     }
+
+    // 2022
+    if (race.electionId === "2022-11-08") {
+        if (race.type === 'Governor') {
+            return [
+                { candidateName: "Tony Evers", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Tim Michels", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'Senate') {
+            return [
+                { candidateName: "Mandela Barnes", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Ron Johnson", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+    }
+
+    // 2020
+    if (race.electionId === "2020-11-03") {
+        if (race.type === 'Presidential') {
+            return [
+                { candidateName: "Joseph R. Biden / Kamala Harris", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Donald J. Trump / Mike Pence", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+    }
+
+    // 2018
+    if (race.electionId === "2018-11-06") {
+        if (race.type === 'Governor') {
+            return [
+                { candidateName: "Tony Evers", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Scott Walker", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'Senate') {
+            return [
+                { candidateName: "Tammy Baldwin", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Leah Vukmir", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+    }
+
+    // 2016
+    if (race.electionId === "2016-11-08") {
+        if (race.type === 'Presidential') {
+            return [
+                { candidateName: "Hillary Clinton / Tim Kaine", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Donald J. Trump / Mike Pence", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+        if (race.type === 'Senate') {
+            return [
+                { candidateName: "Russ Feingold", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Ron Johnson", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+    }
+
     return [];
 };
 

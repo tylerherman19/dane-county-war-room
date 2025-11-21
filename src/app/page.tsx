@@ -16,6 +16,7 @@ import {
 
 export default function Home() {
   // State
+  const [viewMode, setViewMode] = useState<'LIVE' | 'ARCHIVE'>('LIVE');
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
   const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null);
   const [selectedWard, setSelectedWard] = useState<{ name: string; num: string } | null>(null);
@@ -25,10 +26,19 @@ export default function Home() {
 
   // Auto-select first election
   useEffect(() => {
-    if (elections && elections.length > 0 && !selectedElectionId) {
-      setSelectedElectionId(elections[0].electionId);
+    if (elections && elections.length > 0) {
+      // If in LIVE mode, always force the most recent election
+      if (viewMode === 'LIVE') {
+        if (selectedElectionId !== elections[0].electionId) {
+          setSelectedElectionId(elections[0].electionId);
+        }
+      }
+      // If in ARCHIVE mode, only select if nothing is selected
+      else if (!selectedElectionId) {
+        setSelectedElectionId(elections[0].electionId);
+      }
     }
-  }, [elections, selectedElectionId]);
+  }, [elections, selectedElectionId, viewMode]);
 
   const { races } = useRaces(selectedElectionId);
 
@@ -64,6 +74,8 @@ export default function Home() {
       elections={elections}
       selectedElectionId={selectedElectionId}
       onSelectElection={setSelectedElectionId}
+      viewMode={viewMode}
+      onToggleViewMode={setViewMode}
     >
       <div className="relative w-full h-full">
         <RaceSelector
