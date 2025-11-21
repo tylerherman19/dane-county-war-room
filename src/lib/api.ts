@@ -106,11 +106,11 @@ export async function getRaceResults(electionId: string, raceId: string): Promis
 
         // Calculate totals from precinct results
         const precinctResults = generateMockPrecinctResults(raceId);
-        const candidates = result.candidates.map(c => ({ ...c, votes: 0, percentage: 0 }));
+        const candidates: Candidate[] = result.candidates.map((c: Candidate) => ({ ...c, votes: 0, percentage: 0 }));
         let totalVotes = 0;
 
         precinctResults.forEach(p => {
-            const candidate = candidates.find(c => c.candidateName === p.candidateName);
+            const candidate = candidates.find((c: Candidate) => c.candidateName === p.candidateName);
             if (candidate) {
                 candidate.votes += p.votes;
                 totalVotes += p.votes;
@@ -119,7 +119,7 @@ export async function getRaceResults(electionId: string, raceId: string): Promis
 
         // Update percentages
         if (totalVotes > 0) {
-            candidates.forEach(c => {
+            candidates.forEach((c: Candidate) => {
                 c.percentage = (c.votes / totalVotes) * 100;
             });
         }
