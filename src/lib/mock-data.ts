@@ -331,13 +331,10 @@ export const generateMockPrecinctResults = (raceId: string) => {
         if (candidates.length >= 2 && candidates[0].percentage > 0) {
             const actualPercentage = candidates[0].percentage / 100;
 
-            // If it's a Mayor race, the percentage IS the Madison average
-            if (race.type === 'Mayor') {
-                if (muniName.includes('Madison')) {
-                    demBias = actualPercentage;
-                } else {
-                    demBias = 0.5; // Irrelevant for non-Madison, but keeps logic clean
-                }
+            // If it's a Mayor race, use Aldermanic District logic for Madison
+            if (race.type === 'Mayor' && muniName.includes('Madison')) {
+                // Default to the actual percentage (55.2% or 61.9%)
+                demBias = actualPercentage;
             }
             // For county-wide races (Gov, Sen, Pres), adjust based on Muni
             else {
@@ -387,8 +384,30 @@ export const generateMockPrecinctResults = (raceId: string) => {
                 const ballotscast = Math.floor(registeredVoters * turnout);
 
                 // Calculate votes with slight variation around the bias
+                let localBias = demBias;
+
+                // SPECIAL LOGIC FOR 2023 MAYOR RACE (Satya vs Reyes)
+                // Satya (demBias) won 55.2% overall, but lost outer wards.
+                // We use Aldermanic Districts to simulate this.
+                if (race.id === 'mayor-2023' && muniName.includes('Madison')) {
+                    const ald = parseInt(wardInfo.ald);
+
+                    // Satya Strongholds (Central/Near East/West): Districts 2, 4, 6, 8, 13, 15
+                    if ([2, 4, 6, 8, 13, 15].includes(ald)) {
+                        localBias = 0.70; // Satya wins big
+                    }
+                    // Reyes Strongholds/Competitive (Far West/Southwest/North): Districts 1, 9, 14, 16, 17, 18, 19, 20
+                    else if ([1, 9, 14, 16, 17, 18, 19, 20].includes(ald)) {
+                        localBias = 0.42; // Reyes wins (Satya gets 42%)
+                    }
+                    // Swing/Mixed: 3, 5, 7, 10, 11, 12
+                    else {
+                        localBias = 0.52; // Satya barely wins or tossup
+                    }
+                }
+
                 const variation = Math.random() * 0.08 - 0.04; // +/- 4% variation
-                const demPercentage = Math.min(Math.max(demBias + variation, 0.1), 0.9);
+                const demPercentage = Math.min(Math.max(localBias + variation, 0.1), 0.9);
                 const demVotes = Math.floor(ballotscast * demPercentage);
                 const repVotes = ballotscast - demVotes;
 
