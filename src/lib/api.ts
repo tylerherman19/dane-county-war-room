@@ -107,14 +107,16 @@ interface ApiPrecinctResultResponse {
 
 async function fetchAPI<T>(endpoint: string): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
+    console.log(`[API] Fetching: ${url}`);
     try {
         const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
+            console.error(`[API] Error ${response.status} fetching ${url}: ${response.statusText}`);
             throw new Error(`API error: ${response.status} ${response.statusText}`);
         }
         return response.json();
     } catch (error) {
-        console.error(`Failed to fetch ${url}:`, error);
+        console.error(`[API] Failed to fetch ${url}:`, error);
         throw error;
     }
 }
@@ -228,12 +230,15 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
         if (match) wardNum = parseInt(match[1]).toString();
 
         let precinctName = pv.PrecinctName.split(' Wd')[0].trim();
-        if (precinctName === 'C Madison') precinctName = 'City of Madison';
-        if (precinctName === 'C Fitchburg') precinctName = 'City of Fitchburg';
-        if (precinctName === 'C Sun Prairie') precinctName = 'City of Sun Prairie';
-        if (precinctName === 'C Middleton') precinctName = 'City of Middleton';
-        if (precinctName === 'C Verona') precinctName = 'City of Verona';
-        if (precinctName === 'V Waunakee') precinctName = 'Village of Waunakee';
+
+        // Generic mapping for City/Town/Village prefixes
+        // "C Madison" -> "City of Madison"
+        // "T. Albion" / "T Albion" -> "Town of Albion"
+        // "V. Dane" / "V Dane" -> "Village of Dane"
+        precinctName = precinctName
+            .replace(/^C[\s.]+/i, 'City of ')
+            .replace(/^T[\s.]+/i, 'Town of ')
+            .replace(/^V[\s.]+/i, 'Village of ');
 
         const totalBallots = precinctTotals[pv.PrecinctName] || 0;
 

@@ -96,8 +96,89 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
     return null;
 }
 
+// Color Palettes (HSL)
+// Blue: 217, 91%, 60%
+// Red: 0, 84%, 60%
+// Yellow: 48, 96%, 47%
+// Green: 142, 71%, 45%
+// Purple: 271, 91%, 65%
+// Orange: 24, 95%, 53%
+// Cyan: 189, 94%, 43%
+
+interface HSL { h: number; s: number; l: number; }
+
+const PALETTE_2: HSL[] = [{ h: 217, s: 91, l: 60 }, { h: 0, s: 84, l: 60 }];
+const PALETTE_4: HSL[] = [...PALETTE_2, { h: 48, s: 96, l: 47 }, { h: 142, s: 71, l: 45 }];
+const PALETTE_MANY: HSL[] = [...PALETTE_4, { h: 271, s: 91, l: 65 }, { h: 24, s: 95, l: 53 }, { h: 189, s: 94, l: 43 }];
+
+function assignCandidateColors(candidates: any[]): Record<string, HSL> {
+    if (!candidates || candidates.length === 0) return {};
+
+    const assignments: Record<string, HSL> = {};
+    const count = candidates.length;
+
+    // Determine Palette
+    let palette = PALETTE_MANY;
+    if (count <= 2) palette = PALETTE_2;
+    else if (count <= 4) palette = PALETTE_4;
+
+    // Create a pool of available colors
+    let availableColors = [...palette];
+    const unassignedCandidates: any[] = [];
+
+    // 1. Assign Fixed Parties (Dem/Rep)
+    candidates.forEach(c => {
+        const name = c.candidateName.trim();
+        const party = (c.party || '').toLowerCase();
+        const nameLower = name.toLowerCase();
+
+        // Blue (Dem) is index 0 in all palettes
+        // Red (Rep) is index 1 in all palettes
+
+        if (party.includes('democrat') || nameLower.includes('satya') || nameLower.includes('biden') || nameLower.includes('evers')) {
+            const blue = palette[0];
+            if (availableColors.includes(blue)) {
+                assignments[name] = blue;
+                availableColors = availableColors.filter(col => col !== blue);
+            } else {
+                unassignedCandidates.push(c);
+            }
+        } else if (party.includes('republican') || nameLower.includes('trump') || nameLower.includes('johnson')) {
+            const red = palette[1];
+            if (availableColors.includes(red)) {
+                assignments[name] = red;
+                availableColors = availableColors.filter(col => col !== red);
+            } else {
+                unassignedCandidates.push(c);
+            }
+        } else {
+            unassignedCandidates.push(c);
+        }
+    });
+
+    // 2. Assign Remaining Candidates to Remaining Colors
+    unassignedCandidates.forEach(c => {
+        const name = c.candidateName.trim();
+        if (availableColors.length > 0) {
+            assignments[name] = availableColors.shift()!;
+        } else {
+            // Fallback: Slate-ish
+            assignments[name] = { h: 215, s: 16, l: 47 };
+        }
+    });
+
+    return assignments;
+}
+
 export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
+    const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
+
+    useEffect(() => {
+        if (raceResult?.candidates) {
+            setCandidateColors(assignCandidateColors(raceResult.candidates));
+        }
+    }, [raceResult]);
 
     useEffect(() => {
         fetch('dane_wards.geojson')
@@ -134,43 +215,28 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             // Determine Margin
             const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
 
-            // Determine Color based on Party
-            let color = '#64748b'; // Default slate
+            // Determine Color
+            const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
 
-            // Try to find party from raceResult candidates
-            // Use trim() and case-insensitive match for robustness
-            const candidateInfo = raceResult?.candidates.find((c: any) =>
-                c.candidateName.trim().toLowerCase() === winner.candidateName.trim().toLowerCase()
-            );
-            const party = candidateInfo?.party?.toLowerCase() || '';
+            // Calculate Lightness based on Margin
+            // Margin 0 (Tie) -> Lightness 80% (Pale)
+            // Margin 0.5+ (Landslide) -> Lightness 40% (Dark/Standard)
+            // Formula: L = 80 - (Math.min(margin, 0.5) * 2 * 40)
+            // Simplified: L = 80 - (Math.min(margin, 0.5) * 80)
+            const lightness = 80 - (Math.min(margin, 0.5) * 80);
 
-            if (party.includes('democrat') || party.includes('liber') || party.includes('green')) {
-                color = '#3b82f6'; // Blue
-            } else if (party.includes('republican')) {
-                color = '#ef4444'; // Red
-            } else if (winner.candidateName.includes('Satya')) {
-                color = '#3b82f6'; // Satya -> Blue (Progressive)
-            } else if (winner.candidateName.includes('Gloria') || winner.candidateName.includes('Soglin')) {
-                color = '#ef4444'; // Challengers -> Red (for contrast)
-            } else if (winner.candidateName.toLowerCase().includes('yes')) {
-                color = '#3b82f6'; // Yes = Blue
-            } else if (winner.candidateName.toLowerCase().includes('no')) {
-                color = '#ef4444'; // No = Red
-            } else if (['Evers', 'Baldwin', 'Biden', 'Clinton', 'Harris', 'Obama', 'Feingold', 'Pocan'].some(n => winner.candidateName.includes(n))) {
-                color = '#3b82f6'; // Known Dems
-            } else if (['Walker', 'Johnson', 'Trump', 'Michels', 'Vukmir', 'Pence', 'Vance', 'Theron'].some(n => winner.candidateName.includes(n))) {
-                color = '#ef4444'; // Known GOP
-            }
+            // Ensure we don't go too dark or too light if needed, but 40-80 is a good range.
+            // Actually, let's clamp the lower bound to the base color's lightness if it's higher than 40?
+            // Or just stick to the formula for consistency.
 
-            // Calculate Opacity based on Margin (Gradient)
-            const opacity = 0.4 + (Math.min(margin, 0.5) * 1.0);
+            const colorString = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
 
             baseStyle = {
-                fillColor: color,
+                fillColor: colorString,
                 weight: 1,
                 opacity: 1,
                 color: '#334155',
-                fillOpacity: opacity
+                fillOpacity: 0.9 // High opacity because we use lightness for the gradient now
             };
         }
 
