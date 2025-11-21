@@ -31,7 +31,8 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
 
     // Filter wards
     const filteredWards = precinctResults?.filter(w =>
-        w.precinctName.toLowerCase().includes(searchTerm.toLowerCase())
+        w.precinctName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        w.wardNumber.toString().includes(searchTerm)
     ) || [];
 
     // Group by ward for list view (since precinctResults has one row per candidate)
@@ -44,7 +45,14 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
             const winner = wardResults.sort((a, b) => b.votes - a.votes)[0];
             return { name, num, total, winner };
         })
-        .slice(0, 50); // Limit to 50 for performance
+        .sort((a, b) => {
+            // Sort by Municipality Name first
+            const nameCompare = a.name.localeCompare(b.name);
+            if (nameCompare !== 0) return nameCompare;
+            // Then by Ward Number (numeric)
+            return parseInt(a.num) - parseInt(b.num);
+        });
+    // Removed .slice(0, 50) to show all wards as requested
 
     return (
         <div className="h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-hidden">
