@@ -146,6 +146,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 color = '#3b82f6'; // Blue
             } else if (party.includes('republican')) {
                 color = '#ef4444'; // Red
+            } else if (winner.candidateName.includes('Satya')) {
+                color = '#3b82f6'; // Satya -> Blue (Progressive)
+            } else if (winner.candidateName.includes('Gloria') || winner.candidateName.includes('Soglin')) {
+                color = '#ef4444'; // Challengers -> Red (for contrast)
             } else if (winner.candidateName.toLowerCase().includes('yes')) {
                 color = '#3b82f6'; // Yes = Blue
             } else if (winner.candidateName.toLowerCase().includes('no')) {
