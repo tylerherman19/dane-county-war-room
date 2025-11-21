@@ -1,0 +1,782 @@
+[
+    {
+        "ward": "C Madison Wd 1",
+        "satya": "516",
+        "gloria": "375"
+    },
+    {
+        "ward": "C Madison Wd 2",
+        "satya": "588",
+        "gloria": "186"
+    },
+    {
+        "ward": "C Madison Wd 3",
+        "satya": "757",
+        "gloria": "308"
+    },
+    {
+        "ward": "C Madison Wd 4",
+        "satya": "464",
+        "gloria": "122"
+    },
+    {
+        "ward": "C Madison Wd 5",
+        "satya": "306",
+        "gloria": "122"
+    },
+    {
+        "ward": "C Madison Wd 6",
+        "satya": "594",
+        "gloria": "197"
+    },
+    {
+        "ward": "C Madison Wd 7",
+        "satya": "542",
+        "gloria": "228"
+    },
+    {
+        "ward": "C Madison Wd 8",
+        "satya": "561",
+        "gloria": "123"
+    },
+    {
+        "ward": "C Madison Wd 9",
+        "satya": "388",
+        "gloria": "116"
+    },
+    {
+        "ward": "C Madison Wd 10",
+        "satya": "215",
+        "gloria": "104"
+    },
+    {
+        "ward": "C Madison Wd 11",
+        "satya": "501",
+        "gloria": "225"
+    },
+    {
+        "ward": "C Madison Wd 12",
+        "satya": "560",
+        "gloria": "222"
+    },
+    {
+        "ward": "C Madison Wd 13",
+        "satya": "525",
+        "gloria": "193"
+    },
+    {
+        "ward": "C Madison Wd 14",
+        "satya": "492",
+        "gloria": "356"
+    },
+    {
+        "ward": "C Madison Wd 15",
+        "satya": "465",
+        "gloria": "353"
+    },
+    {
+        "ward": "C Madison Wd 16",
+        "satya": "268",
+        "gloria": "360"
+    },
+    {
+        "ward": "C Madison Wd 17",
+        "satya": "309",
+        "gloria": "359"
+    },
+    {
+        "ward": "C Madison Wd 18",
+        "satya": "271",
+        "gloria": "333"
+    },
+    {
+        "ward": "C Madison Wd 19",
+        "satya": "333",
+        "gloria": "413"
+    },
+    {
+        "ward": "C Madison Wd 20",
+        "satya": "346",
+        "gloria": "396"
+    },
+    {
+        "ward": "C Madison Wd 21",
+        "satya": "315",
+        "gloria": "389"
+    },
+    {
+        "ward": "C Madison Wd 22",
+        "satya": "392",
+        "gloria": "437"
+    },
+    {
+        "ward": "C Madison Wd 23",
+        "satya": "393",
+        "gloria": "442"
+    },
+    {
+        "ward": "C Madison Wd 24",
+        "satya": "339",
+        "gloria": "380"
+    },
+    {
+        "ward": "C Madison Wd 25",
+        "satya": "383",
+        "gloria": "443"
+    },
+    {
+        "ward": "C Madison Wd 26",
+        "satya": "391",
+        "gloria": "416"
+    },
+    {
+        "ward": "C Madison Wd 27",
+        "satya": "336",
+        "gloria": "334"
+    },
+    {
+        "ward": "C Madison Wd 28",
+        "satya": "357",
+        "gloria": "332"
+    },
+    {
+        "ward": "C Madison Wd 29",
+        "satya": "353",
+        "gloria": "293"
+    },
+    {
+        "ward": "C Madison Wd 30",
+        "satya": "339",
+        "gloria": "286"
+    },
+    {
+        "ward": "C Madison Wd 31",
+        "satya": "359",
+        "gloria": "305"
+    },
+    {
+        "ward": "C Madison Wd 32",
+        "satya": "355",
+        "gloria": "309"
+    },
+    {
+        "ward": "C Madison Wd 33",
+        "satya": "293",
+        "gloria": "318"
+    },
+    {
+        "ward": "C Madison Wd 34",
+        "satya": "334",
+        "gloria": "392"
+    },
+    {
+        "ward": "C Madison Wd 35",
+        "satya": "319",
+        "gloria": "360"
+    },
+    {
+        "ward": "C Madison Wd 36",
+        "satya": "335",
+        "gloria": "386"
+    },
+    {
+        "ward": "C Madison Wd 37",
+        "satya": "357",
+        "gloria": "395"
+    },
+    {
+        "ward": "C Madison Wd 38",
+        "satya": "348",
+        "gloria": "395"
+    },
+    {
+        "ward": "C Madison Wd 39",
+        "satya": "340",
+        "gloria": "358"
+    },
+    {
+        "ward": "C Madison Wd 40",
+        "satya": "324",
+        "gloria": "371"
+    },
+    {
+        "ward": "C Madison Wd 41",
+        "satya": "364",
+        "gloria": "431"
+    },
+    {
+        "ward": "C Madison Wd 42",
+        "satya": "329",
+        "gloria": "387"
+    },
+    {
+        "ward": "C Madison Wd 43",
+        "satya": "315",
+        "gloria": "361"
+    },
+    {
+        "ward": "C Madison Wd 44",
+        "satya": "317",
+        "gloria": "371"
+    },
+    {
+        "ward": "C Madison Wd 45",
+        "satya": "331",
+        "gloria": "389"
+    },
+    {
+        "ward": "C Madison Wd 46",
+        "satya": "355",
+        "gloria": "296"
+    },
+    {
+        "ward": "C Madison Wd 47",
+        "satya": "296",
+        "gloria": "117"
+    },
+    {
+        "ward": "C Madison Wd 48",
+        "satya": "374",
+        "gloria": "160"
+    },
+    {
+        "ward": "C Madison Wd 49",
+        "satya": "350",
+        "gloria": "145"
+    },
+    {
+        "ward": "C Madison Wd 50",
+        "satya": "406",
+        "gloria": "170"
+    },
+    {
+        "ward": "C Madison Wd 51",
+        "satya": "371",
+        "gloria": "157"
+    },
+    {
+        "ward": "C Madison Wd 52",
+        "satya": "497",
+        "gloria": "205"
+    },
+    {
+        "ward": "C Madison Wd 53",
+        "satya": "487",
+        "gloria": "202"
+    },
+    {
+        "ward": "C Madison Wd 54",
+        "satya": "328",
+        "gloria": "135"
+    },
+    {
+        "ward": "C Madison Wd 55",
+        "satya": "327",
+        "gloria": "135"
+    },
+    {
+        "ward": "C Madison Wd 56",
+        "satya": "392",
+        "gloria": "162"
+    },
+    {
+        "ward": "C Madison Wd 57",
+        "satya": "403",
+        "gloria": "167"
+    },
+    {
+        "ward": "C Madison Wd 58",
+        "satya": "393",
+        "gloria": "162"
+    },
+    {
+        "ward": "C Madison Wd 59",
+        "satya": "309",
+        "gloria": "128"
+    },
+    {
+        "ward": "C Madison Wd 60",
+        "satya": "364",
+        "gloria": "150"
+    },
+    {
+        "ward": "C Madison Wd 61",
+        "satya": "368",
+        "gloria": "152"
+    },
+    {
+        "ward": "C Madison Wd 62",
+        "satya": "336",
+        "gloria": "139"
+    },
+    {
+        "ward": "C Madison Wd 63",
+        "satya": "324",
+        "gloria": "134"
+    },
+    {
+        "ward": "C Madison Wd 64",
+        "satya": "341",
+        "gloria": "141"
+    },
+    {
+        "ward": "C Madison Wd 65",
+        "satya": "322",
+        "gloria": "133"
+    },
+    {
+        "ward": "C Madison Wd 66",
+        "satya": "346",
+        "gloria": "143"
+    },
+    {
+        "ward": "C Madison Wd 67",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 68",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 69",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 70",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 71",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 72",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 73",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 74",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 75",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 76",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 77",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 78",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 79",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 80",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 81",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 82",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 83",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 84",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 85",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 86",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 87",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 88",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 89",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 90",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 91",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 92",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 93",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 94",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 95",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 96",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 97",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 98",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 99",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 100",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 101",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 102",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 103",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 104",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 105",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 106",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 107",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 108",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 109",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 110",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 111",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 112",
+        "satya": "334",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 113",
+        "satya": "750",
+        "gloria": "851"
+    },
+    {
+        "ward": "C Madison Wd 114",
+        "satya": "610",
+        "gloria": "928"
+    },
+    {
+        "ward": "C Madison Wd 115",
+        "satya": "521",
+        "gloria": "687"
+    },
+    {
+        "ward": "C Madison Wd 116",
+        "satya": "642",
+        "gloria": "642"
+    },
+    {
+        "ward": "C Madison Wd 117",
+        "satya": "458",
+        "gloria": "598"
+    },
+    {
+        "ward": "C Madison Wd 118",
+        "satya": "226",
+        "gloria": "321"
+    },
+    {
+        "ward": "C Madison Wd 119",
+        "satya": "509",
+        "gloria": "554"
+    },
+    {
+        "ward": "C Madison Wd 120",
+        "satya": "1",
+        "gloria": "1"
+    },
+    {
+        "ward": "C Madison Wd 121",
+        "satya": "2",
+        "gloria": "2"
+    },
+    {
+        "ward": "C Madison Wd 122",
+        "satya": "2",
+        "gloria": "3"
+    },
+    {
+        "ward": "C Madison Wd 123",
+        "satya": "20",
+        "gloria": "21"
+    },
+    {
+        "ward": "C Madison Wd 124",
+        "satya": "26",
+        "gloria": "42"
+    },
+    {
+        "ward": "C Madison Wd 125",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 126",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 127",
+        "satya": "56",
+        "gloria": "60"
+    },
+    {
+        "ward": "C Madison Wd 128",
+        "satya": "114",
+        "gloria": "138"
+    },
+    {
+        "ward": "C Madison Wd 129",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 130",
+        "satya": "87",
+        "gloria": "178"
+    },
+    {
+        "ward": "C Madison Wd 131",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 132",
+        "satya": "50",
+        "gloria": "27"
+    },
+    {
+        "ward": "C Madison Wd 133",
+        "satya": "95",
+        "gloria": "83"
+    },
+    {
+        "ward": "C Madison Wd 134",
+        "satya": "33",
+        "gloria": "38"
+    },
+    {
+        "ward": "C Madison Wd 135",
+        "satya": "197",
+        "gloria": "357"
+    },
+    {
+        "ward": "C Madison Wd 136",
+        "satya": "0",
+        "gloria": "1"
+    },
+    {
+        "ward": "C Madison Wd 137",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 138",
+        "satya": "40",
+        "gloria": "55"
+    },
+    {
+        "ward": "C Madison Wd 139",
+        "satya": "23",
+        "gloria": "28"
+    },
+    {
+        "ward": "C Madison Wd 140",
+        "satya": "75",
+        "gloria": "73"
+    },
+    {
+        "ward": "C Madison Wd 141",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 142",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 143",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 144",
+        "satya": "1",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 145",
+        "satya": "47",
+        "gloria": "69"
+    },
+    {
+        "ward": "C Madison Wd 146",
+        "satya": "32",
+        "gloria": "42"
+    },
+    {
+        "ward": "C Madison Wd 147",
+        "satya": "95",
+        "gloria": "184"
+    },
+    {
+        "ward": "C Madison Wd 148",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 149",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 150",
+        "satya": "65",
+        "gloria": "62"
+    },
+    {
+        "ward": "C Madison Wd 151",
+        "satya": "2",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 152",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 153",
+        "satya": "56",
+        "gloria": "87"
+    },
+    {
+        "ward": "C Madison Wd 154",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 155",
+        "satya": "0",
+        "gloria": "0"
+    },
+    {
+        "ward": "C Madison Wd 156",
+        "satya": "0",
+        "gloria": "4"
+    }
+]

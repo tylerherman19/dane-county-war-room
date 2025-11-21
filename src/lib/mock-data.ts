@@ -313,14 +313,63 @@ export const mockRaceResults = mockRaces.reduce((acc, race) => {
 
 
 // Generate mock precinct results using Ward Districts Mapping
+import mayor2023Data from './real-data/mayor-2023.json';
+
 export const generateMockPrecinctResults = (raceId: string) => {
     const results: any[] = [];
     const race = mockRaces.find(r => r.id === raceId);
 
     if (!race) return [];
 
+    // ... (existing imports)
+
+    // ... (inside generateMockPrecinctResults)
+
+    // SPECIAL OVERRIDE: Use Real Data for 2023 Mayor
+    if (race.id === 'mayor-2023') {
+        const realResults: any[] = [];
+
+        // Helper to parse "C Madison Wd 1" -> "1"
+        const getWardNum = (str: string) => {
+            const match = str.match(/Wd\s+(\d+)/);
+            return match ? match[1] : null;
+        };
+
+        mayor2023Data.forEach((row: any) => {
+            const wardNum = getWardNum(row.ward);
+            if (wardNum) {
+                const satyaVotes = parseInt(row.satya) || 0;
+                const gloriaVotes = parseInt(row.gloria) || 0;
+                const total = satyaVotes + gloriaVotes;
+
+                // Satya
+                realResults.push({
+                    precinctName: "City of Madison",
+                    wardNumber: wardNum,
+                    candidateName: "Satya Rhodes-Conway",
+                    votes: satyaVotes,
+                    registeredVoters: Math.floor(total * 1.4), // Estimate
+                    ballotscast: total,
+                    isDem: true
+                });
+
+                // Gloria
+                realResults.push({
+                    precinctName: "City of Madison",
+                    wardNumber: wardNum,
+                    candidateName: "Gloria Reyes",
+                    votes: gloriaVotes,
+                    registeredVoters: Math.floor(total * 1.4), // Estimate
+                    ballotscast: total,
+                    isDem: false
+                });
+            }
+        });
+
+        return realResults;
+    }
+
     const candidates = mockRaceResults[raceId]?.candidates || [];
-    if (candidates.length < 2) return [];
 
     // First pass: Generate raw votes based on bias
     let generatedResults: any[] = [];
