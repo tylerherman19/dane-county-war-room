@@ -297,31 +297,29 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 direction: 'top'
             });
 
-            // Only add hover effects if NO ward is selected (to avoid fighting with spotlight)
-            if (!selectedWard) {
-                layer.on({
-                    mouseover: (e) => {
-                        const layer = e.target;
-                        layer.setStyle({
-                            weight: 3,
-                            color: '#60a5fa',
-                            fillOpacity: 0.9
-                        });
-                        layer.bringToFront();
-                    },
-                    mouseout: (e) => {
-                        const layer = e.target;
-                        // Re-apply base style logic roughly or just reset
-                        // Ideally we trigger a re-render but that's expensive. 
-                        // We'll just reset to a "safe" default for hover exit.
-                        layer.setStyle({
-                            weight: 1,
-                            color: '#334155',
-                            fillOpacity: 0.6 // Approximation
-                        });
-                    }
-                });
-            }
+            // Add hover effects (always, not just when no ward selected)
+            layer.on({
+                mouseover: (e) => {
+                    const layer = e.target;
+                    layer.setStyle({
+                        weight: 3,
+                        color: '#60a5fa',
+                        fillOpacity: 0.9
+                    });
+                    layer.bringToFront();
+                },
+                mouseout: (e) => {
+                    const layer = e.target;
+                    // Re-apply base style logic roughly or just reset
+                    // Ideally we trigger a re-render but that's expensive. 
+                    // We'll just reset to a "safe" default for hover exit.
+                    layer.setStyle({
+                        weight: 1,
+                        color: '#334155',
+                        fillOpacity: 0.9
+                    });
+                }
+            });
         }
     };
 

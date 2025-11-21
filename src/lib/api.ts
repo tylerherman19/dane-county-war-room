@@ -103,6 +103,52 @@ interface ApiPrecinctResultResponse {
     PrecinctVotes: ApiPrecinctVote[];
 }
 
+// --- Helper Functions ---
+
+/**
+ * Expands ward ranges from API precinct names into individual ward numbers.
+ * Examples:
+ *   "V DeForest Wds 1-5, 11, 18-19" -> [1, 2, 3, 4, 5, 11, 18, 19]
+ *   "C Madison Wd 001" -> [1]
+ */
+function expandWardRanges(precinctName: string): number[] {
+    const wards: number[] = [];
+
+    // Check if this is a grouped ward entry (contains "Wds" plural)
+    const wdsMatch = precinctName.match(/Wds\s+([\d\s,\-]+)/i);
+    if (wdsMatch) {
+        const rangeString = wdsMatch[1].trim();
+        // Split by comma to get individual ranges or numbers
+        const parts = rangeString.split(',').map(p => p.trim());
+
+        for (const part of parts) {
+            // Check if it's a range (e.g., "1-5")
+            const rangeMatch = part.match(/^(\d+)-(\d+)$/);
+            if (rangeMatch) {
+                const start = parseInt(rangeMatch[1]);
+                const end = parseInt(rangeMatch[2]);
+                for (let i = start; i <= end; i++) {
+                    wards.push(i);
+                }
+            } else {
+                // Single ward number
+                const num = parseInt(part);
+                if (!isNaN(num)) {
+                    wards.push(num);
+                }
+            }
+        }
+    } else {
+        // Single ward entry (e.g., "C Madison Wd 001")
+        const singleMatch = precinctName.match(/Wd\s+(\d+)/i);
+        if (singleMatch) {
+            wards.push(parseInt(singleMatch[1]));
+        }
+    }
+
+    return wards;
+}
+
 // --- Fetch Helper ---
 
 async function fetchAPI<T>(endpoint: string): Promise<T> {
@@ -223,12 +269,11 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
         precinctTotals[pName] += pv.TotalVotes;
     });
 
-    // 2. Map to PrecinctResult
-    return data.PrecinctVotes.map(pv => {
-        let wardNum = "0";
-        const match = pv.PrecinctName.match(/Wd\s+(\d+)/);
-        if (match) wardNum = parseInt(match[1]).toString();
+    // 2. Expand grouped wards and map to PrecinctResult
+    const results: PrecinctResult[] = [];
 
+    data.PrecinctVotes.forEach(pv => {
+        // Get the base precinct name (without ward info)
         let precinctName = pv.PrecinctName.split(' Wd')[0].trim();
 
         // Generic mapping for City/Town/Village prefixes
@@ -242,15 +287,35 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
 
         const totalBallots = precinctTotals[pv.PrecinctName] || 0;
 
-        return {
-            precinctName: precinctName,
-            wardNumber: wardNum,
-            candidateName: pv.CandidateName.trim(),
-            votes: pv.TotalVotes,
-            registeredVoters: 0, // API still doesn't give this, but we can maybe estimate or leave 0
-            ballotscast: totalBallots // Now populated correctly
-        };
+        // Expand ward ranges (e.g., "Wds 1-5, 11" -> [1, 2, 3, 4, 5, 11])
+        const wards = expandWardRanges(pv.PrecinctName);
+
+        // Create a separate entry for each ward
+        if (wards.length > 0) {
+            for (const wardNum of wards) {
+                results.push({
+                    precinctName: precinctName,
+                    wardNumber: wardNum.toString(),
+                    candidateName: pv.CandidateName.trim(),
+                    votes: pv.TotalVotes,
+                    registeredVoters: 0,
+                    ballotscast: totalBallots
+                });
+            }
+        } else {
+            // Fallback for precincts without ward numbers
+            results.push({
+                precinctName: precinctName,
+                wardNumber: "0",
+                candidateName: pv.CandidateName.trim(),
+                votes: pv.TotalVotes,
+                registeredVoters: 0,
+                ballotscast: totalBallots
+            });
+        }
     });
+
+    return results;
 }
 
 export async function getHistoricalTurnout(raceId: string | null, currentTotalVotes: number): Promise<HistoricalTurnout> {
