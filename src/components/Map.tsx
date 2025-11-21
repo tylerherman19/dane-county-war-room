@@ -154,6 +154,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 color = '#3b82f6'; // Yes = Blue
             } else if (winner.candidateName.toLowerCase().includes('no')) {
                 color = '#ef4444'; // No = Red
+            } else if (['Evers', 'Baldwin', 'Biden', 'Clinton', 'Harris', 'Obama', 'Feingold', 'Pocan'].some(n => winner.candidateName.includes(n))) {
+                color = '#3b82f6'; // Known Dems
+            } else if (['Walker', 'Johnson', 'Trump', 'Michels', 'Vukmir', 'Pence', 'Vance', 'Theron'].some(n => winner.candidateName.includes(n))) {
+                color = '#ef4444'; // Known GOP
             }
 
             // Calculate Opacity based on Margin (Gradient)

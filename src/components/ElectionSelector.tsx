@@ -40,7 +40,7 @@ export default function ElectionSelector({ elections, selectedElectionId, onSele
 
             {isOpen && (
                 <div className="absolute top-full right-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
-                    <div className="max-h-[60vh] overflow-y-auto">
+                    <div className="max-h-[80vh] overflow-y-auto">
                         {elections.map(election => (
                             <button
                                 key={election.electionId}
