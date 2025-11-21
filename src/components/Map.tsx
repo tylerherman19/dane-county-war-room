@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -174,6 +174,7 @@ function assignCandidateColors(candidates: any[]): Record<string, HSL> {
 export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
+    const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
 
     useEffect(() => {
         if (raceResult?.candidates) {
@@ -188,7 +189,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             .catch(err => console.error('Error loading GeoJSON:', err));
     }, []);
 
-    const style = (feature: any) => {
+    const style = (feature: any, currentSelectedWard: { name: string; num: string } | null = null) => {
         const municipality = feature.properties.NAME;
         const wardNum = feature.properties.WardNumber;
 
@@ -238,10 +239,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         // SPOTLIGHT EFFECT: If a ward is selected, dim everyone else
-        if (selectedWard) {
-            const isSelected = parseInt(wardNum) === parseInt(selectedWard.num) &&
-                (selectedWard.name.toLowerCase().includes(municipality.toLowerCase()) ||
-                    municipality.toLowerCase().includes(selectedWard.name.toLowerCase()));
+        if (currentSelectedWard) {
+            const isSelected = parseInt(wardNum) === parseInt(currentSelectedWard.num) &&
+                (currentSelectedWard.name.toLowerCase().includes(municipality.toLowerCase()) ||
+                    municipality.toLowerCase().includes(currentSelectedWard.name.toLowerCase()));
 
             if (!isSelected) {
                 baseStyle.fillOpacity = baseStyle.fillOpacity * 0.1; // Dim significantly
@@ -307,14 +308,9 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 },
                 mouseout: (e) => {
                     const layer = e.target;
-                    // Re-apply base style logic roughly or just reset
-                    // Ideally we trigger a re-render but that's expensive. 
-                    // We'll just reset to a "safe" default for hover exit.
-                    layer.setStyle({
-                        weight: 1,
-                        color: '#334155',
-                        fillOpacity: 0.65
-                    });
+                    // Manually recalculate the original style with current selectedWard
+                    const originalStyle = style(feature, selectedWard);
+                    layer.setStyle(originalStyle);
                 }
             });
         }
@@ -335,10 +331,11 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     <GeoJSON
                         key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}`}
                         data={geoJsonData}
-                        style={style}
+                        style={(feature) => style(feature, selectedWard)}
                         onEachFeature={onEachFeature}
+                        ref={geoJsonLayerRef}
                     />
-                    <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} />
+                    <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} />
                 </>
             )}
         </MapContainer>
