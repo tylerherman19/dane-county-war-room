@@ -96,20 +96,21 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
     return null;
 }
 
-// Color Palettes (HSL)
-// Blue: 217, 91%, 60%
-// Red: 0, 84%, 60%
-// Yellow: 48, 96%, 47%
-// Green: 142, 71%, 45%
-// Purple: 271, 91%, 65%
-// Orange: 24, 95%, 53%
-// Cyan: 189, 94%, 43%
+// Color Palettes (HSL) - Traditional Election Map Style
+// Using deeper, more saturated colors for better visibility
+// Blue: 217, 91%, 50% (Deep Democratic Blue)
+// Red: 0, 85%, 50% (Deep Republican Red)
+// Gold: 45, 100%, 50% (Deep Gold instead of pale yellow)
+// Green: 120, 60%, 35% (Deep Forest Green)
+// Purple: 271, 80%, 55% (Deep Purple)
+// Orange: 20, 90%, 50% (Deep Orange)
+// Teal: 180, 70%, 40% (Deep Teal)
 
 interface HSL { h: number; s: number; l: number; }
 
-const PALETTE_2: HSL[] = [{ h: 217, s: 91, l: 60 }, { h: 0, s: 84, l: 60 }];
-const PALETTE_4: HSL[] = [...PALETTE_2, { h: 48, s: 96, l: 47 }, { h: 142, s: 71, l: 45 }];
-const PALETTE_MANY: HSL[] = [...PALETTE_4, { h: 271, s: 91, l: 65 }, { h: 24, s: 95, l: 53 }, { h: 189, s: 94, l: 43 }];
+const PALETTE_2: HSL[] = [{ h: 217, s: 91, l: 50 }, { h: 0, s: 85, l: 50 }];
+const PALETTE_4: HSL[] = [...PALETTE_2, { h: 45, s: 100, l: 50 }, { h: 120, s: 60, l: 35 }];
+const PALETTE_MANY: HSL[] = [...PALETTE_4, { h: 271, s: 80, l: 55 }, { h: 20, s: 90, l: 50 }, { h: 180, s: 70, l: 40 }];
 
 function assignCandidateColors(candidates: any[]): Record<string, HSL> {
     if (!candidates || candidates.length === 0) return {};
@@ -218,16 +219,12 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             // Determine Color
             const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
 
-            // Calculate Lightness based on Margin
-            // Margin 0 (Tie) -> Lightness 80% (Pale)
-            // Margin 0.5+ (Landslide) -> Lightness 40% (Dark/Standard)
-            // Formula: L = 80 - (Math.min(margin, 0.5) * 2 * 40)
-            // Simplified: L = 80 - (Math.min(margin, 0.5) * 80)
-            const lightness = 80 - (Math.min(margin, 0.5) * 80);
-
-            // Ensure we don't go too dark or too light if needed, but 40-80 is a good range.
-            // Actually, let's clamp the lower bound to the base color's lightness if it's higher than 40?
-            // Or just stick to the formula for consistency.
+            // Calculate Lightness based on Margin - Traditional Election Map Style
+            // Use a narrower range for more opaque, vibrant colors
+            // Margin 0 (Tie) -> Lightness 60% (Lighter but still vibrant)
+            // Calculate Lightness based on Margin (50% to 65%)
+            // Close races (margin ~0) = lighter (65%), Definitive wins (margin > 0.5) = darker (50%)
+            const lightness = 65 - (Math.min(margin, 0.5) * 30);
 
             const colorString = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
 
@@ -236,7 +233,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 weight: 1,
                 opacity: 1,
                 color: '#334155',
-                fillOpacity: 0.9 // High opacity because we use lightness for the gradient now
+                fillOpacity: 0.65 // Transparent enough to see road map beneath
             };
         }
 
@@ -316,7 +313,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     layer.setStyle({
                         weight: 1,
                         color: '#334155',
-                        fillOpacity: 0.9
+                        fillOpacity: 0.65
                     });
                 }
             });
