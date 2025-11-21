@@ -322,6 +322,12 @@ export const generateMockPrecinctResults = (raceId: string) => {
     const candidates = mockRaceResults[raceId]?.candidates || [];
     if (candidates.length < 2) return [];
 
+    // First pass: Generate raw votes based on bias
+    let generatedResults: any[] = [];
+    let totalDemVotes = 0;
+    let totalRepVotes = 0;
+    let totalBallots = 0;
+
     // Iterate through all municipalities in the mapping
     Object.entries(wardDistricts).forEach(([muniName, wards]) => {
         // Determine bias based on municipality name (simple heuristic)
@@ -333,7 +339,6 @@ export const generateMockPrecinctResults = (raceId: string) => {
 
             // If it's a Mayor race, use Aldermanic District logic for Madison
             if (race.type === 'Mayor' && muniName.includes('Madison')) {
-                // Default to the actual percentage (55.2% or 61.9%)
                 demBias = actualPercentage;
             }
             // For county-wide races (Gov, Sen, Pres), adjust based on Muni
@@ -411,26 +416,50 @@ export const generateMockPrecinctResults = (raceId: string) => {
                 const demVotes = Math.floor(ballotscast * demPercentage);
                 const repVotes = ballotscast - demVotes;
 
-                results.push({
+                generatedResults.push({
                     precinctName: muniName,
                     wardNumber: wardInfo.ward,
-                    candidateName: candidates[0].candidateName,
+                    candidateName: candidates[0].candidateName, // Dem/Satya
                     votes: demVotes,
                     registeredVoters,
-                    ballotscast
+                    ballotscast,
+                    isDem: true
                 });
 
-                results.push({
+                generatedResults.push({
                     precinctName: muniName,
                     wardNumber: wardInfo.ward,
-                    candidateName: candidates[1].candidateName,
+                    candidateName: candidates[1].candidateName, // Rep/Reyes
                     votes: repVotes,
                     registeredVoters,
-                    ballotscast
+                    ballotscast,
+                    isDem: false
                 });
+
+                totalDemVotes += demVotes;
+                totalRepVotes += repVotes;
+                totalBallots += ballotscast;
             }
         });
     });
 
-    return results;
+    // Normalization Step for 2023 Mayor
+    // Ensure totals match official results exactly: Satya 63,078, Reyes 50,405
+    if (race.id === 'mayor-2023' && candidates[0].votes > 0 && candidates[1].votes > 0) {
+        const targetDem = candidates[0].votes; // 63078
+        const targetRep = candidates[1].votes; // 50405
+
+        const demFactor = targetDem / totalDemVotes;
+        const repFactor = targetRep / totalRepVotes;
+
+        generatedResults.forEach(r => {
+            if (r.isDem) {
+                r.votes = Math.round(r.votes * demFactor);
+            } else {
+                r.votes = Math.round(r.votes * repFactor);
+            }
+        });
+    }
+
+    return generatedResults;
 };
