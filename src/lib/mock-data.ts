@@ -103,6 +103,16 @@ export const mockRaces: Race[] = [
 
     // Spring 2023 - Madison Mayor
     {
+        id: "race-2024-ref",
+        electionId: "2024-11-05",
+        name: "City of Madison Referendum",
+        type: "Referendum",
+        totalPrecincts: 100,
+        precinctsReporting: 100,
+        candidates: [],
+        lastUpdated: new Date().toISOString()
+    },
+    {
         id: "mayor-2023",
         electionId: "2023-04-04",
         name: "Mayor of Madison",
@@ -178,6 +188,14 @@ const getCandidatesForRace = (race: Race) => {
             ];
         }
         if (race.type === 'Referendum') {
+            // City of Madison Referendum (57% Yes)
+            if (race.id === 'race-2024-ref') {
+                return [
+                    { candidateName: "Yes", votes: 0, percentage: 57.0, party: "Non-Partisan" },
+                    { candidateName: "No", votes: 0, percentage: 43.0, party: "Non-Partisan" }
+                ];
+            }
+            // Generic referendum
             return [
                 { candidateName: "Yes", votes: 0, percentage: 0 },
                 { candidateName: "No", votes: 0, percentage: 0 }
@@ -188,8 +206,8 @@ const getCandidatesForRace = (race: Race) => {
     // 2023
     if (race.id === 'mayor-2023') {
         return [
-            { candidateName: "Satya Rhodes-Conway", votes: 0, percentage: 0, party: "Non-Partisan" },
-            { candidateName: "Gloria Reyes", votes: 0, percentage: 0, party: "Non-Partisan" }
+            { candidateName: "Satya Rhodes-Conway", votes: 0, percentage: 55.2, party: "Non-Partisan" },
+            { candidateName: "Gloria Reyes", votes: 0, percentage: 44.1, party: "Non-Partisan" }
         ];
     }
 
@@ -232,11 +250,13 @@ const getCandidatesForRace = (race: Race) => {
     }
 
     // 2019 Spring
-    if (race.id === 'mayor-2019') {
-        return [
-            { candidateName: "Satya Rhodes-Conway", votes: 0, percentage: 0, party: "Non-Partisan" },
-            { candidateName: "Paul Soglin", votes: 0, percentage: 0, party: "Non-Partisan" }
-        ];
+    if (race.electionId === "2019-04-02") {
+        if (race.type === 'Mayor') {
+            return [
+                { candidateName: "Satya Rhodes-Conway", votes: 47915, percentage: 61.9, party: "Non-Partisan" },
+                { candidateName: "Paul Soglin", votes: 29150, percentage: 37.5, party: "Non-Partisan" }
+            ];
+        }
     }
 
     // 2018
