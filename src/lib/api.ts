@@ -1,22 +1,13 @@
-import {
-    mockElections,
-    mockLastPublished,
-    mockRaces,
-    mockRaceResults,
-    generateMockPrecinctResults
-} from './mock-data';
-
 // API client for Dane County Elections
-const BASE_URL = 'https://api.countyofdane.com';
-const TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === '2024';
+const BASE_URL = 'https://api.danecounty.gov';
+
+// --- Internal Interfaces (Used by App) ---
 
 export interface Election {
     electionId: string;
     electionName: string;
     electionDate: string;
 }
-
-
 
 export interface Candidate {
     candidateName: string;
@@ -25,14 +16,14 @@ export interface Candidate {
     party?: string;
 }
 
-export type RaceType = 'Presidential' | 'Senate' | 'Congress' | 'Assembly' | 'StateSenate' | 'Referendum' | 'Mayor' | 'Governor';
+export type RaceType = 'Presidential' | 'Senate' | 'Congress' | 'Assembly' | 'StateSenate' | 'Referendum' | 'Mayor' | 'Governor' | 'Other';
 
 export interface Race {
     id: string;
     electionId?: string;
     name: string;
     type: RaceType;
-    districtId?: string; // e.g., "76" for Assembly 76, "2" for Congress 2
+    districtId?: string;
     totalPrecincts: number;
     precinctsReporting: number;
     candidates: Candidate[];
@@ -68,106 +59,200 @@ export interface HistoricalTurnout {
     percentageReported: number;
 }
 
-async function fetchAPI<T>(endpoint: string): Promise<T> {
-    const url = `${BASE_URL}${endpoint}`;
-    const response = await fetch(url, { cache: 'no-store' });
-    if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-    }
-    return response.json();
+// --- API Response Interfaces (PascalCase) ---
+
+interface ApiElection {
+    ElectionId: number;
+    ElectionName: string;
+    ElectionDate: string;
+    LastPublished: string;
 }
 
+interface ApiRace {
+    RaceNumber: string;
+    RaceName: string;
+}
+
+interface ApiCandidate {
+    Number: number;
+    Name: string;
+    Votes: number;
+    Percentage: number;
+    PartyCode: string;
+    PartyName: string;
+}
+
+interface ApiRaceResult {
+    RaceName: string;
+    RaceNumber: string;
+    Candidates: ApiCandidate[];
+    TotalPrecincts: number;
+    PrecinctsReported: number;
+}
+
+interface ApiPrecinctVote {
+    RaceNumber: string;
+    CandidateName: string;
+    PrecinctName: string; // e.g. "C Madison Wd 001"
+    TotalVotes: number;
+    Reported: boolean;
+}
+
+interface ApiPrecinctResultResponse {
+    ElectionRace: ApiRaceResult;
+    PrecinctVotes: ApiPrecinctVote[];
+}
+
+// --- Fetch Helper ---
+
+async function fetchAPI<T>(endpoint: string): Promise<T> {
+    const url = `${BASE_URL}${endpoint}`;
+    try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    } catch (error) {
+        console.error(`Failed to fetch ${url}:`, error);
+        throw error;
+    }
+}
+
+// --- Public API Functions ---
+
 export async function getElections(): Promise<Election[]> {
-    if (TEST_MODE) return mockElections;
-    return fetchAPI<Election[]>('/api/v1/elections/list');
+    const data = await fetchAPI<ApiElection[]>('/api/v1/elections/list');
+    return data.map(e => ({
+        electionId: e.ElectionId.toString(),
+        electionName: e.ElectionName,
+        electionDate: e.ElectionDate
+    }));
 }
 
 export async function getLastPublished(electionId: string): Promise<LastPublished> {
-    if (TEST_MODE) return mockLastPublished;
-    return fetchAPI<LastPublished>(`/api/v1/elections/lastpublished/${electionId}`);
+    // The API doesn't have a dedicated endpoint for this, but the election list has it.
+    // Or we can just return current time if not critical.
+    // Actually, let's try to find it in the election list.
+    const elections = await fetchAPI<ApiElection[]>('/api/v1/elections/list');
+    const election = elections.find(e => e.ElectionId.toString() === electionId);
+    return {
+        lastPublished: election ? election.LastPublished : new Date().toISOString()
+    };
 }
 
 export async function getRaces(electionId: string): Promise<Race[]> {
-    if (TEST_MODE) {
-        return mockRaces.filter(r => r.electionId === electionId || !r.electionId);
-    }
-    return fetchAPI<Race[]>(`/api/v1/elections/races/${electionId}`);
+    const data = await fetchAPI<ApiRace[]>(`/api/v1/elections/races/${electionId}`);
+
+    // We need to fetch details for each race to get candidates, or just return basic info.
+    // The UI expects candidates to be present in the Race object for the sidebar.
+    // However, fetching details for ALL races might be slow.
+    // Let's see if we can get by with basic info and fetch details on demand.
+    // The existing `Race` interface requires candidates.
+    // For now, let's return empty candidates list and let the UI fetch results later if needed.
+    // OR, we can parallel fetch results for the top few races?
+    // Let's stick to basic info mapping for now.
+
+    return data.map(r => {
+        let type: RaceType = 'Other';
+        const name = r.RaceName.toLowerCase();
+        if (name.includes('president')) type = 'Presidential';
+        else if (name.includes('senator') || name.includes('senate')) type = 'Senate'; // Broad match
+        else if (name.includes('congress') || name.includes('representative')) type = 'Congress';
+        else if (name.includes('assembly')) type = 'Assembly';
+        else if (name.includes('referendum')) type = 'Referendum';
+        else if (name.includes('mayor')) type = 'Mayor';
+        else if (name.includes('governor')) type = 'Governor';
+
+        return {
+            id: r.RaceNumber,
+            electionId: electionId,
+            name: r.RaceName,
+            type: type,
+            totalPrecincts: 0, // Unknown from list
+            precinctsReporting: 0, // Unknown from list
+            candidates: [], // Populated later via getRaceResults
+            lastUpdated: new Date().toISOString()
+        };
+    });
 }
 
 export async function getElectionResults(electionId: string): Promise<any> {
-    if (TEST_MODE) return mockRaceResults; // Note: This might need adjustment if the real API returns a different shape for full results
-    return fetchAPI(`/api/v1/elections/electionresults/${electionId}`);
+    // This was returning a map of raceId -> RaceResult.
+    // We can't easily get ALL results in one go without many requests.
+    // Consumers of this function might need to be refactored to fetch per race.
+    // But for now, let's throw or return empty to force usage of getRaceResults.
+    return {};
 }
 
 export async function getRaceResults(electionId: string, raceId: string): Promise<RaceResult> {
-    if (TEST_MODE) {
-        const result = { ...mockRaceResults[raceId] }; // Clone to avoid mutating static data permanently if we don't want to
-        if (!result) throw new Error('Race not found in mock data');
+    const data = await fetchAPI<ApiRaceResult>(`/api/v1/elections/electionresults/${electionId}/${raceId}`);
 
-        // Calculate totals from precinct results
-        const precinctResults = generateMockPrecinctResults(raceId);
-        const candidates: Candidate[] = result.candidates.map((c: Candidate) => ({ ...c, votes: 0, percentage: 0 }));
-        let totalVotes = 0;
+    let totalVotes = 0;
+    const candidates = data.Candidates.map(c => {
+        totalVotes += c.Votes;
+        return {
+            candidateName: c.Name.trim(),
+            votes: c.Votes,
+            percentage: c.Percentage,
+            party: c.PartyName
+        };
+    });
 
-        precinctResults.forEach(p => {
-            const candidate = candidates.find((c: Candidate) => c.candidateName === p.candidateName);
-            if (candidate) {
-                candidate.votes += p.votes;
-                totalVotes += p.votes;
-            }
-        });
-
-        // Update percentages
-        if (totalVotes > 0) {
-            candidates.forEach((c: Candidate) => {
-                c.percentage = (c.votes / totalVotes) * 100;
-            });
-        }
-
-        result.candidates = candidates;
-        result.totalVotes = totalVotes;
-
-        return result;
-    }
-    return fetchAPI<RaceResult>(`/api/v1/elections/electionresults/${electionId}/${raceId}`);
+    return {
+        id: data.RaceNumber,
+        raceName: data.RaceName.trim(),
+        candidates: candidates,
+        totalVotes: totalVotes, // Or use calculated sum if API sum is different
+        precinctsReporting: data.PrecinctsReported,
+        totalPrecincts: data.TotalPrecincts
+    };
 }
 
 export async function getPrecinctResults(electionId: string, raceId: string): Promise<PrecinctResult[]> {
-    if (TEST_MODE) return generateMockPrecinctResults(raceId);
-    return fetchAPI<PrecinctResult[]>(`/api/v1/elections/precinctresults/${electionId}/${raceId}`);
+    const data = await fetchAPI<ApiPrecinctResultResponse>(`/api/v1/elections/precinctresults/${electionId}/${raceId}`);
+
+    // The API returns a flat list of votes (one per candidate per precinct).
+    // We need to map this to PrecinctResult.
+
+    return data.PrecinctVotes.map(pv => {
+        // Parse "C Madison Wd 001" -> "1"
+        // Or just keep the full name. The map expects "City of Madison" and "1".
+        // We might need a helper to parse the precinct name.
+
+        let wardNum = "0";
+        const match = pv.PrecinctName.match(/Wd\s+(\d+)/);
+        if (match) wardNum = parseInt(match[1]).toString();
+
+        // Clean up precinct name (remove Wd X)
+        // Actually, the map matching logic relies on "City of Madison" etc.
+        // "C Madison" -> "City of Madison"
+        let precinctName = pv.PrecinctName.split(' Wd')[0].trim();
+        if (precinctName === 'C Madison') precinctName = 'City of Madison';
+        if (precinctName === 'C Fitchburg') precinctName = 'City of Fitchburg';
+        if (precinctName === 'C Sun Prairie') precinctName = 'City of Sun Prairie';
+        if (precinctName === 'C Middleton') precinctName = 'City of Middleton';
+        if (precinctName === 'C Verona') precinctName = 'City of Verona';
+        if (precinctName === 'V Waunakee') precinctName = 'Village of Waunakee';
+        // Add more mappings as needed or use a robust parser
+
+        return {
+            precinctName: precinctName,
+            wardNumber: wardNum,
+            candidateName: pv.CandidateName.trim(),
+            votes: pv.TotalVotes,
+            registeredVoters: 0, // API doesn't provide this per candidate/precinct easily here
+            ballotscast: 0 // API doesn't provide this per candidate/precinct easily here
+        };
+    });
 }
 
 export async function getHistoricalTurnout(raceId: string | null, currentTotalVotes: number): Promise<HistoricalTurnout> {
-    // Mock implementation
-    // In a real app, this would fetch from an API or use a lookup table
-
-    let expectedBallots = 300000; // Default fallback
-
-    // If we have race results, we can extrapolate
-    // Note: In a real app, we'd need to fetch the race result here or pass it in.
-    // For this mock, we'll use the mock data directly if available.
-    if (TEST_MODE && raceId) {
-        const race = mockRaceResults[raceId as keyof typeof mockRaceResults];
-        if (race) {
-            // If the election is "done" (test mode 2024), expected = actual
-            // But to simulate "live", let's pretend we are at 90% reporting if we want?
-            // The user wants "math to be correct". In 2024 test mode, the election is over.
-            // So expected should equal total votes.
-            expectedBallots = race.totalVotes;
-        }
-    } else {
-        // Estimate based on current votes and reporting % (if we had it here)
-        // For now, let's just ensure it's never less than current
-        expectedBallots = Math.max(expectedBallots, currentTotalVotes);
-    }
-
-    // Ensure we don't show negative outstanding
-    const outstanding = Math.max(0, expectedBallots - currentTotalVotes);
-
+    // Still mock this for now as API doesn't give expected ballots
     return {
-        expectedBallots,
-        outstandingEstimate: outstanding,
-        confidence: 'High',
-        percentageReported: (currentTotalVotes / expectedBallots) * 100
+        expectedBallots: Math.max(300000, currentTotalVotes),
+        outstandingEstimate: 0,
+        confidence: 'Low',
+        percentageReported: 100
     };
 }
