@@ -95,52 +95,69 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             (r.precinctName.toLowerCase().includes(municipality.toLowerCase()) || municipality.toLowerCase().includes(r.precinctName.toLowerCase()))
         ) || [];
 
-        // If no results for this ward (not in this race), grey it out
-        if (relevantResults.length === 0) {
-            return {
-                fillColor: '#0f172a', // Very dark slate, almost black
+        // Base style for empty/irrelevant wards
+        let baseStyle = {
+            fillColor: '#0f172a',
+            weight: 1,
+            opacity: 0.5,
+            color: '#1e293b',
+            fillOpacity: 0.3
+        };
+
+        if (relevantResults.length > 0) {
+            const total = relevantResults[0].ballotscast;
+            const sorted = relevantResults.sort((a, b) => b.votes - a.votes);
+            const winner = sorted[0];
+            const runnerUp = sorted[1];
+
+            // Determine Margin
+            const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+
+            // Determine Color based on Party
+            let color = '#64748b'; // Default slate
+
+            // Try to find party from raceResult candidates
+            const candidateInfo = raceResult?.candidates.find((c: any) => c.candidateName === winner.candidateName);
+            const party = candidateInfo?.party?.toLowerCase() || '';
+
+            if (party.includes('democrat') || party.includes('liber') || party.includes('green')) {
+                color = '#3b82f6'; // Blue
+            } else if (party.includes('republican')) {
+                color = '#ef4444'; // Red
+            } else if (winner.candidateName.toLowerCase().includes('yes')) {
+                color = '#3b82f6'; // Yes = Blue
+            } else if (winner.candidateName.toLowerCase().includes('no')) {
+                color = '#ef4444'; // No = Red
+            }
+
+            // Calculate Opacity based on Margin (Gradient)
+            const opacity = 0.4 + (Math.min(margin, 0.5) * 1.0);
+
+            baseStyle = {
+                fillColor: color,
                 weight: 1,
-                opacity: 0.5,
-                color: '#1e293b',
-                fillOpacity: 0.3
+                opacity: 1,
+                color: '#334155',
+                fillOpacity: opacity
             };
         }
 
-        const total = relevantResults[0].ballotscast;
-        const sorted = relevantResults.sort((a, b) => b.votes - a.votes);
-        const winner = sorted[0];
-        const runnerUp = sorted[1];
-
-        // Determine Margin
-        const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-
-        // Determine Color based on Party
-        let color = '#64748b'; // Default slate
-
-        // Try to find party from raceResult candidates
-        const candidateInfo = raceResult?.candidates.find((c: any) => c.candidateName === winner.candidateName);
-        const party = candidateInfo?.party?.toLowerCase() || '';
-
-        if (party.includes('democrat') || party.includes('liber') || party.includes('green')) {
-            color = '#3b82f6'; // Blue
-        } else if (party.includes('republican')) {
-            color = '#ef4444'; // Red
-        } else if (winner.candidateName.toLowerCase().includes('yes')) {
-            color = '#3b82f6'; // Yes = Blue
-        } else if (winner.candidateName.toLowerCase().includes('no')) {
-            color = '#ef4444'; // No = Red
+        // SPOTLIGHT EFFECT: If a ward is selected, dim everyone else
+        if (selectedWard) {
+            const isSelected = parseInt(wardNum) === parseInt(selectedWard.num);
+            if (!isSelected) {
+                baseStyle.fillOpacity = baseStyle.fillOpacity * 0.1; // Dim significantly
+                baseStyle.opacity = 0.1; // Fade borders
+                baseStyle.color = '#1e293b';
+            } else {
+                baseStyle.weight = 3; // Thicker border for selected
+                baseStyle.color = '#ffffff'; // White border for selected
+                baseStyle.opacity = 1;
+                baseStyle.fillOpacity = 0.9; // High visibility
+            }
         }
 
-        // Calculate Opacity based on Margin (Gradient)
-        const opacity = 0.4 + (Math.min(margin, 0.5) * 1.0);
-
-        return {
-            fillColor: color,
-            weight: 1,
-            opacity: 1,
-            color: '#334155',
-            fillOpacity: opacity
-        };
+        return baseStyle;
     };
 
     const onEachFeature = (feature: any, layer: L.Layer) => {
@@ -179,33 +196,31 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 direction: 'top'
             });
 
-            layer.on({
-                mouseover: (e) => {
-                    const layer = e.target;
-                    layer.setStyle({
-                        weight: 3,
-                        color: '#60a5fa',
-                        fillOpacity: 0.9
-                    });
-                    layer.bringToFront();
-                },
-                mouseout: (e) => {
-                    const layer = e.target;
-                    // Reset style (simplified, ideally should revert to original style function)
-                    // Note: This resets to a default style, which might lose the gradient.
-                    // In a real app, we'd want to re-apply the specific style for this feature.
-                    // For now, we'll just reset to a generic style that looks okay.
-                    // Or better, re-call the style function? Leaflet doesn't make this super easy without state.
-                    // Let's just reset weight/color but keep fillOpacity if possible?
-                    // Actually, let's just set it back to what it likely was.
-                    layer.setStyle({
-                        weight: 1,
-                        color: '#334155',
-                        // fillOpacity: 0.7 // This overrides the gradient... 
-                        // Ideally we don't touch fillOpacity here or we store it.
-                    });
-                }
-            });
+            // Only add hover effects if NO ward is selected (to avoid fighting with spotlight)
+            if (!selectedWard) {
+                layer.on({
+                    mouseover: (e) => {
+                        const layer = e.target;
+                        layer.setStyle({
+                            weight: 3,
+                            color: '#60a5fa',
+                            fillOpacity: 0.9
+                        });
+                        layer.bringToFront();
+                    },
+                    mouseout: (e) => {
+                        const layer = e.target;
+                        // Re-apply base style logic roughly or just reset
+                        // Ideally we trigger a re-render but that's expensive. 
+                        // We'll just reset to a "safe" default for hover exit.
+                        layer.setStyle({
+                            weight: 1,
+                            color: '#334155',
+                            fillOpacity: 0.6 // Approximation
+                        });
+                    }
+                });
+            }
         }
     };
 
@@ -222,6 +237,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             {geoJsonData && (
                 <>
                     <GeoJSON
+                        key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}`}
                         data={geoJsonData}
                         style={style}
                         onEachFeature={onEachFeature}

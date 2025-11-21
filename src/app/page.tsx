@@ -17,7 +17,7 @@ import {
 export default function Home() {
   // State
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
-  const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
+  const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null);
   const [selectedWard, setSelectedWard] = useState<{ name: string; num: string } | null>(null);
 
   // Data Hooks
@@ -35,7 +35,7 @@ export default function Home() {
   // Auto-select first race
   useEffect(() => {
     if (races && races.length > 0 && !selectedRaceId) {
-      setSelectedRaceId(races[0].raceNumber);
+      setSelectedRaceId(races[0].id);
     }
   }, [races, selectedRaceId]);
 
@@ -61,6 +61,9 @@ export default function Home() {
         />
       }
       lastUpdated={lastPublished?.lastPublished}
+      elections={elections}
+      selectedElectionId={selectedElectionId}
+      onSelectElection={setSelectedElectionId}
     >
       <div className="relative w-full h-full">
         <RaceSelector

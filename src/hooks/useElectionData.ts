@@ -51,10 +51,10 @@ export function useRaces(electionId: string | null) {
     };
 }
 
-export function useRaceResults(electionId: string | null, raceNumber: number | null) {
+export function useRaceResults(electionId: string | null, raceId: string | null) {
     const { data, error, isLoading } = useSWR<RaceResult>(
-        electionId && raceNumber ? ['raceResults', electionId, raceNumber] : null,
-        ([_, eId, rNum]) => getRaceResults(eId as string, rNum as number),
+        electionId && raceId ? ['raceResults', electionId, raceId] : null,
+        ([_, eId, rId]) => getRaceResults(eId as string, rId as string),
         { refreshInterval: REFRESH_INTERVAL }
     );
     return {
@@ -64,10 +64,10 @@ export function useRaceResults(electionId: string | null, raceNumber: number | n
     };
 }
 
-export function usePrecinctResults(electionId: string | null, raceNumber: number | null) {
+export function usePrecinctResults(electionId: string | null, raceId: string | null) {
     const { data, error, isLoading } = useSWR<PrecinctResult[]>(
-        electionId && raceNumber ? ['precinctResults', electionId, raceNumber] : null,
-        ([_, eId, rNum]) => getPrecinctResults(eId as string, rNum as number),
+        electionId && raceId ? ['precinctResults', electionId, raceId] : null,
+        ([_, eId, rId]) => getPrecinctResults(eId as string, rId as string),
         { refreshInterval: REFRESH_INTERVAL }
     );
     return {
@@ -77,10 +77,10 @@ export function usePrecinctResults(electionId: string | null, raceNumber: number
     };
 }
 
-export function useHistoricalTurnout(raceId: number | null, currentVotes: number | undefined) {
+export function useHistoricalTurnout(raceId: string | null, currentVotes: number | undefined) {
     const { data, error, isLoading } = useSWR<HistoricalTurnout>(
         raceId && currentVotes !== undefined ? ['historicalTurnout', raceId, currentVotes] : null,
-        ([_, rId, votes]) => getHistoricalTurnout(rId as number, votes as number)
+        ([_, rId, votes]) => getHistoricalTurnout(rId as string, votes as number)
     );
     return {
         turnoutData: data,

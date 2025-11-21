@@ -16,11 +16,7 @@ export interface Election {
     electionDate: string;
 }
 
-export interface Race {
-    raceNumber: number;
-    raceName: string;
-    raceType: string;
-}
+
 
 export interface Candidate {
     candidateName: string;
@@ -29,8 +25,22 @@ export interface Candidate {
     party?: string;
 }
 
+export type RaceType = 'Presidential' | 'Senate' | 'Congress' | 'Assembly' | 'StateSenate' | 'Referendum' | 'Mayor';
+
+export interface Race {
+    id: string;
+    electionId?: string;
+    name: string;
+    type: RaceType;
+    districtId?: string; // e.g., "76" for Assembly 76, "2" for Congress 2
+    totalPrecincts: number;
+    precinctsReporting: number;
+    candidates: Candidate[];
+    lastUpdated: string;
+}
+
 export interface RaceResult {
-    raceNumber: number;
+    id: string;
     raceName: string;
     candidates: Candidate[];
     totalVotes: number;
@@ -78,7 +88,9 @@ export async function getLastPublished(electionId: string): Promise<LastPublishe
 }
 
 export async function getRaces(electionId: string): Promise<Race[]> {
-    if (TEST_MODE) return mockRaces;
+    if (TEST_MODE) {
+        return mockRaces.filter(r => r.electionId === electionId || !r.electionId);
+    }
     return fetchAPI<Race[]>(`/api/v1/elections/races/${electionId}`);
 }
 
@@ -87,21 +99,21 @@ export async function getElectionResults(electionId: string): Promise<any> {
     return fetchAPI(`/api/v1/elections/electionresults/${electionId}`);
 }
 
-export async function getRaceResults(electionId: string, raceNumber: number): Promise<RaceResult> {
+export async function getRaceResults(electionId: string, raceId: string): Promise<RaceResult> {
     if (TEST_MODE) {
-        const result = mockRaceResults[raceNumber as keyof typeof mockRaceResults];
+        const result = mockRaceResults[raceId];
         if (!result) throw new Error('Race not found in mock data');
         return result;
     }
-    return fetchAPI<RaceResult>(`/api/v1/elections/electionresults/${electionId}/${raceNumber}`);
+    return fetchAPI<RaceResult>(`/api/v1/elections/electionresults/${electionId}/${raceId}`);
 }
 
-export async function getPrecinctResults(electionId: string, raceNumber: number): Promise<PrecinctResult[]> {
-    if (TEST_MODE) return generateMockPrecinctResults(raceNumber);
-    return fetchAPI<PrecinctResult[]>(`/api/v1/elections/precinctresults/${electionId}/${raceNumber}`);
+export async function getPrecinctResults(electionId: string, raceId: string): Promise<PrecinctResult[]> {
+    if (TEST_MODE) return generateMockPrecinctResults(raceId);
+    return fetchAPI<PrecinctResult[]>(`/api/v1/elections/precinctresults/${electionId}/${raceId}`);
 }
 
-export async function getHistoricalTurnout(raceId: number | null, currentTotalVotes: number): Promise<HistoricalTurnout> {
+export async function getHistoricalTurnout(raceId: string | null, currentTotalVotes: number): Promise<HistoricalTurnout> {
     // Mock implementation
     // In a real app, this would fetch from an API or use a lookup table
 

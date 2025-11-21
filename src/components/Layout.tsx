@@ -1,16 +1,21 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Moon, Sun, Radio } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Election } from '@/lib/api';
+import ElectionSelector from './ElectionSelector';
 
 interface LayoutProps {
     children: ReactNode;
     sidebar: ReactNode;
     lastUpdated?: string;
+    elections?: Election[];
+    selectedElectionId?: string | null;
+    onSelectElection?: (id: string) => void;
 }
 
-export default function Layout({ children, sidebar, lastUpdated }: LayoutProps) {
+export default function Layout({ children, sidebar, lastUpdated, elections, selectedElectionId, onSelectElection }: LayoutProps) {
     const [isDark, setIsDark] = useState(true);
 
     useEffect(() => {
@@ -37,6 +42,14 @@ export default function Layout({ children, sidebar, lastUpdated }: LayoutProps) 
                 </div>
 
                 <div className="flex items-center gap-6">
+                    {elections && onSelectElection && (
+                        <ElectionSelector
+                            elections={elections}
+                            selectedElectionId={selectedElectionId || null}
+                            onSelectElection={onSelectElection}
+                        />
+                    )}
+
                     {lastUpdated && (
                         <div className="hidden md:block text-xs text-slate-500 font-mono">
                             Last Updated: <span className="text-slate-400">{new Date(lastUpdated).toLocaleTimeString()}</span>
