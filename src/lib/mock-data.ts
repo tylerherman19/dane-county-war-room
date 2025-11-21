@@ -215,14 +215,14 @@ const getCandidatesForRace = (race: Race) => {
     if (race.electionId === "2022-11-08") {
         if (race.type === 'Governor') {
             return [
-                { candidateName: "Tony Evers", votes: 0, percentage: 0, party: "Democratic" },
-                { candidateName: "Tim Michels", votes: 0, percentage: 0, party: "Republican" }
+                { candidateName: "Tony Evers", votes: 236577, percentage: 78.6, party: "Democratic" },
+                { candidateName: "Tim Michels", votes: 62300, percentage: 20.7, party: "Republican" }
             ];
         }
         if (race.type === 'Senate') {
             return [
-                { candidateName: "Mandela Barnes", votes: 0, percentage: 0, party: "Democratic" },
-                { candidateName: "Ron Johnson", votes: 0, percentage: 0, party: "Republican" }
+                { candidateName: "Mandela Barnes", votes: 0, percentage: 77.0, party: "Democratic" }, // Est based on Evers
+                { candidateName: "Ron Johnson", votes: 0, percentage: 22.0, party: "Republican" }
             ];
         }
         if (race.type === 'Assembly') {
@@ -237,8 +237,8 @@ const getCandidatesForRace = (race: Race) => {
     if (race.electionId === "2020-11-03") {
         if (race.type === 'Presidential') {
             return [
-                { candidateName: "Joseph R. Biden / Kamala Harris", votes: 0, percentage: 0, party: "Democratic" },
-                { candidateName: "Donald J. Trump / Mike Pence", votes: 0, percentage: 0, party: "Republican" }
+                { candidateName: "Joseph R. Biden / Kamala Harris", votes: 260121, percentage: 75.5, party: "Democratic" },
+                { candidateName: "Donald J. Trump / Mike Pence", votes: 78789, percentage: 22.9, party: "Republican" }
             ];
         }
         if (race.type === 'Assembly') {
@@ -263,14 +263,14 @@ const getCandidatesForRace = (race: Race) => {
     if (race.electionId === "2018-11-06") {
         if (race.type === 'Governor') {
             return [
-                { candidateName: "Tony Evers", votes: 0, percentage: 0, party: "Democratic" },
-                { candidateName: "Scott Walker", votes: 0, percentage: 0, party: "Republican" }
+                { candidateName: "Tony Evers", votes: 220052, percentage: 74.7, party: "Democratic" },
+                { candidateName: "Scott Walker", votes: 69206, percentage: 23.5, party: "Republican" }
             ];
         }
         if (race.type === 'Senate') {
             return [
-                { candidateName: "Tammy Baldwin", votes: 0, percentage: 0, party: "Democratic" },
-                { candidateName: "Leah Vukmir", votes: 0, percentage: 0, party: "Republican" }
+                { candidateName: "Tammy Baldwin", votes: 228050, percentage: 77.6, party: "Democratic" },
+                { candidateName: "Leah Vukmir", votes: 65515, percentage: 22.3, party: "Republican" }
             ];
         }
     }
@@ -279,14 +279,14 @@ const getCandidatesForRace = (race: Race) => {
     if (race.electionId === "2016-11-08") {
         if (race.type === 'Presidential') {
             return [
-                { candidateName: "Hillary Clinton / Tim Kaine", votes: 0, percentage: 0, party: "Democratic" },
-                { candidateName: "Donald J. Trump / Mike Pence", votes: 0, percentage: 0, party: "Republican" }
+                { candidateName: "Hillary Clinton / Tim Kaine", votes: 217697, percentage: 70.4, party: "Democratic" },
+                { candidateName: "Donald J. Trump / Mike Pence", votes: 71275, percentage: 23.0, party: "Republican" }
             ];
         }
         if (race.type === 'Senate') {
             return [
-                { candidateName: "Russ Feingold", votes: 0, percentage: 0, party: "Democratic" },
-                { candidateName: "Ron Johnson", votes: 0, percentage: 0, party: "Republican" }
+                { candidateName: "Russ Feingold", votes: 0, percentage: 72.0, party: "Democratic" },
+                { candidateName: "Ron Johnson", votes: 0, percentage: 25.0, party: "Republican" }
             ];
         }
     }
@@ -327,17 +327,29 @@ export const generateMockPrecinctResults = (raceId: string) => {
         // Determine bias based on municipality name (simple heuristic)
         let demBias = 0.55; // Default slight lean
 
-        // For Mayor races, use actual election percentages
-        if (race.type === 'Mayor' && candidates.length >= 2) {
-            // Use the actual percentage from the first candidate (Satya)
-            const actualPercentage = candidates[0].percentage;
-            if (actualPercentage > 0) {
-                demBias = actualPercentage / 100; // Convert percentage to decimal
-            } else {
-                demBias = muniName.includes('Madison') ? 0.62 : 0.50; // Default if no percentage
+        // Use actual election percentages if available
+        if (candidates.length >= 2 && candidates[0].percentage > 0) {
+            const actualPercentage = candidates[0].percentage / 100;
+
+            // If it's a Mayor race, the percentage IS the Madison average
+            if (race.type === 'Mayor') {
+                if (muniName.includes('Madison')) {
+                    demBias = actualPercentage;
+                } else {
+                    demBias = 0.5; // Irrelevant for non-Madison, but keeps logic clean
+                }
+            }
+            // For county-wide races (Gov, Sen, Pres), adjust based on Muni
+            else {
+                // Assuming the actualPercentage is the County Average
+                // Madison is usually +10-15% points higher than county average
+                // Rural is usually -10-20% points lower
+                if (muniName.includes('Madison')) demBias = Math.min(actualPercentage + 0.10, 0.90);
+                else if (muniName.includes('Fitchburg') || muniName.includes('Middleton')) demBias = actualPercentage;
+                else demBias = Math.max(actualPercentage - 0.15, 0.30);
             }
         } else {
-            // Standard partisan bias for other races
+            // Fallback if no percentage data
             if (muniName.includes('Madison')) demBias = 0.75;
             else if (muniName.includes('Fitchburg') || muniName.includes('Middleton') || muniName.includes('Sun Prairie')) demBias = 0.65;
             else if (muniName.includes('Verona') || muniName.includes('Oregon')) demBias = 0.60;
@@ -365,6 +377,8 @@ export const generateMockPrecinctResults = (raceId: string) => {
                 includeWard = wardInfo.asm === race.districtId;
             } else if (race.type === 'Mayor') {
                 includeWard = muniName.includes('Madison');
+            } else if (race.type === 'Governor') {
+                includeWard = true;
             }
 
             if (includeWard) {
