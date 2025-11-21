@@ -326,17 +326,37 @@ export const generateMockPrecinctResults = (raceId: string) => {
     Object.entries(wardDistricts).forEach(([muniName, wards]) => {
         // Determine bias based on municipality name (simple heuristic)
         let demBias = 0.55; // Default slight lean
-        if (muniName.includes('Madison')) demBias = 0.85;
-        else if (muniName.includes('Fitchburg') || muniName.includes('Middleton') || muniName.includes('Sun Prairie')) demBias = 0.65;
-        else if (muniName.includes('Verona') || muniName.includes('Oregon')) demBias = 0.60;
-        else demBias = 0.45; // Rural areas lean Rep
+
+        // For Mayor races, use actual election percentages
+        if (race.type === 'Mayor' && candidates.length >= 2) {
+            // Use the actual percentage from the first candidate (Satya)
+            const actualPercentage = candidates[0].percentage;
+            if (actualPercentage > 0) {
+                demBias = actualPercentage / 100; // Convert percentage to decimal
+            } else {
+                demBias = muniName.includes('Madison') ? 0.62 : 0.50; // Default if no percentage
+            }
+        } else {
+            // Standard partisan bias for other races
+            if (muniName.includes('Madison')) demBias = 0.75;
+            else if (muniName.includes('Fitchburg') || muniName.includes('Middleton') || muniName.includes('Sun Prairie')) demBias = 0.65;
+            else if (muniName.includes('Verona') || muniName.includes('Oregon')) demBias = 0.60;
+            else demBias = 0.45; // Rural areas lean Rep
+        }
 
         (wards as any[]).forEach(wardInfo => {
             // Check if this ward belongs to the race's district
             let includeWard = false;
 
-            if (race.type === 'Presidential' || race.type === 'Senate' || race.type === 'Referendum') {
+            if (race.type === 'Presidential' || race.type === 'Senate') {
                 includeWard = true; // All wards
+            } else if (race.type === 'Referendum') {
+                // City of Madison Referendum only includes Madison wards
+                if (race.id === 'race-2024-ref') {
+                    includeWard = muniName.includes('Madison');
+                } else {
+                    includeWard = true; // Other referendums county-wide
+                }
             } else if (race.type === 'Congress') {
                 includeWard = wardInfo.cong === race.districtId;
             } else if (race.type === 'StateSenate') {
@@ -352,9 +372,10 @@ export const generateMockPrecinctResults = (raceId: string) => {
                 const turnout = 0.7 + Math.random() * 0.2;
                 const ballotscast = Math.floor(registeredVoters * turnout);
 
-                // Calculate votes
-                const demPercentage = demBias + (Math.random() * 0.15 - 0.075);
-                const demVotes = Math.floor(ballotscast * Math.min(Math.max(demPercentage, 0), 1));
+                // Calculate votes with slight variation around the bias
+                const variation = Math.random() * 0.08 - 0.04; // +/- 4% variation
+                const demPercentage = Math.min(Math.max(demBias + variation, 0.1), 0.9);
+                const demVotes = Math.floor(ballotscast * demPercentage);
                 const repVotes = ballotscast - demVotes;
 
                 results.push({
