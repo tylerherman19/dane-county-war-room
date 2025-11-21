@@ -212,21 +212,21 @@ export async function getRaceResults(electionId: string, raceId: string): Promis
 export async function getPrecinctResults(electionId: string, raceId: string): Promise<PrecinctResult[]> {
     const data = await fetchAPI<ApiPrecinctResultResponse>(`/api/v1/elections/precinctresults/${electionId}/${raceId}`);
 
-    // The API returns a flat list of votes (one per candidate per precinct).
-    // We need to map this to PrecinctResult.
+    // 1. Calculate totals per precinct first
+    const precinctTotals: Record<string, number> = {};
 
+    data.PrecinctVotes.forEach(pv => {
+        const pName = pv.PrecinctName;
+        if (!precinctTotals[pName]) precinctTotals[pName] = 0;
+        precinctTotals[pName] += pv.TotalVotes;
+    });
+
+    // 2. Map to PrecinctResult
     return data.PrecinctVotes.map(pv => {
-        // Parse "C Madison Wd 001" -> "1"
-        // Or just keep the full name. The map expects "City of Madison" and "1".
-        // We might need a helper to parse the precinct name.
-
         let wardNum = "0";
         const match = pv.PrecinctName.match(/Wd\s+(\d+)/);
         if (match) wardNum = parseInt(match[1]).toString();
 
-        // Clean up precinct name (remove Wd X)
-        // Actually, the map matching logic relies on "City of Madison" etc.
-        // "C Madison" -> "City of Madison"
         let precinctName = pv.PrecinctName.split(' Wd')[0].trim();
         if (precinctName === 'C Madison') precinctName = 'City of Madison';
         if (precinctName === 'C Fitchburg') precinctName = 'City of Fitchburg';
@@ -234,15 +234,16 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
         if (precinctName === 'C Middleton') precinctName = 'City of Middleton';
         if (precinctName === 'C Verona') precinctName = 'City of Verona';
         if (precinctName === 'V Waunakee') precinctName = 'Village of Waunakee';
-        // Add more mappings as needed or use a robust parser
+
+        const totalBallots = precinctTotals[pv.PrecinctName] || 0;
 
         return {
             precinctName: precinctName,
             wardNumber: wardNum,
             candidateName: pv.CandidateName.trim(),
             votes: pv.TotalVotes,
-            registeredVoters: 0, // API doesn't provide this per candidate/precinct easily here
-            ballotscast: 0 // API doesn't provide this per candidate/precinct easily here
+            registeredVoters: 0, // API still doesn't give this, but we can maybe estimate or leave 0
+            ballotscast: totalBallots // Now populated correctly
         };
     });
 }

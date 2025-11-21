@@ -13,8 +13,9 @@ interface MapWrapperProps {
     isLoading: boolean;
     selectedWard?: { name: string; num: string } | null;
     raceResult?: any;
+    onReset?: () => void;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult }: MapWrapperProps) {
-    return <DynamicMap precinctResults={precinctResults} isLoading={isLoading} selectedWard={selectedWard} raceResult={raceResult} />;
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset }: MapWrapperProps) {
+    return <DynamicMap precinctResults={precinctResults} isLoading={isLoading} selectedWard={selectedWard} raceResult={raceResult} onReset={onReset} />;
 }

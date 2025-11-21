@@ -19,9 +19,10 @@ interface MapProps {
     isLoading: boolean;
     selectedWard?: { name: string; num: string } | null;
     raceResult?: any;
+    onReset?: () => void;
 }
 
-function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null }) {
+function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null; onReset?: () => void }) {
     const map = useMap();
 
     useEffect(() => {
@@ -77,9 +78,10 @@ function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; select
                                             map.flyTo([43.0731, -89.4012], 10, { duration: 1.5 });
                                         }, 2000);
 
-                                        // After 5s: Remove Pulse/Highlight
+                                        // After 5s: Remove Pulse/Highlight AND Reset Selection
                                         setTimeout(() => {
                                             el.classList.remove('ward-pulse');
+                                            if (onReset) onReset();
                                         }, 5000);
                                     }
                                 }
@@ -89,12 +91,12 @@ function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; select
                 });
             }
         }
-    }, [selectedWard, geoJsonData, map]);
+    }, [selectedWard, geoJsonData, map, onReset]);
 
     return null;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
 
     useEffect(() => {

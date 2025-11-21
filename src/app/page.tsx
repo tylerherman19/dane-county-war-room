@@ -88,6 +88,7 @@ export default function Home() {
           isLoading={isLoading}
           selectedWard={selectedWard}
           raceResult={raceResult}
+          onReset={() => setSelectedWard(null)}
         />
       </div>
     </Layout>
