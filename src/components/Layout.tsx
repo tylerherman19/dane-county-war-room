@@ -31,7 +31,7 @@ export default function Layout({ children, sidebar, lastUpdated, elections, sele
     return (
         <div className="flex flex-col h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
             {/* Header */}
-            <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 shrink-0 z-50 relative shadow-lg">
+            <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 shrink-0 z-[2000] relative shadow-lg">
                 <div className="flex items-center gap-4">
                     {viewMode === 'LIVE' ? (
                         <div className="flex items-center gap-2">

@@ -36,10 +36,17 @@ function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; select
             // 1. Zoom to Ward
             const layer = L.geoJSON(geoJsonData, {
                 filter: (feature) => {
-                    // Match ward number. Note: GeoJSON might have "001" or "1", handle both if needed.
-                    // Mock data uses padded "001", GeoJSON usually has numbers.
-                    // Let's match loosely on number.
-                    return parseInt(feature.properties.WardNumber) === parseInt(selectedWard.num);
+                    const wardNum = parseInt(feature.properties.WardNumber);
+                    const targetNum = parseInt(selectedWard.num);
+                    const muniName = feature.properties.NAME;
+
+                    // Check if ward numbers match
+                    if (wardNum !== targetNum) return false;
+
+                    // Check if municipality matches (selectedWard.name usually contains "City of Madison" etc)
+                    // We check if selectedWard.name includes the GeoJSON NAME, or vice versa
+                    return selectedWard.name.toLowerCase().includes(muniName.toLowerCase()) ||
+                        muniName.toLowerCase().includes(selectedWard.name.toLowerCase());
                 }
             });
             if (layer.getLayers().length > 0) {
@@ -47,23 +54,25 @@ function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; select
             }
 
             // 2. Apply Pulse Effect
-            // We need to find the actual rendered layer in the map
             map.eachLayer((l: any) => {
                 if (l.feature && l.feature.properties) {
-                    const wardNum = l.feature.properties.WardNumber;
-                    // Match ward number
-                    if (parseInt(wardNum) === parseInt(selectedWard.num)) {
-                        // Check municipality if available in selectedWard to be precise, 
-                        // but for now ward number + zoom is decent. 
-                        // Ideally selectedWard should have municipality name too.
+                    const wardNum = parseInt(l.feature.properties.WardNumber);
+                    const targetNum = parseInt(selectedWard.num);
+                    const muniName = l.feature.properties.NAME;
 
-                        if (l.getElement) {
-                            const el = l.getElement();
-                            if (el) {
-                                el.classList.add('ward-pulse');
-                                setTimeout(() => {
-                                    el.classList.remove('ward-pulse');
-                                }, 5000);
+                    if (wardNum === targetNum) {
+                        // Strict municipality check for pulse
+                        if (selectedWard.name.toLowerCase().includes(muniName.toLowerCase()) ||
+                            muniName.toLowerCase().includes(selectedWard.name.toLowerCase())) {
+
+                            if (l.getElement) {
+                                const el = l.getElement();
+                                if (el) {
+                                    el.classList.add('ward-pulse');
+                                    setTimeout(() => {
+                                        el.classList.remove('ward-pulse');
+                                    }, 5000);
+                                }
                             }
                         }
                     }
@@ -117,7 +126,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             let color = '#64748b'; // Default slate
 
             // Try to find party from raceResult candidates
-            const candidateInfo = raceResult?.candidates.find((c: any) => c.candidateName === winner.candidateName);
+            // Use trim() and case-insensitive match for robustness
+            const candidateInfo = raceResult?.candidates.find((c: any) =>
+                c.candidateName.trim().toLowerCase() === winner.candidateName.trim().toLowerCase()
+            );
             const party = candidateInfo?.party?.toLowerCase() || '';
 
             if (party.includes('democrat') || party.includes('liber') || party.includes('green')) {
@@ -144,7 +156,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
 
         // SPOTLIGHT EFFECT: If a ward is selected, dim everyone else
         if (selectedWard) {
-            const isSelected = parseInt(wardNum) === parseInt(selectedWard.num);
+            const isSelected = parseInt(wardNum) === parseInt(selectedWard.num) &&
+                (selectedWard.name.toLowerCase().includes(municipality.toLowerCase()) ||
+                    municipality.toLowerCase().includes(selectedWard.name.toLowerCase()));
+
             if (!isSelected) {
                 baseStyle.fillOpacity = baseStyle.fillOpacity * 0.1; // Dim significantly
                 baseStyle.opacity = 0.1; // Fade borders
