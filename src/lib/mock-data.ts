@@ -24,6 +24,11 @@ export const mockElections = [
         electionDate: "2020-11-03"
     },
     {
+        electionId: "2019-04-02",
+        electionName: "Spring 2019 General Election",
+        electionDate: "2019-04-02"
+    },
+    {
         electionId: "2018-11-06",
         electionName: "November 2018 General Election",
         electionDate: "2018-11-06"
@@ -41,6 +46,7 @@ export const mockLastPublished = {
 
 // Comprehensive 2024 Race Definitions
 export const mockRaces: Race[] = [
+    // ... (Keep existing 2024 races) ...
     // Federal
     {
         id: "1",
@@ -110,9 +116,23 @@ export const mockRaces: Race[] = [
     // 2022 General
     { id: "gov-2022", electionId: "2022-11-08", name: "Governor / Lieutenant Governor", type: 'Governor', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
     { id: "sen-2022", electionId: "2022-11-08", name: "United States Senator", type: 'Senate', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+    { id: "asm-76-2022", electionId: "2022-11-08", name: "Representative to the Assembly District 76", type: 'Assembly', districtId: "76", totalPrecincts: 20, precinctsReporting: 20, candidates: [], lastUpdated: new Date().toISOString() },
 
     // 2020 General
     { id: "pres-2020", electionId: "2020-11-03", name: "President / Vice President", type: 'Presidential', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
+    { id: "asm-76-2020", electionId: "2020-11-03", name: "Representative to the Assembly District 76", type: 'Assembly', districtId: "76", totalPrecincts: 20, precinctsReporting: 20, candidates: [], lastUpdated: new Date().toISOString() },
+
+    // Spring 2019 - Madison Mayor
+    {
+        id: "mayor-2019",
+        electionId: "2019-04-02",
+        name: "Mayor of Madison",
+        type: 'Mayor',
+        totalPrecincts: 100,
+        precinctsReporting: 100,
+        candidates: [],
+        lastUpdated: new Date().toISOString()
+    },
 
     // 2018 General
     { id: "gov-2018", electionId: "2018-11-06", name: "Governor / Lieutenant Governor", type: 'Governor', totalPrecincts: 260, precinctsReporting: 260, candidates: [], lastUpdated: new Date().toISOString() },
@@ -187,6 +207,12 @@ const getCandidatesForRace = (race: Race) => {
                 { candidateName: "Ron Johnson", votes: 0, percentage: 0, party: "Republican" }
             ];
         }
+        if (race.type === 'Assembly') {
+            return [
+                { candidateName: "Democratic Candidate", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Republican Candidate", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
     }
 
     // 2020
@@ -197,6 +223,20 @@ const getCandidatesForRace = (race: Race) => {
                 { candidateName: "Donald J. Trump / Mike Pence", votes: 0, percentage: 0, party: "Republican" }
             ];
         }
+        if (race.type === 'Assembly') {
+            return [
+                { candidateName: "Democratic Candidate", votes: 0, percentage: 0, party: "Democratic" },
+                { candidateName: "Republican Candidate", votes: 0, percentage: 0, party: "Republican" }
+            ];
+        }
+    }
+
+    // 2019 Spring
+    if (race.id === 'mayor-2019') {
+        return [
+            { candidateName: "Satya Rhodes-Conway", votes: 0, percentage: 0, party: "Non-Partisan" },
+            { candidateName: "Paul Soglin", votes: 0, percentage: 0, party: "Non-Partisan" }
+        ];
     }
 
     // 2018

@@ -101,8 +101,32 @@ export async function getElectionResults(electionId: string): Promise<any> {
 
 export async function getRaceResults(electionId: string, raceId: string): Promise<RaceResult> {
     if (TEST_MODE) {
-        const result = mockRaceResults[raceId];
+        const result = { ...mockRaceResults[raceId] }; // Clone to avoid mutating static data permanently if we don't want to
         if (!result) throw new Error('Race not found in mock data');
+
+        // Calculate totals from precinct results
+        const precinctResults = generateMockPrecinctResults(raceId);
+        const candidates = result.candidates.map(c => ({ ...c, votes: 0, percentage: 0 }));
+        let totalVotes = 0;
+
+        precinctResults.forEach(p => {
+            const candidate = candidates.find(c => c.candidateName === p.candidateName);
+            if (candidate) {
+                candidate.votes += p.votes;
+                totalVotes += p.votes;
+            }
+        });
+
+        // Update percentages
+        if (totalVotes > 0) {
+            candidates.forEach(c => {
+                c.percentage = (c.votes / totalVotes) * 100;
+            });
+        }
+
+        result.candidates = candidates;
+        result.totalVotes = totalVotes;
+
         return result;
     }
     return fetchAPI<RaceResult>(`/api/v1/elections/electionresults/${electionId}/${raceId}`);

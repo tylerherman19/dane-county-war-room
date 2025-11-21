@@ -33,51 +33,61 @@ function MapController({ geoJsonData, selectedWard }: { geoJsonData: any; select
 
     useEffect(() => {
         if (selectedWard && geoJsonData) {
-            // 1. Zoom to Ward
             const layer = L.geoJSON(geoJsonData, {
                 filter: (feature) => {
                     const wardNum = parseInt(feature.properties.WardNumber);
                     const targetNum = parseInt(selectedWard.num);
                     const muniName = feature.properties.NAME;
 
-                    // Check if ward numbers match
                     if (wardNum !== targetNum) return false;
-
-                    // Check if municipality matches (selectedWard.name usually contains "City of Madison" etc)
-                    // We check if selectedWard.name includes the GeoJSON NAME, or vice versa
                     return selectedWard.name.toLowerCase().includes(muniName.toLowerCase()) ||
                         muniName.toLowerCase().includes(selectedWard.name.toLowerCase());
                 }
             });
+
             if (layer.getLayers().length > 0) {
+                // Initial Zoom
                 map.fitBounds(layer.getBounds(), { maxZoom: 14, animate: true });
-            }
 
-            // 2. Apply Pulse Effect
-            map.eachLayer((l: any) => {
-                if (l.feature && l.feature.properties) {
-                    const wardNum = parseInt(l.feature.properties.WardNumber);
-                    const targetNum = parseInt(selectedWard.num);
-                    const muniName = l.feature.properties.NAME;
+                // Sequence:
+                // 0s: Zoomed in, Pulse starts
+                // 2s: Pulse ends, Zoom resets to county view
+                // 2s-5s: Ward stays highlighted (pulsing or static high vis)
+                // 5s: Highlight removed
 
-                    if (wardNum === targetNum) {
-                        // Strict municipality check for pulse
-                        if (selectedWard.name.toLowerCase().includes(muniName.toLowerCase()) ||
-                            muniName.toLowerCase().includes(selectedWard.name.toLowerCase())) {
+                // Apply Pulse
+                map.eachLayer((l: any) => {
+                    if (l.feature && l.feature.properties) {
+                        const wardNum = parseInt(l.feature.properties.WardNumber);
+                        const targetNum = parseInt(selectedWard.num);
+                        const muniName = l.feature.properties.NAME;
 
-                            if (l.getElement) {
-                                const el = l.getElement();
-                                if (el) {
-                                    el.classList.add('ward-pulse');
-                                    setTimeout(() => {
-                                        el.classList.remove('ward-pulse');
-                                    }, 5000);
+                        if (wardNum === targetNum) {
+                            if (selectedWard.name.toLowerCase().includes(muniName.toLowerCase()) ||
+                                muniName.toLowerCase().includes(selectedWard.name.toLowerCase())) {
+
+                                if (l.getElement) {
+                                    const el = l.getElement();
+                                    if (el) {
+                                        // Start Pulse
+                                        el.classList.add('ward-pulse');
+
+                                        // After 2s: Reset Zoom but keep highlight
+                                        setTimeout(() => {
+                                            map.flyTo([43.0731, -89.4012], 10, { duration: 1.5 });
+                                        }, 2000);
+
+                                        // After 5s: Remove Pulse/Highlight
+                                        setTimeout(() => {
+                                            el.classList.remove('ward-pulse');
+                                        }, 5000);
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
         }
     }, [selectedWard, geoJsonData, map]);
 
