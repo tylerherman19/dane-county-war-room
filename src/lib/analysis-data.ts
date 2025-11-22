@@ -16,6 +16,7 @@ interface MayorResult {
     ward: string;
     satya: string | number; // JSON might have strings
     gloria: string | number;
+    total: number;
 }
 
 export interface WardAnalysis {
@@ -27,17 +28,32 @@ export interface WardAnalysis {
 
 // Helper to normalize ward names for matching
 // "City of Madison Ward 56" -> "madison-56"
+// "MADISON CITY WARD 002" -> "madison-2"
+// "MAPLE BLUFF VLG" -> "maple-bluff"
 const normalizeWard = (name: string): string => {
-    const lower = name.toLowerCase();
-    const wardMatch = lower.match(/ward\s+(\d+)/);
-    const wardNum = wardMatch ? wardMatch[1] : '';
+    let s = name.toLowerCase();
 
-    if (lower.includes('madison')) return `madison-${wardNum}`;
-    if (lower.includes('fitchburg')) return `fitchburg-${wardNum}`;
-    if (lower.includes('sun prairie')) return `sun-prairie-${wardNum}`;
-    if (lower.includes('middleton')) return `middleton-${wardNum}`;
-    if (lower.includes('verona')) return `verona-${wardNum}`;
-    return `${lower.replace(/\s+/g, '-')}-${wardNum}`;
+    // Remove common prefixes
+    s = s.replace(/^(city|village|town) of\s+/, '');
+
+    // Remove common suffixes (often found in the data files)
+    s = s.replace(/\s+(city|vlg|town|village)$/, '');
+
+    // Extract ward number if present
+    const wardMatch = s.match(/ward\s+(\d+)/);
+    const wardNum = wardMatch ? parseInt(wardMatch[1], 10).toString() : '';
+
+    // Remove "ward X" from the name part to get the base municipality name
+    s = s.replace(/ward\s+\d+/, '').trim();
+
+    // Replace spaces with dashes
+    s = s.replace(/\s+/g, '-');
+
+    // Special case for "madison" if it still has "city" or similar attached in a weird way, 
+    // but the above regexes should handle "madison city" -> "madison"
+
+    if (wardNum) return `${s}-${wardNum}`;
+    return s;
 };
 
 // Create lookup maps for O(1) access
@@ -46,20 +62,24 @@ const presidentMap = new Map<string, PresidentialResult>();
     presidentMap.set(normalizeWard(r.ward), r);
 });
 
-// Mayor data structure in JSON might be different, adapting...
-// The mayor-2023.json seems to be a list of objects based on previous file checks
-const mayorMap = new Map<string, any>();
+const mayorMap = new Map<string, MayorResult>();
 (mayor2023 as any[]).forEach((r: any) => {
-    // Adjust based on actual structure of mayor-2023.json
-    // Assuming it has 'ward' property
     if (r.ward) mayorMap.set(normalizeWard(r.ward), r);
 });
 
 export function getWardAnalysis(wardId: string, municipality: string): WardAnalysis {
     const normalizedKey = normalizeWard(`${municipality} Ward ${wardId}`);
+    // Fallback key without ward number (for places like Maple Bluff that might be reported as a whole)
+    const baseKey = normalizedKey.split('-').slice(0, -1).join('-');
+    // Actually, normalizeWard("Maple Bluff") returns "maple-bluff". 
+    // normalizeWard("Maple Bluff Ward 1") returns "maple-bluff-1".
+    // So if we don't find "maple-bluff-1", we should try "maple-bluff".
+    const fallbackKey = normalizedKey.replace(/-\d+$/, '');
 
     // 1. Presidential Benchmark (2020)
-    const presResult = presidentMap.get(normalizedKey);
+    let presResult = presidentMap.get(normalizedKey);
+    if (!presResult) presResult = presidentMap.get(fallbackKey);
+
     let presidentialMargin2020 = 0;
     let turnout2020 = 0;
 
@@ -70,31 +90,41 @@ export function getWardAnalysis(wardId: string, municipality: string): WardAnaly
         // But we can use raw votes as a proxy or default to a high baseline
         turnout2020 = 0.85; // Assumed high turnout for 2020
     } else {
-        // Fallback if data missing (e.g. new wards)
-        presidentialMargin2020 = 0.45; // Default Dem lean
+        // NO PLACEHOLDERS: Return 0 if no data
+        presidentialMargin2020 = 0;
     }
 
     // 2. Previous Margin (Mayor 2023 as proxy for "Previous")
     // Satya (Left) vs Gloria (Center/Right)
-    const mayorResult = mayorMap.get(normalizedKey);
+    let mayorResult = mayorMap.get(normalizedKey);
+    if (!mayorResult) mayorResult = mayorMap.get(fallbackKey);
+
     let previousMargin = 0;
     let turnout2023 = 0;
 
     if (mayorResult) {
         const satya = Number(mayorResult.satya || 0);
         const gloria = Number(mayorResult.gloria || 0);
-        const total = satya + gloria;
+        const total = satya + gloria; // Use calculated total from candidates to be safe
         if (total > 0) {
             previousMargin = (satya - gloria) / total;
             turnout2023 = 0.55; // Lower turnout for Spring
         }
     } else {
-        previousMargin = presidentialMargin2020 - 0.1; // Fallback
+        // NO PLACEHOLDERS: Return 0 if no data
+        previousMargin = 0;
     }
 
     // 3. Average Turnout
     // Simple average of available data points
-    const averageTurnout = (turnout2020 + turnout2023) / 2 || 0.7;
+    let averageTurnout = 0;
+    if (turnout2020 > 0 && turnout2023 > 0) {
+        averageTurnout = (turnout2020 + turnout2023) / 2;
+    } else if (turnout2020 > 0) {
+        averageTurnout = turnout2020;
+    } else if (turnout2023 > 0) {
+        averageTurnout = turnout2023;
+    }
 
     // 4. Trend
     const trend = [

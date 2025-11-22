@@ -1,3132 +1,938 @@
 [
   {
-    "ward": "City of Edgerton Ward 7",
-    "satya": 254,
-    "gloria": 315
-  },
-  {
-    "ward": "City of Fitchburg Ward 16",
-    "satya": 138,
-    "gloria": 236
-  },
-  {
-    "ward": "City of Fitchburg Ward 22",
-    "satya": 179,
-    "gloria": 270
-  },
-  {
-    "ward": "City of Fitchburg Ward 1",
-    "satya": 341,
-    "gloria": 348
-  },
-  {
-    "ward": "City of Fitchburg Ward 24",
-    "satya": 177,
-    "gloria": 268
-  },
-  {
-    "ward": "City of Fitchburg Ward 12",
-    "satya": 292,
-    "gloria": 331
-  },
-  {
-    "ward": "City of Fitchburg Ward 18",
-    "satya": 219,
-    "gloria": 296
-  },
-  {
-    "ward": "City of Fitchburg Ward 20",
-    "satya": 82,
-    "gloria": 173
-  },
-  {
-    "ward": "City of Fitchburg Ward 15",
-    "satya": 93,
-    "gloria": 189
-  },
-  {
-    "ward": "City of Fitchburg Ward 14",
-    "satya": 205,
-    "gloria": 288
-  },
-  {
-    "ward": "City of Fitchburg Ward 19",
-    "satya": 97,
-    "gloria": 192
-  },
-  {
-    "ward": "City of Fitchburg Ward 8",
-    "satya": 244,
-    "gloria": 310
-  },
-  {
-    "ward": "City of Fitchburg Ward 7",
-    "satya": 291,
-    "gloria": 331
-  },
-  {
-    "ward": "City of Fitchburg Ward 13",
-    "satya": 141,
-    "gloria": 239
-  },
-  {
-    "ward": "City of Fitchburg Ward 11",
-    "satya": 156,
-    "gloria": 252
-  },
-  {
-    "ward": "City of Fitchburg Ward 10",
-    "satya": 146,
-    "gloria": 244
-  },
-  {
-    "ward": "City of Fitchburg Ward 9",
-    "satya": 248,
-    "gloria": 311
-  },
-  {
-    "ward": "City of Fitchburg Ward 4",
-    "satya": 140,
-    "gloria": 238
-  },
-  {
-    "ward": "City of Fitchburg Ward 6",
-    "satya": 306,
-    "gloria": 337
-  },
-  {
-    "ward": "City of Fitchburg Ward 5",
-    "satya": 186,
-    "gloria": 275
-  },
-  {
-    "ward": "City of Fitchburg Ward 3",
-    "satya": 274,
-    "gloria": 323
-  },
-  {
-    "ward": "City of Fitchburg Ward 2",
-    "satya": 344,
-    "gloria": 348
-  },
-  {
-    "ward": "City of Fitchburg Ward 21",
-    "satya": 96,
-    "gloria": 192
-  },
-  {
-    "ward": "City of Fitchburg Ward 17",
-    "satya": 251,
-    "gloria": 313
-  },
-  {
-    "ward": "City of Fitchburg Ward 23",
-    "satya": 274,
-    "gloria": 323
-  },
-  {
-    "ward": "City of Fitchburg Ward 25",
-    "satya": 208,
-    "gloria": 289
-  },
-  {
-    "ward": "City of Madison Ward 123",
-    "satya": 142,
-    "gloria": 90
-  },
-  {
-    "ward": "City of Madison Ward 2",
-    "satya": 183,
-    "gloria": 106
-  },
-  {
-    "ward": "City of Madison Ward 1",
-    "satya": 316,
-    "gloria": 136
-  },
-  {
-    "ward": "City of Madison Ward 127",
-    "satya": 555,
-    "gloria": 141
-  },
-  {
-    "ward": "City of Madison Ward 130",
-    "satya": 458,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 120",
-    "satya": 431,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 135",
-    "satya": 543,
-    "gloria": 141
-  },
-  {
-    "ward": "City of Madison Ward 120",
-    "satya": 431,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 136",
-    "satya": 457,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 104",
-    "satya": 548,
-    "gloria": 141
-  },
-  {
-    "ward": "City of Madison Ward 30",
-    "satya": 504,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 60",
-    "satya": 239,
-    "gloria": 121
-  },
-  {
-    "ward": "City of Madison Ward 63",
-    "satya": 474,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 66",
-    "satya": 265,
-    "gloria": 127
-  },
-  {
-    "ward": "City of Madison Ward 112",
-    "satya": 483,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 111",
-    "satya": 342,
-    "gloria": 139
-  },
-  {
-    "ward": "City of Madison Ward 71",
-    "satya": 187,
-    "gloria": 107
-  },
-  {
-    "ward": "City of Madison Ward 74",
-    "satya": 270,
-    "gloria": 128
-  },
-  {
-    "ward": "City of Madison Ward 117",
-    "satya": 427,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 114",
-    "satya": 218,
-    "gloria": 116
-  },
-  {
-    "ward": "City of Madison Ward 82",
-    "satya": 159,
-    "gloria": 97
-  },
-  {
-    "ward": "City of Madison Ward 94",
-    "satya": 246,
-    "gloria": 123
-  },
-  {
-    "ward": "City of Madison Ward 46",
-    "satya": 163,
-    "gloria": 99
-  },
-  {
-    "ward": "City of Madison Ward 126",
-    "satya": 543,
-    "gloria": 141
-  },
-  {
-    "ward": "City of Madison Ward 101",
-    "satya": 170,
-    "gloria": 101
-  },
-  {
-    "ward": "City of Madison Ward 35",
-    "satya": 387,
-    "gloria": 142
-  },
-  {
-    "ward": "City of Madison Ward 39",
-    "satya": 332,
-    "gloria": 138
-  },
-  {
-    "ward": "City of Madison Ward 29",
-    "satya": 228,
-    "gloria": 119
-  },
-  {
-    "ward": "City of Madison Ward 19",
-    "satya": 138,
-    "gloria": 89
-  },
-  {
-    "ward": "City of Madison Ward 26",
-    "satya": 203,
-    "gloria": 112
-  },
-  {
-    "ward": "City of Madison Ward 123",
-    "satya": 142,
-    "gloria": 90
-  },
-  {
-    "ward": "City of Madison Ward 23",
-    "satya": 144,
-    "gloria": 91
-  },
-  {
-    "ward": "City of Madison Ward 22",
-    "satya": 535,
-    "gloria": 142
-  },
-  {
-    "ward": "City of Madison Ward 6",
-    "satya": 198,
-    "gloria": 111
-  },
-  {
-    "ward": "City of Madison Ward 3",
-    "satya": 136,
-    "gloria": 88
-  },
-  {
-    "ward": "City of Madison Ward 2",
-    "satya": 183,
-    "gloria": 106
-  },
-  {
-    "ward": "City of Madison Ward 107",
-    "satya": 214,
-    "gloria": 115
-  },
-  {
-    "ward": "City of Madison Ward 103",
-    "satya": 423,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 106",
-    "satya": 405,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 105",
-    "satya": 155,
-    "gloria": 96
-  },
-  {
-    "ward": "City of Madison Ward 34",
-    "satya": 130,
-    "gloria": 85
-  },
-  {
-    "ward": "City of Madison Ward 14",
-    "satya": 538,
-    "gloria": 142
-  },
-  {
-    "ward": "City of Madison Ward 15",
-    "satya": 282,
-    "gloria": 130
-  },
-  {
-    "ward": "City of Madison Ward 47",
-    "satya": 177,
-    "gloria": 104
-  },
-  {
-    "ward": "City of Madison Ward 54",
-    "satya": 243,
-    "gloria": 122
-  },
-  {
-    "ward": "City of Madison Ward 53",
-    "satya": 262,
-    "gloria": 126
-  },
-  {
-    "ward": "City of Madison Ward 52",
-    "satya": 478,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 45",
-    "satya": 216,
-    "gloria": 116
-  },
-  {
-    "ward": "City of Madison Ward 43",
-    "satya": 439,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 55",
-    "satya": 457,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 41",
-    "satya": 544,
-    "gloria": 142
-  },
-  {
-    "ward": "City of Madison Ward 42",
-    "satya": 328,
-    "gloria": 137
-  },
-  {
-    "ward": "City of Madison Ward 30",
-    "satya": 504,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 44",
-    "satya": 120,
-    "gloria": 80
-  },
-  {
-    "ward": "City of Madison Ward 27",
-    "satya": 144,
-    "gloria": 91
-  },
-  {
-    "ward": "City of Madison Ward 18",
-    "satya": 129,
-    "gloria": 85
-  },
-  {
-    "ward": "City of Madison Ward 40",
-    "satya": 188,
-    "gloria": 108
-  },
-  {
-    "ward": "City of Madison Ward 28",
-    "satya": 388,
-    "gloria": 142
-  },
-  {
-    "ward": "City of Madison Ward 37",
-    "satya": 221,
-    "gloria": 117
-  },
-  {
-    "ward": "City of Madison Ward 33",
-    "satya": 356,
-    "gloria": 140
-  },
-  {
-    "ward": "City of Madison Ward 36",
-    "satya": 128,
-    "gloria": 84
-  },
-  {
-    "ward": "City of Madison Ward 38",
-    "satya": 440,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 32",
-    "satya": 358,
-    "gloria": 140
-  },
-  {
-    "ward": "City of Madison Ward 31",
-    "satya": 557,
-    "gloria": 140
-  },
-  {
-    "ward": "City of Madison Ward 13",
-    "satya": 325,
-    "gloria": 137
-  },
-  {
-    "ward": "City of Madison Ward 25",
-    "satya": 283,
-    "gloria": 131
-  },
-  {
-    "ward": "City of Madison Ward 24",
-    "satya": 207,
-    "gloria": 113
-  },
-  {
-    "ward": "City of Madison Ward 21",
-    "satya": 273,
-    "gloria": 129
-  },
-  {
-    "ward": "City of Madison Ward 20",
-    "satya": 201,
-    "gloria": 111
-  },
-  {
-    "ward": "City of Madison Ward 17",
-    "satya": 395,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 12",
-    "satya": 406,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 16",
-    "satya": 483,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 11",
-    "satya": 497,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 10",
-    "satya": 128,
-    "gloria": 85
-  },
-  {
-    "ward": "City of Madison Ward 9",
-    "satya": 282,
-    "gloria": 130
-  },
-  {
-    "ward": "City of Madison Ward 7",
-    "satya": 127,
-    "gloria": 84
-  },
-  {
-    "ward": "City of Madison Ward 4",
-    "satya": 539,
-    "gloria": 142
-  },
-  {
-    "ward": "City of Madison Ward 5",
-    "satya": 509,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 50",
-    "satya": 399,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 48",
-    "satya": 339,
-    "gloria": 138
-  },
-  {
-    "ward": "City of Madison Ward 49",
-    "satya": 301,
-    "gloria": 134
-  },
-  {
-    "ward": "City of Madison Ward 62",
-    "satya": 144,
-    "gloria": 91
-  },
-  {
-    "ward": "City of Madison Ward 61",
-    "satya": 125,
-    "gloria": 83
-  },
-  {
-    "ward": "City of Madison Ward 59",
-    "satya": 480,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 64",
-    "satya": 249,
-    "gloria": 124
-  },
-  {
-    "ward": "City of Madison Ward 56",
-    "satya": 274,
-    "gloria": 129
-  },
-  {
-    "ward": "City of Madison Ward 58",
-    "satya": 202,
-    "gloria": 111
-  },
-  {
-    "ward": "City of Madison Ward 57",
-    "satya": 511,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 75",
-    "satya": 285,
-    "gloria": 131
-  },
-  {
-    "ward": "City of Madison Ward 73",
-    "satya": 350,
-    "gloria": 139
-  },
-  {
-    "ward": "City of Madison Ward 76",
-    "satya": 290,
-    "gloria": 132
-  },
-  {
-    "ward": "City of Madison Ward 68",
-    "satya": 226,
-    "gloria": 118
-  },
-  {
-    "ward": "City of Madison Ward 72",
-    "satya": 216,
-    "gloria": 115
-  },
-  {
-    "ward": "City of Madison Ward 89",
-    "satya": 398,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 88",
-    "satya": 173,
-    "gloria": 102
-  },
-  {
-    "ward": "City of Madison Ward 65",
-    "satya": 251,
-    "gloria": 124
-  },
-  {
-    "ward": "City of Madison Ward 67",
-    "satya": 525,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 87",
-    "satya": 266,
-    "gloria": 127
-  },
-  {
-    "ward": "City of Madison Ward 85",
-    "satya": 303,
-    "gloria": 134
-  },
-  {
-    "ward": "City of Madison Ward 70",
-    "satya": 221,
-    "gloria": 117
-  },
-  {
-    "ward": "City of Madison Ward 69",
-    "satya": 141,
-    "gloria": 90
-  },
-  {
-    "ward": "City of Madison Ward 80",
-    "satya": 401,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 86",
-    "satya": 272,
-    "gloria": 129
-  },
-  {
-    "ward": "City of Madison Ward 91",
-    "satya": 291,
-    "gloria": 132
-  },
-  {
-    "ward": "City of Madison Ward 92",
-    "satya": 499,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 115",
-    "satya": 339,
-    "gloria": 138
-  },
-  {
-    "ward": "City of Madison Ward 93",
-    "satya": 362,
-    "gloria": 141
-  },
-  {
-    "ward": "City of Madison Ward 90",
-    "satya": 436,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 78",
-    "satya": 264,
-    "gloria": 127
-  },
-  {
-    "ward": "City of Madison Ward 79",
-    "satya": 172,
-    "gloria": 102
-  },
-  {
-    "ward": "City of Madison Ward 81",
-    "satya": 287,
-    "gloria": 131
-  },
-  {
-    "ward": "City of Madison Ward 83",
-    "satya": 194,
-    "gloria": 109
-  },
-  {
-    "ward": "City of Madison Ward 84",
-    "satya": 153,
-    "gloria": 95
-  },
-  {
-    "ward": "City of Madison Ward 96",
-    "satya": 366,
-    "gloria": 141
-  },
-  {
-    "ward": "City of Madison Ward 116",
-    "satya": 186,
-    "gloria": 107
-  },
-  {
-    "ward": "City of Madison Ward 95",
-    "satya": 349,
-    "gloria": 139
-  },
-  {
-    "ward": "City of Madison Ward 102",
-    "satya": 133,
-    "gloria": 86
-  },
-  {
-    "ward": "City of Madison Ward 108",
-    "satya": 359,
-    "gloria": 140
-  },
-  {
-    "ward": "City of Madison Ward 97",
-    "satya": 182,
-    "gloria": 106
-  },
-  {
-    "ward": "City of Madison Ward 98",
-    "satya": 464,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 99",
-    "satya": 389,
-    "gloria": 142
-  },
-  {
-    "ward": "City of Madison Ward 100",
-    "satya": 343,
-    "gloria": 139
-  },
-  {
-    "ward": "City of Madison Ward 110",
-    "satya": 310,
-    "gloria": 135
-  },
-  {
-    "ward": "City of Madison Ward 119",
-    "satya": 470,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 118",
-    "satya": 206,
-    "gloria": 113
-  },
-  {
-    "ward": "City of Madison Ward 109",
-    "satya": 425,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 113",
-    "satya": 216,
-    "gloria": 116
-  },
-  {
-    "ward": "City of Madison Ward 121",
-    "satya": 323,
-    "gloria": 136
-  },
-  {
-    "ward": "City of Madison Ward 8",
-    "satya": 177,
-    "gloria": 104
-  },
-  {
-    "ward": "City of Madison Ward 128",
-    "satya": 395,
-    "gloria": 143
-  },
-  {
-    "ward": "City of Madison Ward 129",
-    "satya": 208,
-    "gloria": 113
-  },
-  {
-    "ward": "City of Madison Ward 129",
-    "satya": 208,
-    "gloria": 113
-  },
-  {
-    "ward": "City of Madison Ward 131",
-    "satya": 314,
-    "gloria": 135
-  },
-  {
-    "ward": "City of Madison Ward 51",
-    "satya": 322,
-    "gloria": 136
-  },
-  {
-    "ward": "City of Madison Ward 132",
-    "satya": 417,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 134",
-    "satya": 449,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 120",
-    "satya": 431,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 125",
-    "satya": 256,
-    "gloria": 125
-  },
-  {
-    "ward": "City of Madison Ward 124",
-    "satya": 305,
-    "gloria": 134
-  },
-  {
-    "ward": "City of Madison Ward 122",
-    "satya": 334,
-    "gloria": 138
-  },
-  {
-    "ward": "City of Madison Ward 77",
-    "satya": 499,
-    "gloria": 144
-  },
-  {
-    "ward": "City of Madison Ward 133",
-    "satya": 122,
-    "gloria": 81
-  },
-  {
-    "ward": "City of Middleton Ward 18",
-    "satya": 66,
-    "gloria": 151
-  },
-  {
-    "ward": "City of Middleton Ward 14",
-    "satya": 164,
-    "gloria": 258
-  },
-  {
-    "ward": "City of Middleton Ward 1",
-    "satya": 345,
-    "gloria": 349
-  },
-  {
-    "ward": "City of Middleton Ward 5",
-    "satya": 89,
-    "gloria": 183
-  },
-  {
-    "ward": "City of Middleton Ward 3",
+    "ward": "C Madison Wd 001",
     "satya": 321,
-    "gloria": 342
+    "gloria": 425,
+    "total": 753
   },
   {
-    "ward": "City of Middleton Ward 2",
-    "satya": 87,
-    "gloria": 181
+    "ward": "C Madison Wd 002",
+    "satya": 236,
+    "gloria": 251,
+    "total": 491
   },
   {
-    "ward": "City of Middleton Ward 4",
-    "satya": 253,
-    "gloria": 314
+    "ward": "C Madison Wd 003",
+    "satya": 305,
+    "gloria": 335,
+    "total": 646
   },
   {
-    "ward": "City of Middleton Ward 11",
-    "satya": 142,
-    "gloria": 240
+    "ward": "C Madison Wd 004",
+    "satya": 411,
+    "gloria": 619,
+    "total": 1035
   },
   {
-    "ward": "City of Middleton Ward 19",
-    "satya": 64,
-    "gloria": 147
+    "ward": "C Madison Wd 005",
+    "satya": 344,
+    "gloria": 368,
+    "total": 718
   },
   {
-    "ward": "City of Middleton Ward 10",
-    "satya": 328,
-    "gloria": 344
+    "ward": "C Madison Wd 006",
+    "satya": 507,
+    "gloria": 715,
+    "total": 1230
   },
   {
-    "ward": "City of Middleton Ward 7",
-    "satya": 131,
-    "gloria": 230
+    "ward": "C Madison Wd 007",
+    "satya": 510,
+    "gloria": 729,
+    "total": 1250
   },
   {
-    "ward": "City of Middleton Ward 8",
-    "satya": 107,
-    "gloria": 205
+    "ward": "C Madison Wd 008",
+    "satya": 608,
+    "gloria": 730,
+    "total": 1343
   },
   {
-    "ward": "City of Middleton Ward 6",
-    "satya": 208,
-    "gloria": 290
+    "ward": "C Madison Wd 009",
+    "satya": 374,
+    "gloria": 333,
+    "total": 714
   },
   {
-    "ward": "City of Middleton Ward 9",
-    "satya": 182,
-    "gloria": 273
+    "ward": "C Madison Wd 010",
+    "satya": 445,
+    "gloria": 683,
+    "total": 1135
   },
   {
-    "ward": "City of Middleton Ward 13",
-    "satya": 75,
-    "gloria": 165
+    "ward": "C Madison Wd 011",
+    "satya": 554,
+    "gloria": 648,
+    "total": 1209
   },
   {
-    "ward": "City of Middleton Ward 18",
-    "satya": 66,
-    "gloria": 151
+    "ward": "C Madison Wd 012",
+    "satya": 334,
+    "gloria": 409,
+    "total": 749
   },
   {
-    "ward": "City of Middleton Ward 17",
-    "satya": 237,
-    "gloria": 306
+    "ward": "C Madison Wd 013",
+    "satya": 150,
+    "gloria": 166,
+    "total": 318
   },
   {
-    "ward": "City of Middleton Ward 12",
-    "satya": 339,
-    "gloria": 347
+    "ward": "C Madison Wd 014",
+    "satya": 511,
+    "gloria": 555,
+    "total": 1071
   },
   {
-    "ward": "City of Middleton Ward 16",
-    "satya": 101,
-    "gloria": 197
+    "ward": "C Madison Wd 015",
+    "satya": 603,
+    "gloria": 599,
+    "total": 1205
   },
   {
-    "ward": "City of Middleton Ward 15",
-    "satya": 217,
-    "gloria": 294
+    "ward": "C Madison Wd 016",
+    "satya": 426,
+    "gloria": 251,
+    "total": 680
   },
   {
-    "ward": "City of Middleton Ward 20",
-    "satya": 188,
-    "gloria": 276
+    "ward": "C Madison Wd 017",
+    "satya": 807,
+    "gloria": 643,
+    "total": 1455
   },
   {
-    "ward": "City of Middleton Ward 21",
-    "satya": 315,
-    "gloria": 340
+    "ward": "C Madison Wd 018",
+    "satya": 846,
+    "gloria": 446,
+    "total": 1300
   },
   {
-    "ward": "City of Middleton Ward 22",
-    "satya": 103,
-    "gloria": 200
+    "ward": "C Madison Wd 019",
+    "satya": 1315,
+    "gloria": 627,
+    "total": 1958
   },
   {
-    "ward": "City of Middleton Ward 23",
-    "satya": 98,
-    "gloria": 195
+    "ward": "C Madison Wd 020",
+    "satya": 495,
+    "gloria": 588,
+    "total": 1087
   },
   {
-    "ward": "City of Middleton Ward 24",
-    "satya": 161,
-    "gloria": 256
-  },
-  {
-    "ward": "City of Monona Ward 10",
-    "satya": 74,
-    "gloria": 162
-  },
-  {
-    "ward": "City of Monona Ward 8",
-    "satya": 118,
-    "gloria": 216
-  },
-  {
-    "ward": "City of Monona Ward 8",
-    "satya": 118,
-    "gloria": 216
-  },
-  {
-    "ward": "City of Monona Ward 1",
-    "satya": 217,
-    "gloria": 295
-  },
-  {
-    "ward": "City of Monona Ward 5",
-    "satya": 146,
-    "gloria": 243
-  },
-  {
-    "ward": "City of Monona Ward 3",
-    "satya": 269,
-    "gloria": 322
-  },
-  {
-    "ward": "City of Monona Ward 6",
-    "satya": 140,
-    "gloria": 238
-  },
-  {
-    "ward": "City of Monona Ward 10",
-    "satya": 74,
-    "gloria": 162
-  },
-  {
-    "ward": "City of Monona Ward 7",
-    "satya": 298,
-    "gloria": 333
-  },
-  {
-    "ward": "City of Monona Ward 4",
-    "satya": 326,
-    "gloria": 344
-  },
-  {
-    "ward": "City of Monona Ward 2",
-    "satya": 128,
-    "gloria": 227
-  },
-  {
-    "ward": "City of Monona Ward 9",
-    "satya": 145,
-    "gloria": 243
-  },
-  {
-    "ward": "City of Sun Prairie Ward 9",
-    "satya": 122,
-    "gloria": 221
-  },
-  {
-    "ward": "City of Sun Prairie Ward 22",
-    "satya": 182,
-    "gloria": 272
-  },
-  {
-    "ward": "City of Sun Prairie Ward 21",
-    "satya": 338,
-    "gloria": 347
-  },
-  {
-    "ward": "City of Sun Prairie Ward 19",
-    "satya": 172,
-    "gloria": 265
-  },
-  {
-    "ward": "City of Sun Prairie Ward 17",
-    "satya": 148,
-    "gloria": 245
-  },
-  {
-    "ward": "City of Sun Prairie Ward 29",
-    "satya": 289,
-    "gloria": 330
-  },
-  {
-    "ward": "City of Sun Prairie Ward 12",
-    "satya": 318,
-    "gloria": 341
-  },
-  {
-    "ward": "City of Sun Prairie Ward 25",
-    "satya": 346,
-    "gloria": 350
-  },
-  {
-    "ward": "City of Sun Prairie Ward 27",
-    "satya": 274,
-    "gloria": 324
-  },
-  {
-    "ward": "City of Sun Prairie Ward 14",
-    "satya": 211,
-    "gloria": 291
-  },
-  {
-    "ward": "City of Sun Prairie Ward 23",
-    "satya": 242,
-    "gloria": 309
-  },
-  {
-    "ward": "City of Sun Prairie Ward 24",
-    "satya": 315,
-    "gloria": 340
-  },
-  {
-    "ward": "City of Sun Prairie Ward 11",
-    "satya": 122,
-    "gloria": 221
-  },
-  {
-    "ward": "City of Sun Prairie Ward 10",
-    "satya": 319,
-    "gloria": 341
-  },
-  {
-    "ward": "City of Sun Prairie Ward 13",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "City of Sun Prairie Ward 26",
-    "satya": 103,
-    "gloria": 200
-  },
-  {
-    "ward": "City of Sun Prairie Ward 20",
-    "satya": 312,
-    "gloria": 338
-  },
-  {
-    "ward": "City of Sun Prairie Ward 8",
-    "satya": 93,
-    "gloria": 187
-  },
-  {
-    "ward": "City of Sun Prairie Ward 1",
-    "satya": 349,
-    "gloria": 350
-  },
-  {
-    "ward": "City of Sun Prairie Ward 15",
-    "satya": 164,
-    "gloria": 259
-  },
-  {
-    "ward": "City of Sun Prairie Ward 6",
-    "satya": 177,
-    "gloria": 269
-  },
-  {
-    "ward": "City of Sun Prairie Ward 5",
-    "satya": 303,
-    "gloria": 336
-  },
-  {
-    "ward": "City of Sun Prairie Ward 7",
-    "satya": 169,
-    "gloria": 263
-  },
-  {
-    "ward": "City of Sun Prairie Ward 3",
-    "satya": 241,
-    "gloria": 308
-  },
-  {
-    "ward": "City of Sun Prairie Ward 4",
-    "satya": 157,
-    "gloria": 253
-  },
-  {
-    "ward": "City of Sun Prairie Ward 2",
-    "satya": 108,
-    "gloria": 206
-  },
-  {
-    "ward": "City of Sun Prairie Ward 16",
-    "satya": 181,
-    "gloria": 272
-  },
-  {
-    "ward": "City of Sun Prairie Ward 18",
-    "satya": 257,
-    "gloria": 316
-  },
-  {
-    "ward": "City of Sun Prairie Ward 28",
-    "satya": 288,
-    "gloria": 330
-  },
-  {
-    "ward": "City of Sun Prairie Ward 30",
-    "satya": 91,
-    "gloria": 185
-  },
-  {
-    "ward": "City of Verona Ward 2",
-    "satya": 341,
-    "gloria": 348
-  },
-  {
-    "ward": "City of Verona Ward 12",
-    "satya": 158,
-    "gloria": 254
-  },
-  {
-    "ward": "City of Verona Ward 11",
-    "satya": 121,
-    "gloria": 220
-  },
-  {
-    "ward": "City of Verona Ward 9",
-    "satya": 250,
-    "gloria": 312
-  },
-  {
-    "ward": "City of Verona Ward 10",
-    "satya": 64,
-    "gloria": 148
-  },
-  {
-    "ward": "City of Verona Ward 6",
-    "satya": 83,
-    "gloria": 175
-  },
-  {
-    "ward": "City of Verona Ward 4",
-    "satya": 348,
-    "gloria": 350
-  },
-  {
-    "ward": "City of Verona Ward 1",
-    "satya": 288,
-    "gloria": 330
-  },
-  {
-    "ward": "City of Verona Ward 5",
-    "satya": 111,
-    "gloria": 209
-  },
-  {
-    "ward": "City of Verona Ward 7",
-    "satya": 111,
-    "gloria": 210
-  },
-  {
-    "ward": "City of Verona Ward 3",
-    "satya": 267,
-    "gloria": 321
-  },
-  {
-    "ward": "City of Verona Ward 8",
-    "satya": 161,
-    "gloria": 257
-  },
-  {
-    "ward": "City of Verona Ward 13",
-    "satya": 87,
-    "gloria": 181
-  },
-  {
-    "ward": "City of Verona Ward 14",
-    "satya": 182,
-    "gloria": 273
-  },
-  {
-    "ward": "City of Verona Ward 15",
-    "satya": 92,
-    "gloria": 188
-  },
-  {
-    "ward": "Town of Albion Ward 3",
-    "satya": 124,
-    "gloria": 223
-  },
-  {
-    "ward": "Town of Albion Ward 1",
-    "satya": 223,
-    "gloria": 299
-  },
-  {
-    "ward": "Town of Albion Ward 2",
-    "satya": 198,
-    "gloria": 283
-  },
-  {
-    "ward": "Town of Albion Ward 4",
-    "satya": 342,
-    "gloria": 348
-  },
-  {
-    "ward": "Town of Berry Ward 2",
-    "satya": 152,
-    "gloria": 248
-  },
-  {
-    "ward": "Town of Berry Ward 1",
+    "ward": "C Madison Wd 021",
     "satya": 153,
-    "gloria": 250
+    "gloria": 155,
+    "total": 309
   },
   {
-    "ward": "Town of Black Earth Ward 1",
-    "satya": 177,
-    "gloria": 268
+    "ward": "C Madison Wd 022",
+    "satya": 373,
+    "gloria": 384,
+    "total": 761
   },
   {
-    "ward": "Town of Blue Mounds Ward 1",
-    "satya": 134,
-    "gloria": 232
+    "ward": "C Madison Wd 023",
+    "satya": 426,
+    "gloria": 332,
+    "total": 764
   },
   {
-    "ward": "Town of Blue Mounds Ward 2",
-    "satya": 217,
-    "gloria": 295
-  },
-  {
-    "ward": "Town of Bristol Ward 5",
-    "satya": 225,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Bristol Ward 1",
-    "satya": 219,
-    "gloria": 296
-  },
-  {
-    "ward": "Town of Bristol Ward 2",
-    "satya": 291,
-    "gloria": 331
-  },
-  {
-    "ward": "Town of Bristol Ward 4",
-    "satya": 66,
-    "gloria": 151
-  },
-  {
-    "ward": "Town of Bristol Ward 3",
-    "satya": 109,
-    "gloria": 206
-  },
-  {
-    "ward": "Town of Bristol Ward 5",
-    "satya": 225,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Bristol Ward 5",
-    "satya": 225,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Bristol Ward 5",
-    "satya": 225,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Bristol Ward 5",
-    "satya": 225,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Bristol Ward 5",
-    "satya": 225,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Christiana Ward 1",
-    "satya": 273,
-    "gloria": 324
-  },
-  {
-    "ward": "Town of Christiana Ward 1",
-    "satya": 273,
-    "gloria": 324
-  },
-  {
-    "ward": "Town of Christiana Ward 1",
-    "satya": 273,
-    "gloria": 324
-  },
-  {
-    "ward": "Town of Christiana Ward 2",
-    "satya": 65,
-    "gloria": 149
-  },
-  {
-    "ward": "Town of Christiana Ward 1",
-    "satya": 273,
-    "gloria": 324
-  },
-  {
-    "ward": "Town of Cross Plains Ward 2",
-    "satya": 86,
-    "gloria": 180
-  },
-  {
-    "ward": "Town of Cross Plains Ward 1",
-    "satya": 146,
-    "gloria": 244
-  },
-  {
-    "ward": "Town of Cross Plains Ward 1",
-    "satya": 146,
-    "gloria": 244
-  },
-  {
-    "ward": "Town of Cross Plains Ward 1",
-    "satya": 146,
-    "gloria": 244
-  },
-  {
-    "ward": "Town of Dane Ward 1",
-    "satya": 89,
-    "gloria": 183
-  },
-  {
-    "ward": "Town of Deerfield Ward 2",
-    "satya": 190,
-    "gloria": 277
-  },
-  {
-    "ward": "Town of Deerfield Ward 1",
-    "satya": 64,
-    "gloria": 147
-  },
-  {
-    "ward": "Town of Deerfield Ward 2",
-    "satya": 190,
-    "gloria": 277
-  },
-  {
-    "ward": "Town of Mazomanie Ward 1",
-    "satya": 231,
-    "gloria": 303
-  },
-  {
-    "ward": "Town of Mazomanie Ward 1",
-    "satya": 231,
-    "gloria": 303
-  },
-  {
-    "ward": "Town of Mazomanie Ward 1",
-    "satya": 231,
-    "gloria": 303
-  },
-  {
-    "ward": "Town of Mazomanie Ward 1",
-    "satya": 231,
-    "gloria": 303
-  },
-  {
-    "ward": "Town of Mazomanie Ward 2",
-    "satya": 219,
-    "gloria": 296
-  },
-  {
-    "ward": "Town of Mazomanie Ward 2",
-    "satya": 219,
-    "gloria": 296
-  },
-  {
-    "ward": "Town of Mazomanie Ward 2",
-    "satya": 219,
-    "gloria": 296
-  },
-  {
-    "ward": "Town of Mazomanie Ward 2",
-    "satya": 219,
-    "gloria": 296
-  },
-  {
-    "ward": "Town of Mazomanie Ward 2",
-    "satya": 219,
-    "gloria": 296
-  },
-  {
-    "ward": "Town of Mazomanie Ward 1",
-    "satya": 231,
-    "gloria": 303
-  },
-  {
-    "ward": "Town of Medina Ward 1",
-    "satya": 77,
-    "gloria": 166
-  },
-  {
-    "ward": "Town of Medina Ward 2",
-    "satya": 292,
-    "gloria": 331
-  },
-  {
-    "ward": "Town of Middleton Ward 2",
-    "satya": 227,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Middleton Ward 2",
-    "satya": 227,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Middleton Ward 4A",
-    "satya": 286,
-    "gloria": 328
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8A",
-    "satya": 318,
-    "gloria": 341
-  },
-  {
-    "ward": "Town of Middleton Ward 8A",
-    "satya": 318,
-    "gloria": 341
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8A",
-    "satya": 318,
-    "gloria": 341
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 4",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Middleton Ward 3",
-    "satya": 262,
-    "gloria": 318
-  },
-  {
-    "ward": "Town of Middleton Ward 1",
-    "satya": 95,
-    "gloria": 190
-  },
-  {
-    "ward": "Town of Middleton Ward 2",
-    "satya": 227,
-    "gloria": 300
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 7",
-    "satya": 140,
-    "gloria": 239
-  },
-  {
-    "ward": "Town of Middleton Ward 6",
-    "satya": 267,
-    "gloria": 320
-  },
-  {
-    "ward": "Town of Middleton Ward 5",
-    "satya": 183,
-    "gloria": 273
-  },
-  {
-    "ward": "Town of Middleton Ward 4A",
-    "satya": 286,
-    "gloria": 328
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Middleton Ward 8",
-    "satya": 143,
-    "gloria": 242
-  },
-  {
-    "ward": "Town of Montrose Ward 1",
-    "satya": 257,
-    "gloria": 316
-  },
-  {
-    "ward": "Town of Montrose Ward 2",
-    "satya": 250,
-    "gloria": 312
-  },
-  {
-    "ward": "Town of Oregon Ward 4",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Oregon Ward 2",
-    "satya": 79,
-    "gloria": 169
-  },
-  {
-    "ward": "Town of Oregon Ward 3",
-    "satya": 326,
-    "gloria": 343
-  },
-  {
-    "ward": "Town of Oregon Ward 4",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Oregon Ward 1",
-    "satya": 201,
-    "gloria": 285
-  },
-  {
-    "ward": "Town of Oregon Ward 1",
-    "satya": 201,
-    "gloria": 285
-  },
-  {
-    "ward": "Town of Perry Ward 1",
-    "satya": 74,
-    "gloria": 162
-  },
-  {
-    "ward": "Town of Primrose Ward 1",
-    "satya": 157,
-    "gloria": 253
-  },
-  {
-    "ward": "Town of Roxbury Ward 2",
-    "satya": 294,
-    "gloria": 332
-  },
-  {
-    "ward": "Town of Roxbury Ward 1",
-    "satya": 79,
-    "gloria": 170
-  },
-  {
-    "ward": "Town of Springdale Ward 3",
-    "satya": 77,
-    "gloria": 167
-  },
-  {
-    "ward": "Town of Springdale Ward 2",
-    "satya": 148,
-    "gloria": 246
-  },
-  {
-    "ward": "Town of Springdale Ward 1",
-    "satya": 106,
-    "gloria": 203
-  },
-  {
-    "ward": "Town of Springfield Ward 4",
-    "satya": 97,
-    "gloria": 194
-  },
-  {
-    "ward": "Town of Springfield Ward 1",
-    "satya": 176,
-    "gloria": 268
-  },
-  {
-    "ward": "Town of Springfield Ward 2",
-    "satya": 218,
-    "gloria": 296
-  },
-  {
-    "ward": "Town of Springfield Ward 3",
-    "satya": 103,
-    "gloria": 200
-  },
-  {
-    "ward": "Town of Springfield Ward 4",
-    "satya": 97,
-    "gloria": 194
-  },
-  {
-    "ward": "Town of Vermont Ward 1",
-    "satya": 296,
-    "gloria": 332
-  },
-  {
-    "ward": "Town of Verona Ward 3",
-    "satya": 239,
-    "gloria": 307
-  },
-  {
-    "ward": "Town of Verona Ward 2",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Verona Ward 3",
-    "satya": 239,
-    "gloria": 307
-  },
-  {
-    "ward": "Town of Verona Ward 3",
-    "satya": 239,
-    "gloria": 307
-  },
-  {
-    "ward": "Town of Verona Ward 3",
-    "satya": 239,
-    "gloria": 307
-  },
-  {
-    "ward": "Town of Verona Ward 1",
-    "satya": 133,
-    "gloria": 232
-  },
-  {
-    "ward": "Town of Verona Ward 1",
-    "satya": 133,
-    "gloria": 232
-  },
-  {
-    "ward": "Town of Verona Ward 1",
-    "satya": 133,
-    "gloria": 232
-  },
-  {
-    "ward": "Town of Verona Ward 2",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Verona Ward 2",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Verona Ward 2",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Verona Ward 1",
-    "satya": 133,
-    "gloria": 232
-  },
-  {
-    "ward": "Town of Verona Ward 1",
-    "satya": 133,
-    "gloria": 232
-  },
-  {
-    "ward": "Town of Verona Ward 2",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Verona Ward 2",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Verona Ward 2",
-    "satya": 119,
-    "gloria": 217
-  },
-  {
-    "ward": "Town of Verona Ward 1",
-    "satya": 133,
-    "gloria": 232
-  },
-  {
-    "ward": "Town of Vienna Ward 2",
-    "satya": 312,
-    "gloria": 339
-  },
-  {
-    "ward": "Town of Vienna Ward 2",
-    "satya": 312,
-    "gloria": 339
-  },
-  {
-    "ward": "Town of Vienna Ward 1",
-    "satya": 236,
-    "gloria": 306
-  },
-  {
-    "ward": "Town of Westport Ward 1",
+    "ward": "C Madison Wd 024",
     "satya": 253,
-    "gloria": 314
+    "gloria": 308,
+    "total": 564
   },
   {
-    "ward": "Town of Westport Ward 1",
-    "satya": 253,
-    "gloria": 314
+    "ward": "C Madison Wd 025",
+    "satya": 436,
+    "gloria": 727,
+    "total": 1174
   },
   {
-    "ward": "Town of Westport Ward 3",
-    "satya": 301,
-    "gloria": 334
-  },
-  {
-    "ward": "Town of Westport Ward 3",
-    "satya": 301,
-    "gloria": 334
-  },
-  {
-    "ward": "Town of Westport Ward 3",
-    "satya": 301,
-    "gloria": 334
-  },
-  {
-    "ward": "Town of Westport Ward 3",
-    "satya": 301,
-    "gloria": 334
-  },
-  {
-    "ward": "Town of Westport Ward 1",
-    "satya": 253,
-    "gloria": 314
-  },
-  {
-    "ward": "Town of Westport Ward 4",
-    "satya": 133,
-    "gloria": 231
-  },
-  {
-    "ward": "Town of Westport Ward 1",
-    "satya": 253,
-    "gloria": 314
-  },
-  {
-    "ward": "Town of Westport Ward 4",
-    "satya": 133,
-    "gloria": 231
-  },
-  {
-    "ward": "Town of Westport Ward 5",
-    "satya": 302,
-    "gloria": 335
-  },
-  {
-    "ward": "Town of Westport Ward 3",
-    "satya": 301,
-    "gloria": 334
-  },
-  {
-    "ward": "Town of Westport Ward 2",
-    "satya": 343,
-    "gloria": 348
-  },
-  {
-    "ward": "Town of Westport Ward 1",
-    "satya": 253,
-    "gloria": 314
-  },
-  {
-    "ward": "Town of York Ward 1",
-    "satya": 314,
-    "gloria": 339
-  },
-  {
-    "ward": "Village of Belleville Ward 2",
-    "satya": 144,
-    "gloria": 241
-  },
-  {
-    "ward": "Village of Belleville Ward 1",
-    "satya": 320,
-    "gloria": 341
-  },
-  {
-    "ward": "Village of Black Earth Ward 2",
-    "satya": 287,
-    "gloria": 329
-  },
-  {
-    "ward": "Village of Black Earth Ward 1",
-    "satya": 70,
-    "gloria": 158
-  },
-  {
-    "ward": "Village of Blue Mounds Ward 1",
-    "satya": 283,
-    "gloria": 328
-  },
-  {
-    "ward": "Village of Blue Mounds Ward 1",
-    "satya": 283,
-    "gloria": 328
-  },
-  {
-    "ward": "Village of Brooklyn Ward 3",
-    "satya": 63,
-    "gloria": 147
-  },
-  {
-    "ward": "Village of Brooklyn Ward 1",
-    "satya": 230,
-    "gloria": 302
-  },
-  {
-    "ward": "Village of Brooklyn Ward 4",
-    "satya": 220,
-    "gloria": 297
-  },
-  {
-    "ward": "Village of Cambridge Ward 2",
-    "satya": 319,
-    "gloria": 341
-  },
-  {
-    "ward": "Village of Cambridge Ward 3",
-    "satya": 204,
-    "gloria": 287
-  },
-  {
-    "ward": "Village of Cambridge Ward 2",
-    "satya": 319,
-    "gloria": 341
-  },
-  {
-    "ward": "Village of Cross Plains Ward 6",
-    "satya": 322,
-    "gloria": 342
-  },
-  {
-    "ward": "Village of Cross Plains Ward 1",
-    "satya": 227,
-    "gloria": 301
-  },
-  {
-    "ward": "Village of Cross Plains Ward 2",
-    "satya": 92,
-    "gloria": 187
-  },
-  {
-    "ward": "Village of Cross Plains Ward 4",
-    "satya": 251,
-    "gloria": 313
-  },
-  {
-    "ward": "Village of Cross Plains Ward 3",
-    "satya": 146,
-    "gloria": 243
-  },
-  {
-    "ward": "Village of Cross Plains Ward 5",
-    "satya": 167,
-    "gloria": 261
-  },
-  {
-    "ward": "Village of Cross Plains Ward 7",
-    "satya": 183,
-    "gloria": 272
-  },
-  {
-    "ward": "Village of Dane Ward 1",
-    "satya": 155,
-    "gloria": 251
-  },
-  {
-    "ward": "Village of Deerfield Ward 3",
-    "satya": 204,
-    "gloria": 287
-  },
-  {
-    "ward": "Village of Deerfield Ward 2",
-    "satya": 312,
-    "gloria": 339
-  },
-  {
-    "ward": "Village of Deerfield Ward 1",
-    "satya": 260,
-    "gloria": 318
-  },
-  {
-    "ward": "Village of Deerfield Ward 3",
-    "satya": 204,
-    "gloria": 287
-  },
-  {
-    "ward": "Village of DeForest Ward 4",
-    "satya": 335,
-    "gloria": 346
-  },
-  {
-    "ward": "Village of DeForest Ward 10",
-    "satya": 176,
-    "gloria": 267
-  },
-  {
-    "ward": "Village of DeForest Ward 5",
-    "satya": 312,
-    "gloria": 339
-  },
-  {
-    "ward": "Village of DeForest Ward 1",
-    "satya": 211,
-    "gloria": 292
-  },
-  {
-    "ward": "Village of DeForest Ward 6",
-    "satya": 102,
-    "gloria": 198
-  },
-  {
-    "ward": "Village of DeForest Ward 7",
-    "satya": 267,
-    "gloria": 321
-  },
-  {
-    "ward": "Village of DeForest Ward 9",
-    "satya": 92,
-    "gloria": 186
-  },
-  {
-    "ward": "Village of DeForest Ward 8",
-    "satya": 277,
-    "gloria": 325
-  },
-  {
-    "ward": "Village of DeForest Ward 3",
-    "satya": 127,
-    "gloria": 225
-  },
-  {
-    "ward": "Village of DeForest Ward 2",
-    "satya": 245,
-    "gloria": 310
-  },
-  {
-    "ward": "Village of DeForest Ward 12",
-    "satya": 208,
-    "gloria": 289
-  },
-  {
-    "ward": "Village of DeForest Ward 13",
-    "satya": 262,
-    "gloria": 319
-  },
-  {
-    "ward": "Village of DeForest Ward 11",
-    "satya": 152,
-    "gloria": 249
-  },
-  {
-    "ward": "Village of DeForest Ward 14",
-    "satya": 107,
-    "gloria": 204
-  },
-  {
-    "ward": "Village of DeForest Ward 15",
-    "satya": 229,
-    "gloria": 302
-  },
-  {
-    "ward": "Village of DeForest Ward 16",
-    "satya": 99,
-    "gloria": 195
-  },
-  {
-    "ward": "Village of DeForest Ward 17",
-    "satya": 191,
-    "gloria": 278
-  },
-  {
-    "ward": "Village of DeForest Ward 18",
-    "satya": 87,
-    "gloria": 180
-  },
-  {
-    "ward": "Village of DeForest Ward 19",
-    "satya": 105,
-    "gloria": 203
-  },
-  {
-    "ward": "Village of Marshall Ward 4",
-    "satya": 286,
-    "gloria": 329
-  },
-  {
-    "ward": "Village of Marshall Ward 3",
-    "satya": 206,
-    "gloria": 288
-  },
-  {
-    "ward": "Village of Marshall Ward 5",
-    "satya": 260,
-    "gloria": 317
-  },
-  {
-    "ward": "Village of Marshall Ward 1",
-    "satya": 223,
-    "gloria": 298
-  },
-  {
-    "ward": "Village of Marshall Ward 2",
-    "satya": 122,
-    "gloria": 221
-  },
-  {
-    "ward": "Village of Marshall Ward 3",
-    "satya": 206,
-    "gloria": 288
-  },
-  {
-    "ward": "Village of Marshall Ward 4",
-    "satya": 286,
-    "gloria": 329
-  },
-  {
-    "ward": "Village of Mazomanie Ward 2",
-    "satya": 128,
-    "gloria": 226
-  },
-  {
-    "ward": "Village of Mazomanie Ward 1",
-    "satya": 274,
-    "gloria": 323
-  },
-  {
-    "ward": "Village of Mazomanie Ward 3",
-    "satya": 182,
-    "gloria": 272
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 2",
-    "satya": 241,
-    "gloria": 308
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 6",
-    "satya": 120,
-    "gloria": 219
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 7",
-    "satya": 169,
-    "gloria": 263
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 10",
-    "satya": 188,
-    "gloria": 277
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 9",
-    "satya": 290,
-    "gloria": 330
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 8",
-    "satya": 227,
-    "gloria": 300
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 5",
-    "satya": 312,
-    "gloria": 338
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 4",
-    "satya": 177,
-    "gloria": 269
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 1",
-    "satya": 249,
-    "gloria": 312
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 3",
-    "satya": 135,
-    "gloria": 234
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 11",
-    "satya": 293,
-    "gloria": 331
-  },
-  {
-    "ward": "Village of Mount Horeb Ward 12",
-    "satya": 102,
-    "gloria": 198
-  },
-  {
-    "ward": "Village of Oregon Ward 4",
-    "satya": 151,
-    "gloria": 247
-  },
-  {
-    "ward": "Village of Oregon Ward 11",
-    "satya": 246,
-    "gloria": 311
-  },
-  {
-    "ward": "Village of Oregon Ward 1",
-    "satya": 71,
-    "gloria": 158
-  },
-  {
-    "ward": "Village of Oregon Ward 14",
-    "satya": 199,
-    "gloria": 284
-  },
-  {
-    "ward": "Village of Oregon Ward 13",
-    "satya": 112,
-    "gloria": 210
-  },
-  {
-    "ward": "Village of Oregon Ward 7",
-    "satya": 244,
-    "gloria": 309
-  },
-  {
-    "ward": "Village of Oregon Ward 9",
-    "satya": 200,
-    "gloria": 284
-  },
-  {
-    "ward": "Village of Oregon Ward 10",
-    "satya": 286,
-    "gloria": 328
-  },
-  {
-    "ward": "Village of Oregon Ward 8",
-    "satya": 191,
-    "gloria": 279
-  },
-  {
-    "ward": "Village of Oregon Ward 2",
-    "satya": 129,
-    "gloria": 227
-  },
-  {
-    "ward": "Village of Oregon Ward 6",
-    "satya": 291,
-    "gloria": 330
-  },
-  {
-    "ward": "Village of Oregon Ward 5",
-    "satya": 252,
-    "gloria": 314
-  },
-  {
-    "ward": "Village of Oregon Ward 12",
-    "satya": 86,
-    "gloria": 179
-  },
-  {
-    "ward": "Village of Oregon Ward 3",
-    "satya": 60,
-    "gloria": 142
-  },
-  {
-    "ward": "Village of Oregon Ward 15",
-    "satya": 93,
-    "gloria": 187
-  },
-  {
-    "ward": "Village of Rockdale Ward 1",
-    "satya": 74,
-    "gloria": 162
-  },
-  {
-    "ward": "Village of Shorewood Hills Ward 2",
-    "satya": 142,
-    "gloria": 241
-  },
-  {
-    "ward": "Village of Shorewood Hills Ward 1",
-    "satya": 263,
-    "gloria": 319
-  },
-  {
-    "ward": "Village of Waunakee Ward 9",
-    "satya": 182,
-    "gloria": 273
-  },
-  {
-    "ward": "Village of Waunakee Ward 3",
-    "satya": 204,
-    "gloria": 287
-  },
-  {
-    "ward": "Village of Waunakee Ward 1",
-    "satya": 166,
-    "gloria": 261
-  },
-  {
-    "ward": "Village of Waunakee Ward 2",
-    "satya": 119,
-    "gloria": 218
-  },
-  {
-    "ward": "Village of Waunakee Ward 4",
-    "satya": 76,
-    "gloria": 165
-  },
-  {
-    "ward": "Village of Waunakee Ward 5",
-    "satya": 179,
-    "gloria": 270
-  },
-  {
-    "ward": "Village of Waunakee Ward 6",
-    "satya": 205,
-    "gloria": 288
-  },
-  {
-    "ward": "Village of Waunakee Ward 11",
-    "satya": 67,
-    "gloria": 152
-  },
-  {
-    "ward": "Village of Waunakee Ward 7",
-    "satya": 327,
-    "gloria": 344
-  },
-  {
-    "ward": "Village of Waunakee Ward 10",
-    "satya": 118,
-    "gloria": 217
-  },
-  {
-    "ward": "Village of Waunakee Ward 8",
-    "satya": 276,
-    "gloria": 325
-  },
-  {
-    "ward": "Village of Waunakee Ward 12",
-    "satya": 222,
-    "gloria": 298
-  },
-  {
-    "ward": "Village of Waunakee Ward 13",
-    "satya": 137,
-    "gloria": 235
-  },
-  {
-    "ward": "Village of Waunakee Ward 14",
-    "satya": 80,
-    "gloria": 172
-  },
-  {
-    "ward": "Village of Waunakee Ward 15",
-    "satya": 284,
-    "gloria": 328
-  },
-  {
-    "ward": "Village of Waunakee Ward 16",
-    "satya": 102,
-    "gloria": 198
-  },
-  {
-    "ward": "Village of Windsor Ward 2",
-    "satya": 91,
-    "gloria": 185
-  },
-  {
-    "ward": "Village of Windsor Ward 11",
-    "satya": 261,
-    "gloria": 318
-  },
-  {
-    "ward": "Village of Windsor Ward 7",
-    "satya": 133,
-    "gloria": 232
-  },
-  {
-    "ward": "Village of Windsor Ward 6",
-    "satya": 277,
-    "gloria": 325
-  },
-  {
-    "ward": "Village of Windsor Ward 12",
-    "satya": 94,
-    "gloria": 189
-  },
-  {
-    "ward": "Village of Windsor Ward 8",
-    "satya": 181,
-    "gloria": 271
-  },
-  {
-    "ward": "Village of Windsor Ward 14",
-    "satya": 107,
-    "gloria": 204
-  },
-  {
-    "ward": "Village of Windsor Ward 13",
-    "satya": 172,
-    "gloria": 264
-  },
-  {
-    "ward": "Village of Windsor Ward 10",
-    "satya": 92,
-    "gloria": 187
-  },
-  {
-    "ward": "Village of Windsor Ward 9",
-    "satya": 296,
-    "gloria": 332
-  },
-  {
-    "ward": "Village of Windsor Ward 1",
-    "satya": 234,
-    "gloria": 304
-  },
-  {
-    "ward": "Village of Windsor Ward 4",
-    "satya": 147,
-    "gloria": 244
-  },
-  {
-    "ward": "Village of Windsor Ward 5",
-    "satya": 106,
-    "gloria": 203
-  },
-  {
-    "ward": "Village of Windsor Ward 3",
-    "satya": 283,
-    "gloria": 327
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 5",
-    "satya": 136,
-    "gloria": 234
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 6",
-    "satya": 97,
-    "gloria": 193
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 6",
-    "satya": 97,
-    "gloria": 193
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 2",
-    "satya": 222,
-    "gloria": 298
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 3",
-    "satya": 114,
-    "gloria": 212
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 4",
-    "satya": 89,
-    "gloria": 183
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 6",
-    "satya": 97,
-    "gloria": 193
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 6",
-    "satya": 97,
-    "gloria": 193
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 1",
-    "satya": 127,
-    "gloria": 226
-  },
-  {
-    "ward": "Town of Cottage Grove Ward 4",
-    "satya": 89,
-    "gloria": 183
-  },
-  {
-    "ward": "Village of Cottage Grove Ward 2",
-    "satya": 80,
-    "gloria": 170
-  },
-  {
-    "ward": "Village of Cottage Grove Ward 1",
-    "satya": 208,
-    "gloria": 289
-  },
-  {
-    "ward": "Village of Cottage Grove Ward 3",
-    "satya": 333,
-    "gloria": 345
-  },
-  {
-    "ward": "Village of Cottage Grove Ward 4",
-    "satya": 185,
-    "gloria": 275
-  },
-  {
-    "ward": "Village of Cottage Grove Ward 7",
+    "ward": "C Madison Wd 026",
     "satya": 72,
-    "gloria": 160
+    "gloria": 85,
+    "total": 157
   },
   {
-    "ward": "Village of Cottage Grove Ward 8",
-    "satya": 80,
-    "gloria": 171
+    "ward": "C Madison Wd 027",
+    "satya": 165,
+    "gloria": 160,
+    "total": 327
   },
   {
-    "ward": "Village of Cottage Grove Ward 9",
-    "satya": 141,
-    "gloria": 239
+    "ward": "C Madison Wd 028",
+    "satya": 712,
+    "gloria": 495,
+    "total": 1212
   },
   {
-    "ward": "Village of Cottage Grove Ward 6",
-    "satya": 238,
-    "gloria": 306
+    "ward": "C Madison Wd 029",
+    "satya": 795,
+    "gloria": 391,
+    "total": 1200
   },
   {
-    "ward": "Village of Cottage Grove Ward 5",
-    "satya": 173,
-    "gloria": 265
+    "ward": "C Madison Wd 030",
+    "satya": 423,
+    "gloria": 282,
+    "total": 712
   },
   {
-    "ward": "Village of Cottage Grove Ward 10",
-    "satya": 148,
-    "gloria": 245
+    "ward": "C Madison Wd 031",
+    "satya": 339,
+    "gloria": 326,
+    "total": 668
   },
   {
-    "ward": "Village of Cottage Grove Ward 11",
-    "satya": 208,
-    "gloria": 290
+    "ward": "C Madison Wd 032",
+    "satya": 598,
+    "gloria": 604,
+    "total": 1207
   },
   {
-    "ward": "Town of Sun Prairie Ward 3",
-    "satya": 297,
-    "gloria": 333
-  },
-  {
-    "ward": "Town of Sun Prairie Ward 3",
-    "satya": 297,
-    "gloria": 333
-  },
-  {
-    "ward": "Town of Sun Prairie Ward 2",
-    "satya": 320,
-    "gloria": 341
-  },
-  {
-    "ward": "Town of Sun Prairie Ward 3",
-    "satya": 297,
-    "gloria": 333
-  },
-  {
-    "ward": "Town of Sun Prairie Ward 3",
-    "satya": 297,
-    "gloria": 333
-  },
-  {
-    "ward": "Town of Sun Prairie Ward 1",
-    "satya": 239,
-    "gloria": 307
-  },
-  {
-    "ward": "Town of Sun Prairie Ward 3",
-    "satya": 297,
-    "gloria": 333
-  },
-  {
-    "ward": "Town of Sun Prairie Ward 2",
-    "satya": 320,
-    "gloria": 341
-  },
-  {
-    "ward": "Village of McFarland Ward 3",
-    "satya": 262,
-    "gloria": 318
-  },
-  {
-    "ward": "Village of McFarland Ward 1",
-    "satya": 340,
-    "gloria": 348
-  },
-  {
-    "ward": "Village of McFarland Ward 5",
-    "satya": 213,
-    "gloria": 292
-  },
-  {
-    "ward": "Village of McFarland Ward 10",
-    "satya": 275,
-    "gloria": 324
-  },
-  {
-    "ward": "Village of McFarland Ward 7",
-    "satya": 86,
-    "gloria": 180
-  },
-  {
-    "ward": "Village of McFarland Ward 9",
-    "satya": 282,
-    "gloria": 327
-  },
-  {
-    "ward": "Village of McFarland Ward 6",
-    "satya": 89,
-    "gloria": 182
-  },
-  {
-    "ward": "Village of McFarland Ward 2",
-    "satya": 74,
-    "gloria": 163
-  },
-  {
-    "ward": "Village of McFarland Ward 8",
-    "satya": 270,
-    "gloria": 322
-  },
-  {
-    "ward": "Village of McFarland Ward 4",
-    "satya": 84,
-    "gloria": 177
-  },
-  {
-    "ward": "Village of McFarland Ward 12",
-    "satya": 146,
-    "gloria": 244
-  },
-  {
-    "ward": "Village of McFarland Ward 13",
-    "satya": 349,
-    "gloria": 350
-  },
-  {
-    "ward": "Village of McFarland Ward 11",
-    "satya": 260,
-    "gloria": 318
-  },
-  {
-    "ward": "City of Stoughton Ward 4",
-    "satya": 129,
-    "gloria": 227
-  },
-  {
-    "ward": "City of Stoughton Ward 3",
-    "satya": 318,
-    "gloria": 341
-  },
-  {
-    "ward": "City of Stoughton Ward 8",
-    "satya": 113,
-    "gloria": 211
-  },
-  {
-    "ward": "City of Stoughton Ward 1",
-    "satya": 105,
-    "gloria": 202
-  },
-  {
-    "ward": "City of Stoughton Ward 7",
-    "satya": 85,
-    "gloria": 178
-  },
-  {
-    "ward": "City of Stoughton Ward 6",
-    "satya": 127,
-    "gloria": 225
-  },
-  {
-    "ward": "City of Stoughton Ward 2",
-    "satya": 114,
-    "gloria": 213
-  },
-  {
-    "ward": "City of Stoughton Ward 5",
-    "satya": 138,
-    "gloria": 236
-  },
-  {
-    "ward": "City of Stoughton Ward 4",
-    "satya": 129,
-    "gloria": 227
-  },
-  {
-    "ward": "City of Stoughton Ward 9",
-    "satya": 115,
-    "gloria": 214
-  },
-  {
-    "ward": "Town of Dunkirk Ward 1",
-    "satya": 60,
-    "gloria": 142
-  },
-  {
-    "ward": "Town of Dunkirk Ward 3",
-    "satya": 80,
-    "gloria": 172
-  },
-  {
-    "ward": "Town of Dunkirk Ward 1",
-    "satya": 60,
-    "gloria": 142
-  },
-  {
-    "ward": "Town of Dunkirk Ward 6",
-    "satya": 140,
-    "gloria": 238
-  },
-  {
-    "ward": "Town of Dunkirk Ward 3",
-    "satya": 80,
-    "gloria": 172
-  },
-  {
-    "ward": "Town of Dunkirk Ward 1",
-    "satya": 60,
-    "gloria": 142
-  },
-  {
-    "ward": "Town of Dunkirk Ward 2",
+    "ward": "C Madison Wd 033",
     "satya": 234,
-    "gloria": 304
+    "gloria": 302,
+    "total": 545
   },
   {
-    "ward": "Town of Dunkirk Ward 5",
-    "satya": 109,
-    "gloria": 207
+    "ward": "C Madison Wd 034",
+    "satya": 396,
+    "gloria": 459,
+    "total": 861
   },
   {
-    "ward": "Town of Dunkirk Ward 4",
-    "satya": 133,
-    "gloria": 231
+    "ward": "C Madison Wd 035",
+    "satya": 474,
+    "gloria": 615,
+    "total": 1094
   },
   {
-    "ward": "Town of Dunkirk Ward 3",
-    "satya": 80,
-    "gloria": 172
+    "ward": "C Madison Wd 036",
+    "satya": 299,
+    "gloria": 267,
+    "total": 568
   },
   {
-    "ward": "Town of Dunkirk Ward 3",
-    "satya": 80,
-    "gloria": 172
+    "ward": "C Madison Wd 037",
+    "satya": 508,
+    "gloria": 513,
+    "total": 1030
   },
   {
-    "ward": "Town of Dunkirk Ward 3",
-    "satya": 80,
-    "gloria": 172
+    "ward": "C Madison Wd 038",
+    "satya": 295,
+    "gloria": 296,
+    "total": 599
   },
   {
-    "ward": "Town of Dunkirk Ward 1",
-    "satya": 60,
-    "gloria": 142
+    "ward": "C Madison Wd 039",
+    "satya": 369,
+    "gloria": 458,
+    "total": 830
   },
   {
-    "ward": "Town of Pleasant Springs Ward 4",
-    "satya": 137,
-    "gloria": 235
+    "ward": "C Madison Wd 040",
+    "satya": 1284,
+    "gloria": 539,
+    "total": 1833
   },
   {
-    "ward": "Town of Pleasant Springs Ward 2",
-    "satya": 336,
-    "gloria": 346
+    "ward": "C Madison Wd 041",
+    "satya": 1146,
+    "gloria": 466,
+    "total": 1632
   },
   {
-    "ward": "Town of Pleasant Springs Ward 1",
-    "satya": 232,
-    "gloria": 303
+    "ward": "C Madison Wd 042",
+    "satya": 931,
+    "gloria": 399,
+    "total": 1334
   },
   {
-    "ward": "Town of Pleasant Springs Ward 3",
-    "satya": 333,
-    "gloria": 345
+    "ward": "C Madison Wd 043",
+    "satya": 1013,
+    "gloria": 421,
+    "total": 1447
   },
   {
-    "ward": "Town of Dunn Ward 4",
-    "satya": 230,
-    "gloria": 302
+    "ward": "C Madison Wd 044",
+    "satya": 675,
+    "gloria": 353,
+    "total": 1034
   },
   {
-    "ward": "Town of Dunn Ward 5",
-    "satya": 225,
-    "gloria": 299
+    "ward": "C Madison Wd 045",
+    "satya": 184,
+    "gloria": 78,
+    "total": 264
   },
   {
-    "ward": "Town of Dunn Ward 1",
-    "satya": 143,
-    "gloria": 241
+    "ward": "C Madison Wd 046",
+    "satya": 897,
+    "gloria": 414,
+    "total": 1322
   },
   {
-    "ward": "Town of Dunn Ward 7",
-    "satya": 293,
-    "gloria": 331
+    "ward": "C Madison Wd 047",
+    "satya": 485,
+    "gloria": 332,
+    "total": 836
   },
   {
-    "ward": "Town of Dunn Ward 6",
-    "satya": 176,
-    "gloria": 268
+    "ward": "C Madison Wd 048",
+    "satya": 476,
+    "gloria": 442,
+    "total": 932
   },
   {
-    "ward": "Town of Dunn Ward 2",
-    "satya": 193,
-    "gloria": 279
+    "ward": "C Madison Wd 049",
+    "satya": 285,
+    "gloria": 293,
+    "total": 583
   },
   {
-    "ward": "Town of Dunn Ward 3",
+    "ward": "C Madison Wd 050",
+    "satya": 237,
+    "gloria": 157,
+    "total": 397
+  },
+  {
+    "ward": "C Madison Wd 051",
+    "satya": 388,
+    "gloria": 200,
+    "total": 591
+  },
+  {
+    "ward": "C Madison Wd 052",
+    "satya": 565,
+    "gloria": 330,
+    "total": 899
+  },
+  {
+    "ward": "C Madison Wd 053",
+    "satya": 651,
+    "gloria": 346,
+    "total": 1003
+  },
+  {
+    "ward": "C Madison Wd 054",
+    "satya": 483,
+    "gloria": 460,
+    "total": 958
+  },
+  {
+    "ward": "C Madison Wd 055",
+    "satya": 741,
+    "gloria": 347,
+    "total": 1096
+  },
+  {
+    "ward": "C Madison Wd 056",
+    "satya": 222,
+    "gloria": 177,
+    "total": 403
+  },
+  {
+    "ward": "C Madison Wd 057",
+    "satya": 539,
+    "gloria": 553,
+    "total": 1102
+  },
+  {
+    "ward": "C Madison Wd 058",
+    "satya": 505,
+    "gloria": 547,
+    "total": 1059
+  },
+  {
+    "ward": "C Madison Wd 059",
+    "satya": 432,
+    "gloria": 373,
+    "total": 815
+  },
+  {
+    "ward": "C Madison Wd 060",
+    "satya": 364,
+    "gloria": 304,
+    "total": 669
+  },
+  {
+    "ward": "C Madison Wd 061",
+    "satya": 505,
+    "gloria": 388,
+    "total": 898
+  },
+  {
+    "ward": "C Madison Wd 062",
+    "satya": 181,
+    "gloria": 79,
+    "total": 261
+  },
+  {
+    "ward": "C Madison Wd 063",
+    "satya": 719,
+    "gloria": 560,
+    "total": 1293
+  },
+  {
+    "ward": "C Madison Wd 064",
+    "satya": 435,
+    "gloria": 310,
+    "total": 749
+  },
+  {
+    "ward": "C Madison Wd 065",
+    "satya": 755,
+    "gloria": 492,
+    "total": 1257
+  },
+  {
+    "ward": "C Madison Wd 066",
+    "satya": 691,
+    "gloria": 411,
+    "total": 1108
+  },
+  {
+    "ward": "C Madison Wd 067",
+    "satya": 704,
+    "gloria": 416,
+    "total": 1127
+  },
+  {
+    "ward": "C Madison Wd 068",
+    "satya": 340,
+    "gloria": 194,
+    "total": 537
+  },
+  {
+    "ward": "C Madison Wd 069",
+    "satya": 480,
+    "gloria": 406,
+    "total": 890
+  },
+  {
+    "ward": "C Madison Wd 070",
+    "satya": 781,
+    "gloria": 591,
+    "total": 1381
+  },
+  {
+    "ward": "C Madison Wd 071",
+    "satya": 845,
+    "gloria": 492,
+    "total": 1343
+  },
+  {
+    "ward": "C Madison Wd 072",
+    "satya": 521,
+    "gloria": 271,
+    "total": 796
+  },
+  {
+    "ward": "C Madison Wd 073",
+    "satya": 830,
+    "gloria": 555,
+    "total": 1387
+  },
+  {
+    "ward": "C Madison Wd 074",
+    "satya": 388,
+    "gloria": 365,
+    "total": 758
+  },
+  {
+    "ward": "C Madison Wd 075",
+    "satya": 399,
+    "gloria": 460,
+    "total": 865
+  },
+  {
+    "ward": "C Madison Wd 076",
     "satya": 180,
-    "gloria": 271
+    "gloria": 138,
+    "total": 320
   },
   {
-    "ward": "Town of Dunn Ward 7",
-    "satya": 293,
-    "gloria": 331
+    "ward": "C Madison Wd 077",
+    "satya": 192,
+    "gloria": 155,
+    "total": 353
   },
   {
-    "ward": "Town of Rutland Ward 1",
-    "satya": 268,
-    "gloria": 321
+    "ward": "C Madison Wd 078",
+    "satya": 125,
+    "gloria": 88,
+    "total": 215
   },
   {
-    "ward": "Town of Rutland Ward 1",
-    "satya": 268,
-    "gloria": 321
+    "ward": "C Madison Wd 079",
+    "satya": 390,
+    "gloria": 315,
+    "total": 708
   },
   {
-    "ward": "Town of Rutland Ward 2",
-    "satya": 213,
-    "gloria": 292
+    "ward": "C Madison Wd 080",
+    "satya": 1125,
+    "gloria": 793,
+    "total": 1921
   },
   {
-    "ward": "Town of Rutland Ward 1",
-    "satya": 268,
-    "gloria": 321
+    "ward": "C Madison Wd 081",
+    "satya": 209,
+    "gloria": 183,
+    "total": 394
   },
   {
-    "ward": "Town of Rutland Ward 2",
-    "satya": 213,
-    "gloria": 292
+    "ward": "C Madison Wd 082",
+    "satya": 565,
+    "gloria": 599,
+    "total": 1177
   },
   {
-    "ward": "Town of Burke Ward 2",
-    "satya": 147,
-    "gloria": 244
+    "ward": "C Madison Wd 083",
+    "satya": 385,
+    "gloria": 434,
+    "total": 823
   },
   {
-    "ward": "Town of Burke Ward 4",
-    "satya": 85,
-    "gloria": 178
+    "ward": "C Madison Wd 084",
+    "satya": 326,
+    "gloria": 310,
+    "total": 641
   },
   {
-    "ward": "Town of Burke Ward 6",
-    "satya": 333,
-    "gloria": 346
+    "ward": "C Madison Wd 085",
+    "satya": 974,
+    "gloria": 557,
+    "total": 1536
   },
   {
-    "ward": "Town of Burke Ward 7",
-    "satya": 151,
-    "gloria": 248
+    "ward": "C Madison Wd 086",
+    "satya": 589,
+    "gloria": 456,
+    "total": 1049
   },
   {
-    "ward": "Town of Burke Ward 2",
-    "satya": 147,
-    "gloria": 244
+    "ward": "C Madison Wd 087",
+    "satya": 651,
+    "gloria": 517,
+    "total": 1173
   },
   {
-    "ward": "Town of Burke Ward 5",
-    "satya": 236,
-    "gloria": 306
+    "ward": "C Madison Wd 088",
+    "satya": 646,
+    "gloria": 614,
+    "total": 1266
   },
   {
-    "ward": "Town of Burke Ward 5",
-    "satya": 236,
-    "gloria": 306
+    "ward": "C Madison Wd 089",
+    "satya": 674,
+    "gloria": 485,
+    "total": 1171
   },
   {
-    "ward": "Town of Burke Ward 6",
-    "satya": 333,
-    "gloria": 346
+    "ward": "C Madison Wd 090",
+    "satya": 445,
+    "gloria": 365,
+    "total": 810
   },
   {
-    "ward": "Town of Burke Ward 2",
-    "satya": 147,
-    "gloria": 244
+    "ward": "C Madison Wd 091",
+    "satya": 828,
+    "gloria": 731,
+    "total": 1566
   },
   {
-    "ward": "Town of Burke Ward 2",
-    "satya": 147,
-    "gloria": 244
+    "ward": "C Madison Wd 092",
+    "satya": 611,
+    "gloria": 411,
+    "total": 1025
   },
   {
-    "ward": "Town of Burke Ward 1",
-    "satya": 120,
-    "gloria": 218
+    "ward": "C Madison Wd 093",
+    "satya": 379,
+    "gloria": 240,
+    "total": 621
   },
   {
-    "ward": "Town of Burke Ward 1",
-    "satya": 120,
-    "gloria": 218
+    "ward": "C Madison Wd 094",
+    "satya": 886,
+    "gloria": 587,
+    "total": 1479
   },
   {
-    "ward": "Town of Burke Ward 2",
-    "satya": 147,
-    "gloria": 244
+    "ward": "C Madison Wd 095",
+    "satya": 212,
+    "gloria": 150,
+    "total": 364
   },
   {
-    "ward": "Town of Burke Ward 5",
-    "satya": 236,
-    "gloria": 306
+    "ward": "C Madison Wd 096",
+    "satya": 710,
+    "gloria": 688,
+    "total": 1406
   },
   {
-    "ward": "Town of Burke Ward 4",
-    "satya": 85,
-    "gloria": 178
+    "ward": "C Madison Wd 097",
+    "satya": 516,
+    "gloria": 457,
+    "total": 977
   },
   {
-    "ward": "Town of Burke Ward 3",
-    "satya": 194,
-    "gloria": 281
+    "ward": "C Madison Wd 098",
+    "satya": 766,
+    "gloria": 681,
+    "total": 1453
   },
   {
-    "ward": "Town of Burke Ward 7",
-    "satya": 151,
-    "gloria": 248
+    "ward": "C Madison Wd 099",
+    "satya": 237,
+    "gloria": 220,
+    "total": 458
   },
   {
-    "ward": "Town of Burke Ward 2",
-    "satya": 147,
-    "gloria": 244
+    "ward": "C Madison Wd 100",
+    "satya": 116,
+    "gloria": 104,
+    "total": 221
   },
   {
-    "ward": "Town of Blooming Grove Ward 2",
-    "satya": 327,
-    "gloria": 343
+    "ward": "C Madison Wd 101",
+    "satya": 426,
+    "gloria": 313,
+    "total": 743
   },
   {
-    "ward": "Town of Blooming Grove Ward 1",
-    "satya": 112,
-    "gloria": 210
+    "ward": "C Madison Wd 102",
+    "satya": 394,
+    "gloria": 294,
+    "total": 697
   },
   {
-    "ward": "Town of Blooming Grove Ward 3",
-    "satya": 95,
-    "gloria": 191
+    "ward": "C Madison Wd 103",
+    "satya": 682,
+    "gloria": 586,
+    "total": 1278
   },
   {
-    "ward": "Town of Blooming Grove Ward 4",
-    "satya": 165,
-    "gloria": 259
+    "ward": "C Madison Wd 104",
+    "satya": 750,
+    "gloria": 619,
+    "total": 1375
   },
   {
-    "ward": "Town of Blooming Grove Ward 4",
-    "satya": 165,
-    "gloria": 259
+    "ward": "C Madison Wd 105",
+    "satya": 559,
+    "gloria": 412,
+    "total": 980
   },
   {
-    "ward": "Town of Blooming Grove Ward 6",
-    "satya": 89,
-    "gloria": 183
+    "ward": "C Madison Wd 106",
+    "satya": 594,
+    "gloria": 578,
+    "total": 1181
   },
   {
-    "ward": "Town of Blooming Grove Ward 6",
-    "satya": 89,
-    "gloria": 183
+    "ward": "C Madison Wd 107",
+    "satya": 744,
+    "gloria": 566,
+    "total": 1315
   },
   {
-    "ward": "Town of Blooming Grove Ward 6",
-    "satya": 89,
-    "gloria": 183
+    "ward": "C Madison Wd 108",
+    "satya": 170,
+    "gloria": 122,
+    "total": 294
   },
   {
-    "ward": "Town of Blooming Grove Ward 6",
-    "satya": 89,
-    "gloria": 183
+    "ward": "C Madison Wd 109",
+    "satya": 370,
+    "gloria": 277,
+    "total": 651
   },
   {
-    "ward": "Town of Blooming Grove Ward 4",
-    "satya": 165,
-    "gloria": 259
+    "ward": "C Madison Wd 110",
+    "satya": 536,
+    "gloria": 346,
+    "total": 887
   },
   {
-    "ward": "Town of Blooming Grove Ward 4",
-    "satya": 165,
-    "gloria": 259
+    "ward": "C Madison Wd 111",
+    "satya": 285,
+    "gloria": 236,
+    "total": 528
   },
   {
-    "ward": "Town of Blooming Grove Ward 4",
-    "satya": 165,
-    "gloria": 259
+    "ward": "C Madison Wd 112",
+    "satya": 196,
+    "gloria": 143,
+    "total": 343
   },
   {
-    "ward": "Town of Blooming Grove Ward 6",
-    "satya": 89,
-    "gloria": 183
+    "ward": "C Madison Wd 113",
+    "satya": 851,
+    "gloria": 750,
+    "total": 1617
   },
   {
-    "ward": "Town of Blooming Grove Ward 7",
-    "satya": 203,
-    "gloria": 287
+    "ward": "C Madison Wd 114",
+    "satya": 928,
+    "gloria": 610,
+    "total": 1548
   },
   {
-    "ward": "Town of Blooming Grove Ward 7",
-    "satya": 203,
-    "gloria": 287
+    "ward": "C Madison Wd 115",
+    "satya": 687,
+    "gloria": 521,
+    "total": 1210
   },
   {
-    "ward": "Town of Blooming Grove Ward 4",
-    "satya": 165,
-    "gloria": 259
+    "ward": "C Madison Wd 116",
+    "satya": 642,
+    "gloria": 642,
+    "total": 1293
   },
   {
-    "ward": "Town of Blooming Grove Ward 5",
-    "satya": 316,
-    "gloria": 340
+    "ward": "C Madison Wd 117",
+    "satya": 598,
+    "gloria": 458,
+    "total": 1065
   },
   {
-    "ward": "Town of Blooming Grove Ward 5",
-    "satya": 316,
-    "gloria": 340
+    "ward": "C Madison Wd 118",
+    "satya": 321,
+    "gloria": 226,
+    "total": 549
   },
   {
-    "ward": "Town of Blooming Grove Ward 7",
-    "satya": 203,
-    "gloria": 287
+    "ward": "C Madison Wd 119",
+    "satya": 554,
+    "gloria": 509,
+    "total": 1078
   },
   {
-    "ward": "Village of Maple Bluff Ward 1",
-    "satya": 328,
-    "gloria": 344
+    "ward": "C Madison Wd 120",
+    "satya": 1,
+    "gloria": 1,
+    "total": 2
   },
   {
-    "ward": "Village of Maple Bluff Ward 2",
-    "satya": 158,
-    "gloria": 254
+    "ward": "C Madison Wd 121",
+    "satya": 2,
+    "gloria": 2,
+    "total": 4
+  },
+  {
+    "ward": "C Madison Wd 122",
+    "satya": 3,
+    "gloria": 2,
+    "total": 5
+  },
+  {
+    "ward": "C Madison Wd 123",
+    "satya": 21,
+    "gloria": 20,
+    "total": 41
+  },
+  {
+    "ward": "C Madison Wd 124",
+    "satya": 42,
+    "gloria": 26,
+    "total": 68
+  },
+  {
+    "ward": "C Madison Wd 125",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 126",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 127",
+    "satya": 60,
+    "gloria": 56,
+    "total": 117
+  },
+  {
+    "ward": "C Madison Wd 128",
+    "satya": 138,
+    "gloria": 114,
+    "total": 255
+  },
+  {
+    "ward": "C Madison Wd 129",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 130",
+    "satya": 178,
+    "gloria": 87,
+    "total": 266
+  },
+  {
+    "ward": "C Madison Wd 131",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 132",
+    "satya": 27,
+    "gloria": 50,
+    "total": 79
+  },
+  {
+    "ward": "C Madison Wd 133",
+    "satya": 83,
+    "gloria": 95,
+    "total": 179
+  },
+  {
+    "ward": "C Madison Wd 134",
+    "satya": 38,
+    "gloria": 33,
+    "total": 72
+  },
+  {
+    "ward": "C Madison Wd 135",
+    "satya": 357,
+    "gloria": 197,
+    "total": 556
+  },
+  {
+    "ward": "C Madison Wd 136",
+    "satya": 1,
+    "gloria": 0,
+    "total": 2
+  },
+  {
+    "ward": "C Madison Wd 137",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 138",
+    "satya": 55,
+    "gloria": 40,
+    "total": 95
+  },
+  {
+    "ward": "C Madison Wd 139",
+    "satya": 28,
+    "gloria": 23,
+    "total": 51
+  },
+  {
+    "ward": "C Madison Wd 140",
+    "satya": 73,
+    "gloria": 75,
+    "total": 149
+  },
+  {
+    "ward": "C Madison Wd 141",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 142",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 143",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 144",
+    "satya": 0,
+    "gloria": 1,
+    "total": 1
+  },
+  {
+    "ward": "C Madison Wd 145",
+    "satya": 69,
+    "gloria": 47,
+    "total": 116
+  },
+  {
+    "ward": "C Madison Wd 146",
+    "satya": 42,
+    "gloria": 32,
+    "total": 74
+  },
+  {
+    "ward": "C Madison Wd 147",
+    "satya": 184,
+    "gloria": 95,
+    "total": 281
+  },
+  {
+    "ward": "C Madison Wd 148",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 149",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 150",
+    "satya": 62,
+    "gloria": 65,
+    "total": 127
+  },
+  {
+    "ward": "C Madison Wd 151",
+    "satya": 0,
+    "gloria": 2,
+    "total": 2
+  },
+  {
+    "ward": "C Madison Wd 152",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 153",
+    "satya": 87,
+    "gloria": 56,
+    "total": 145
+  },
+  {
+    "ward": "C Madison Wd 154",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 155",
+    "satya": 0,
+    "gloria": 0,
+    "total": 0
+  },
+  {
+    "ward": "C Madison Wd 156",
+    "satya": 4,
+    "gloria": 0,
+    "total": 4
   }
 ]
