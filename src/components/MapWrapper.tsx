@@ -1,21 +1,32 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { PrecinctResult } from '@/lib/api';
-
-const DynamicMap = dynamic(() => import('./Map'), {
-    ssr: false,
-    loading: () => <div className="w-full h-full bg-slate-900 animate-pulse flex items-center justify-center text-slate-500">Loading Map...</div>
-}) as any;
+import Map from './Map';
+import { PrecinctResult, RaceResult } from '@/lib/api';
+import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
+import { useState } from 'react';
 
 interface MapWrapperProps {
-    precinctResults: any[];
+    precinctResults: PrecinctResult[];
     isLoading: boolean;
-    selectedWard?: { name: string; num: string } | null;
-    raceResult?: any;
-    onReset?: () => void;
+    selectedWard: { name: string; num: string } | null;
+    raceResult: RaceResult | undefined;
+    onReset: () => void;
 }
 
 export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset }: MapWrapperProps) {
-    return <DynamicMap precinctResults={precinctResults} isLoading={isLoading} selectedWard={selectedWard} raceResult={raceResult} onReset={onReset} />;
+    const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
+
+    return (
+        <div className="relative w-full h-full">
+            <MapOverlayControl currentMode={overlayMode} onChange={setOverlayMode} />
+            <Map
+                precinctResults={precinctResults}
+                isLoading={isLoading}
+                selectedWard={selectedWard}
+                raceResult={raceResult}
+                onReset={onReset}
+                overlayMode={overlayMode}
+            />
+        </div>
+    );
 }

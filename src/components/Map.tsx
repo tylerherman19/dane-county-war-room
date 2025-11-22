@@ -1,10 +1,10 @@
-'use client';
-
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { PrecinctResult } from '@/lib/api';
+import { PrecinctResult, RaceResult } from '@/lib/api';
+import { getWardAnalysis, WardAnalysis } from '@/lib/analysis-data';
+import { OverlayMode } from './MapOverlayControl';
 
 // Fix for default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -17,9 +17,10 @@ L.Icon.Default.mergeOptions({
 interface MapProps {
     precinctResults: PrecinctResult[] | undefined;
     isLoading: boolean;
-    selectedWard?: { name: string; num: string } | null;
-    raceResult?: any;
-    onReset?: () => void;
+    selectedWard: { name: string; num: string } | null;
+    raceResult: RaceResult | undefined;
+    onReset: () => void;
+    overlayMode: OverlayMode;
 }
 
 function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null; onReset?: () => void }) {
@@ -108,70 +109,50 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
 
 interface HSL { h: number; s: number; l: number; }
 
-const PALETTE_2: HSL[] = [{ h: 217, s: 91, l: 50 }, { h: 0, s: 85, l: 50 }];
-const PALETTE_4: HSL[] = [...PALETTE_2, { h: 45, s: 100, l: 50 }, { h: 120, s: 60, l: 35 }];
-const PALETTE_MANY: HSL[] = [...PALETTE_4, { h: 271, s: 80, l: 55 }, { h: 20, s: 90, l: 50 }, { h: 180, s: 70, l: 40 }];
+// Helper to assign colors to candidates dynamically
+function assignCandidateColors(candidates: { candidateName: string; party: string }[]): Record<string, HSL> {
+    const colors: Record<string, HSL> = {};
 
-function assignCandidateColors(candidates: any[]): Record<string, HSL> {
-    if (!candidates || candidates.length === 0) return {};
+    // Standard party colors
+    const partyColors: Record<string, HSL> = {
+        'Democratic': { h: 215, s: 90, l: 50 }, // Blue
+        'Republican': { h: 0, s: 90, l: 50 },   // Red
+        'Green': { h: 140, s: 70, l: 45 },      // Green
+        'Libertarian': { h: 45, s: 90, l: 50 }, // Gold
+        'Independent': { h: 280, s: 60, l: 60 }, // Purple
+        'Nonpartisan': { h: 200, s: 10, l: 50 }  // Grey
+    };
 
-    const assignments: Record<string, HSL> = {};
-    const count = candidates.length;
+    // Fallback palette for non-partisan or multiple candidates of same party
+    const palette: HSL[] = [
+        { h: 215, s: 80, l: 55 }, // Blue
+        { h: 160, s: 70, l: 45 }, // Teal
+        { h: 280, s: 60, l: 60 }, // Purple
+        { h: 30, s: 90, l: 55 },  // Orange
+        { h: 330, s: 70, l: 55 }, // Pink
+    ];
 
-    // Determine Palette
-    let palette = PALETTE_MANY;
-    if (count <= 2) palette = PALETTE_2;
-    else if (count <= 4) palette = PALETTE_4;
+    let paletteIndex = 0;
 
-    // Create a pool of available colors
-    let availableColors = [...palette];
-    const unassignedCandidates: any[] = [];
-
-    // 1. Assign Fixed Parties (Dem/Rep)
     candidates.forEach(c => {
         const name = c.candidateName.trim();
-        const party = (c.party || '').toLowerCase();
-        const nameLower = name.toLowerCase();
-
-        // Blue (Dem) is index 0 in all palettes
-        // Red (Rep) is index 1 in all palettes
-
-        if (party.includes('democrat') || nameLower.includes('satya') || nameLower.includes('biden') || nameLower.includes('evers')) {
-            const blue = palette[0];
-            if (availableColors.includes(blue)) {
-                assignments[name] = blue;
-                availableColors = availableColors.filter(col => col !== blue);
-            } else {
-                unassignedCandidates.push(c);
-            }
-        } else if (party.includes('republican') || nameLower.includes('trump') || nameLower.includes('johnson')) {
-            const red = palette[1];
-            if (availableColors.includes(red)) {
-                assignments[name] = red;
-                availableColors = availableColors.filter(col => col !== red);
-            } else {
-                unassignedCandidates.push(c);
-            }
+        // Check for specific known candidates (optional hardcoding for key figures)
+        if (name.includes('Biden') || name.includes('Harris') || name.includes('Evers')) {
+            colors[name] = { h: 215, s: 90, l: 50 };
+        } else if (name.includes('Trump') || name.includes('Michels')) {
+            colors[name] = { h: 0, s: 90, l: 50 };
+        } else if (partyColors[c.party]) {
+            colors[name] = partyColors[c.party];
         } else {
-            unassignedCandidates.push(c);
+            colors[name] = palette[paletteIndex % palette.length];
+            paletteIndex++;
         }
     });
 
-    // 2. Assign Remaining Candidates to Remaining Colors
-    unassignedCandidates.forEach(c => {
-        const name = c.candidateName.trim();
-        if (availableColors.length > 0) {
-            assignments[name] = availableColors.shift()!;
-        } else {
-            // Fallback: Slate-ish
-            assignments[name] = { h: 215, s: 16, l: 47 };
-        }
-    });
-
-    return assignments;
+    return colors;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
@@ -180,36 +161,8 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
     // Key: "Municipality Name-WardNumber" (normalized)
     // Value: PrecinctResult[] (usually just one, but keeping array structure for compatibility)
     const resultsMap = useMemo(() => {
-        if (!precinctResults) return {};
-
         const map: Record<string, PrecinctResult[]> = {};
         precinctResults.forEach(r => {
-            // Normalize keys for consistent lookup
-            // Note: The GeoJSON properties might differ slightly, so we need a robust key.
-            // We'll use a combination of normalized name and ward number.
-            // Ideally, we should use a unique ID if available, but name+ward is what we have.
-
-            // We need to match how we construct the key in the style function.
-            // Let's store by Ward Number primarily if unique within a race? 
-            // No, ward numbers repeat across municipalities (e.g. Madison Ward 1 vs Fitchburg Ward 1).
-            // So we need Municipality + Ward.
-
-            // Let's use a simplified key: `${wardNumber}-${precinctName.toLowerCase()}`
-            // But precinctName in result might be "City of Madison" and GeoJSON might be "Madison City" or "Madison".
-            // The existing logic used `includes`.
-
-            // To support O(1), we need exact matches or a better strategy.
-            // Since we can't easily normalize all names perfectly for O(1) without a fuzzy match map,
-            // we might need a hybrid approach or pre-process the GeoJSON names to match API names.
-
-            // However, for this specific app, let's look at the data.
-            // API: "City of Madison"
-            // GeoJSON: "Madison" or "City of Madison"?
-
-            // Let's stick to the existing logic BUT optimize it by pre-grouping by Ward Number.
-            // Then we only filter a tiny subset (wards with same number).
-            // This is O(1) effectively (O(M) where M is small, like < 5 municipalities share a ward number).
-
             const wardNum = parseInt(r.wardNumber).toString(); // Normalize to string "1", "2"
             if (!map[wardNum]) map[wardNum] = [];
             map[wardNum].push(r);
@@ -259,24 +212,155 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             const winner = sorted[0];
             const runnerUp = sorted[1];
 
-            // Determine Margin
-            const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+            // Get Analysis Data
+            const analysis = getWardAnalysis(wardNum, municipality);
 
-            // Determine Color
-            const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
+            // --- STANDARD VIEW ---
+            if (overlayMode === 'NONE') {
+                // Determine Margin
+                const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
 
-            // Calculate Lightness based on Margin - Traditional Election Map Style
-            const lightness = 65 - (Math.min(margin, 0.5) * 30);
+                // Determine Color
+                const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
 
-            const colorString = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
+                // Calculate Lightness based on Margin - Traditional Election Map Style
+                const lightness = 65 - (Math.min(margin, 0.5) * 30);
 
-            baseStyle = {
-                fillColor: colorString,
-                weight: 1,
-                opacity: 1,
-                color: '#334155',
-                fillOpacity: 0.65 // Transparent enough to see road map beneath
-            };
+                const colorString = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
+
+                baseStyle = {
+                    fillColor: colorString,
+                    weight: 1,
+                    opacity: 1,
+                    color: '#334155',
+                    fillOpacity: 0.65
+                };
+            }
+            // --- PRESIDENTIAL BENCHMARK ---
+            else if (overlayMode === 'PRESIDENTIAL') {
+                // Calculate current Dem margin (assuming winner is Dem for simplicity, or finding Dem candidate)
+                // For robustness, let's find the "Democratic" or "Liberal" candidate or just the winner if they are blue.
+                // Simplified: Use winner's margin if they are Blue, else negative.
+                const winnerColor = candidateColors[winner.candidateName.trim()];
+                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260); // Roughly blue hue
+
+                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                if (!isBlue) currentMargin = -currentMargin; // If winner is Red, margin is negative (from Dem perspective)
+
+                // Compare to Biden 2020
+                const diff = currentMargin - analysis.presidentialMargin2020;
+
+                // Color Scale: Red (Underperform) -> Grey -> Blue (Overperform)
+                // Range: -0.2 to +0.2
+                let h = 215; // Blue
+                let s = 80;
+                let l = 50;
+
+                if (diff < 0) {
+                    h = 0; // Red
+                    l = 90 - (Math.min(Math.abs(diff) * 3, 0.5) * 80); // Darker red as underperformance grows
+                    // Actually, let's do:
+                    // 0 -> Grey/White
+                    // -0.2 -> Dark Red
+                    const intensity = Math.min(Math.abs(diff) / 0.2, 1);
+                    l = 90 - (intensity * 40); // 90 -> 50
+                    s = intensity * 80;
+                } else {
+                    h = 215; // Blue
+                    const intensity = Math.min(diff / 0.2, 1);
+                    l = 90 - (intensity * 40); // 90 -> 50
+                    s = intensity * 80;
+                }
+
+                if (Math.abs(diff) < 0.01) {
+                    h = 0; s = 0; l = 80; // Neutral grey
+                }
+
+                baseStyle = {
+                    fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                    weight: 1,
+                    opacity: 1,
+                    color: '#334155',
+                    fillOpacity: 0.75
+                };
+            }
+            // --- TURNOUT HEATMAP ---
+            else if (overlayMode === 'TURNOUT') {
+                const currentTurnout = total / relevantResults[0].registeredVoters;
+                // Compare to average
+                const ratio = currentTurnout / analysis.averageTurnout;
+
+                // Scale: 0.5 (Low) -> 1.0 (Avg) -> 1.5 (High)
+                // Red -> Grey -> Green
+
+                let h = 120; // Green
+                let s = 80;
+                let l = 50;
+
+                if (ratio < 1.0) {
+                    h = 0; s = 0; l = 30 + (ratio * 40); // Dark grey to light grey
+                } else {
+                    h = 140; // Green
+                    const intensity = Math.min((ratio - 1.0) / 0.5, 1);
+                    l = 50 - (intensity * 10); // Slightly darker green for intensity
+                    s = 50 + (intensity * 50); // More saturated
+                }
+
+                // Simplified Heatmap:
+                // 0% -> 100% turnout
+                // 0 = Black, 50 = Grey, 80+ = Bright Green
+                const t = Math.min(currentTurnout, 1.0);
+                if (t < 0.5) {
+                    h = 0; s = 0; l = t * 100; // Black to Grey
+                } else {
+                    h = 140; s = 100; l = 20 + ((t - 0.5) * 120); // Dark Green to Neon
+                    if (l > 70) l = 70; // Cap lightness
+                }
+
+                baseStyle = {
+                    fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                    weight: 1,
+                    opacity: 1,
+                    color: '#334155',
+                    fillOpacity: 0.75
+                };
+            }
+            // --- SWING ANALYSIS ---
+            else if (overlayMode === 'SWING') {
+                // Similar to Presidential but vs Previous Margin
+                const winnerColor = candidateColors[winner.candidateName.trim()];
+                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260);
+
+                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                if (!isBlue) currentMargin = -currentMargin;
+
+                const diff = currentMargin - analysis.previousMargin;
+
+                // Red Shift vs Blue Shift
+                let h = 215;
+                let s = 80;
+                let l = 50;
+
+                if (diff < 0) {
+                    h = 0; // Red Shift
+                    const intensity = Math.min(Math.abs(diff) / 0.15, 1);
+                    l = 90 - (intensity * 40);
+                    s = intensity * 80;
+                } else {
+                    h = 215; // Blue Shift
+                    const intensity = Math.min(diff / 0.15, 1);
+                    l = 90 - (intensity * 40);
+                    s = intensity * 80;
+                }
+
+                baseStyle = {
+                    fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                    weight: 1,
+                    opacity: 1,
+                    color: '#334155',
+                    fillOpacity: 0.75
+                };
+            }
         }
 
         // SPOTLIGHT EFFECT: If a ward is selected, dim everyone else
@@ -298,7 +382,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors]); // Re-create only if data changes
+    }, [resultsMap, candidateColors, overlayMode]); // Re-create if overlay mode changes
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -315,22 +399,104 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             const total = relevantResults[0].ballotscast;
             const sorted = relevantResults.sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
 
+            // Get Analysis Data
+            const analysis = getWardAnalysis(wardNum, municipality);
+
             let popupContent = `<div class="p-2 font-sans text-sm">
                 <div class="text-xs text-slate-400 mb-1 uppercase tracking-wider">${raceResult?.raceName || 'Election Results'}</div>
-                <h3 class="font-bold border-b pb-1 mb-2">${municipality} Ward ${wardNum}</h3>
-                <div class="space-y-1">`;
+                <h3 class="font-bold border-b pb-1 mb-2">${municipality} Ward ${wardNum}</h3>`;
 
-            sorted.forEach((r: PrecinctResult) => {
-                const pct = ((r.votes / total) * 100).toFixed(1);
-                popupContent += `<div class="flex justify-between gap-4">
-                    <span>${r.candidateName}</span>
-                    <span class="font-mono">${r.votes} (${pct}%)</span>
-                </div>`;
-            });
+            // --- DYNAMIC CONTENT BASED ON OVERLAY ---
+            if (overlayMode === 'PRESIDENTIAL') {
+                const winner = sorted[0];
+                // Calculate current margin (simplified for demo)
+                const runnerUp = sorted[1];
+                const winnerColor = candidateColors[winner.candidateName.trim()];
+                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260);
 
-            popupContent += `<div class="mt-2 pt-1 border-t text-xs text-slate-500">
-                Turnout: ${total} / ${relevantResults[0].registeredVoters}
-            </div></div>`;
+                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                if (!isBlue) currentMargin = -currentMargin; // Convert to Dem margin perspective
+
+                const diff = currentMargin - analysis.presidentialMargin2020;
+                const diffPct = (diff * 100).toFixed(1);
+                const sign = diff > 0 ? '+' : '';
+                const colorClass = diff > 0 ? 'text-blue-400' : 'text-red-400';
+
+                popupContent += `
+                    <div class="mb-2">
+                        <div class="text-xs text-slate-400">Vs. Biden 2020</div>
+                        <div class="text-lg font-bold ${colorClass}">${sign}${diffPct}%</div>
+                        <div class="text-xs text-slate-500 mt-1">
+                            Current Margin: ${(currentMargin * 100).toFixed(1)}%<br>
+                            2020 Margin: ${(analysis.presidentialMargin2020 * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                `;
+            }
+            else if (overlayMode === 'TURNOUT') {
+                const currentTurnout = total / relevantResults[0].registeredVoters;
+                const avgTurnout = analysis.averageTurnout;
+                const diff = currentTurnout - avgTurnout;
+                const sign = diff > 0 ? '+' : '';
+                const colorClass = diff > 0 ? 'text-green-400' : 'text-slate-400';
+
+                popupContent += `
+                    <div class="mb-2">
+                        <div class="text-xs text-slate-400">Turnout</div>
+                        <div class="text-lg font-bold text-white">${(currentTurnout * 100).toFixed(1)}%</div>
+                        <div class="text-sm font-medium ${colorClass} mt-1">
+                            ${sign}${(diff * 100).toFixed(1)}% vs Avg
+                        </div>
+                        <div class="text-xs text-slate-500 mt-1">
+                            Avg Turnout: ${(avgTurnout * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                `;
+            }
+            else if (overlayMode === 'SWING') {
+                const winner = sorted[0];
+                const runnerUp = sorted[1];
+                const winnerColor = candidateColors[winner.candidateName.trim()];
+                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260);
+
+                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                if (!isBlue) currentMargin = -currentMargin;
+
+                const swing = currentMargin - analysis.previousMargin;
+                const swingPct = (swing * 100).toFixed(1);
+                const direction = swing > 0 ? 'Dem' : 'Rep';
+                const colorClass = swing > 0 ? 'text-blue-400' : 'text-red-400';
+
+                popupContent += `
+                    <div class="mb-2">
+                        <div class="text-xs text-slate-400">Swing vs Previous</div>
+                        <div class="text-lg font-bold ${colorClass}">${direction} +${Math.abs(parseFloat(swingPct))}%</div>
+                        <div class="text-xs text-slate-500 mt-1">
+                            Current Margin: ${(currentMargin * 100).toFixed(1)}%<br>
+                            Prev Margin: ${(analysis.previousMargin * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                `;
+            }
+            else {
+                // --- STANDARD VIEW (Existing Logic) ---
+                popupContent += `<div class="space-y-1">`;
+                sorted.forEach((r: PrecinctResult) => {
+                    const pct = ((r.votes / total) * 100).toFixed(1);
+                    popupContent += `<div class="flex justify-between gap-4">
+                        <span>${r.candidateName}</span>
+                        <span class="font-mono">${r.votes} (${pct}%)</span>
+                    </div>`;
+                });
+                popupContent += `<div class="mt-2 pt-1 border-t text-xs text-slate-500">
+                    Turnout: ${total} / ${relevantResults[0].registeredVoters}
+                </div></div>`;
+            }
+
+            // Close main div if not standard view (standard view closes it inside the else block)
+            if (overlayMode !== 'NONE') {
+                popupContent += `</div>`;
+            }
 
             layer.bindTooltip(popupContent, {
                 className: 'dark-popup',
@@ -352,32 +518,12 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 mouseout: (e) => {
                     const layer = e.target;
                     // Manually recalculate the original style with current selectedWard
-                    // Note: We need to access the LATEST selectedWard here.
-                    // Since onEachFeature is a closure, 'selectedWard' might be stale if we used it directly.
-                    // BUT, we are calling 'style' which is now a useCallback dependency.
-                    // Wait, if 'style' changes, 'onEachFeature' changes?
-                    // No, onEachFeature is passed to GeoJSON once. Leaflet doesn't re-bind easily.
-
-                    // CRITICAL FIX: We cannot pass 'selectedWard' from the closure if it changes.
-                    // We need a ref to the current selectedWard or rely on the fact that 
-                    // we are re-rendering the GeoJSON when selectedWard changes (via the key prop).
-
-                    // The GeoJSON component has: key={`${selectedWard ? selectedWard.num : 'all'}...`}
-                    // This forces a full re-render of the GeoJSON layer when selectedWard changes.
-                    // So the closure 'selectedWard' inside 'style' (if we used it) would be fresh.
-                    // But 'style' function itself takes 'currentSelectedWard' as arg.
-
-                    // In mouseout, we call: style(feature, selectedWard)
-                    // If 'selectedWard' is from the props of Map component, it is fresh because
-                    // the Map component re-renders, and GeoJSON re-renders (new key), so onEachFeature is re-created and re-bound.
-
-                    // So this is safe.
                     const originalStyle = style(feature, selectedWard);
                     layer.setStyle(originalStyle);
                 }
             });
         }
-    }, [resultsMap, raceResult, selectedWard, style]); // Dependencies
+    }, [resultsMap, raceResult, selectedWard, style, overlayMode, candidateColors]); // Dependencies
 
     return (
         <MapContainer
@@ -392,7 +538,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             {geoJsonData && (
                 <>
                     <GeoJSON
-                        key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}`}
+                        key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}`}
                         data={geoJsonData}
                         style={(feature) => style(feature, selectedWard)}
                         onEachFeature={onEachFeature}

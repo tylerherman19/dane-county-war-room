@@ -4,6 +4,8 @@ import { RaceResult, HistoricalTurnout, PrecinctResult } from '@/lib/api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Search, ExternalLink, Download } from 'lucide-react';
 import { useState } from 'react';
+import TrendSparkline from './TrendSparkline';
+import { getWardAnalysis } from '@/lib/analysis-data';
 
 interface SidebarProps {
     raceResult: RaceResult | undefined;
@@ -130,9 +132,15 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                                     <span className="text-sm font-medium text-slate-200">{ward.name} Ward {ward.num}</span>
                                     <span className="text-xs text-slate-500 group-hover:text-blue-400 transition-colors">View</span>
                                 </div>
-                                <div className="flex justify-between mt-1 text-xs text-slate-500">
-                                    <span>Leader: {ward.winner?.candidateName || 'N/A'}</span>
-                                    <span>Votes: {ward.total}</span>
+                                <div className="flex justify-between items-end mt-1">
+                                    <div className="text-xs text-slate-500">
+                                        <div>Leader: {ward.winner?.candidateName || 'N/A'}</div>
+                                        <div>Votes: {ward.total}</div>
+                                    </div>
+                                    <div className="flex flex-col items-end">
+                                        <div className="text-[10px] text-slate-600 mb-0.5 uppercase tracking-wider">Trend</div>
+                                        <TrendSparkline data={getWardAnalysis(ward.num, ward.name).trend} />
+                                    </div>
                                 </div>
                             </button>
                         ))}

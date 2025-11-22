@@ -1,0 +1,3758 @@
+[
+  {
+    "ward": "City of Edgerton Ward 7",
+    "biden": 596,
+    "trump": 634,
+    "total": 1230
+  },
+  {
+    "ward": "City of Fitchburg Ward 16",
+    "biden": 436,
+    "trump": 282,
+    "total": 718
+  },
+  {
+    "ward": "City of Fitchburg Ward 22",
+    "biden": 1018,
+    "trump": 408,
+    "total": 1426
+  },
+  {
+    "ward": "City of Fitchburg Ward 1",
+    "biden": 289,
+    "trump": 214,
+    "total": 503
+  },
+  {
+    "ward": "City of Fitchburg Ward 24",
+    "biden": 598,
+    "trump": 337,
+    "total": 935
+  },
+  {
+    "ward": "City of Fitchburg Ward 12",
+    "biden": 643,
+    "trump": 349,
+    "total": 992
+  },
+  {
+    "ward": "City of Fitchburg Ward 18",
+    "biden": 760,
+    "trump": 375,
+    "total": 1135
+  },
+  {
+    "ward": "City of Fitchburg Ward 20",
+    "biden": 1055,
+    "trump": 411,
+    "total": 1466
+  },
+  {
+    "ward": "City of Fitchburg Ward 15",
+    "biden": 321,
+    "trump": 231,
+    "total": 552
+  },
+  {
+    "ward": "City of Fitchburg Ward 14",
+    "biden": 367,
+    "trump": 252,
+    "total": 619
+  },
+  {
+    "ward": "City of Fitchburg Ward 19",
+    "biden": 592,
+    "trump": 335,
+    "total": 927
+  },
+  {
+    "ward": "City of Fitchburg Ward 8",
+    "biden": 1080,
+    "trump": 413,
+    "total": 1493
+  },
+  {
+    "ward": "City of Fitchburg Ward 7",
+    "biden": 299,
+    "trump": 219,
+    "total": 518
+  },
+  {
+    "ward": "City of Fitchburg Ward 13",
+    "biden": 829,
+    "trump": 386,
+    "total": 1215
+  },
+  {
+    "ward": "City of Fitchburg Ward 11",
+    "biden": 479,
+    "trump": 299,
+    "total": 778
+  },
+  {
+    "ward": "City of Fitchburg Ward 10",
+    "biden": 638,
+    "trump": 348,
+    "total": 986
+  },
+  {
+    "ward": "City of Fitchburg Ward 9",
+    "biden": 407,
+    "trump": 271,
+    "total": 678
+  },
+  {
+    "ward": "City of Fitchburg Ward 4",
+    "biden": 722,
+    "trump": 367,
+    "total": 1089
+  },
+  {
+    "ward": "City of Fitchburg Ward 6",
+    "biden": 1068,
+    "trump": 412,
+    "total": 1480
+  },
+  {
+    "ward": "City of Fitchburg Ward 5",
+    "biden": 853,
+    "trump": 390,
+    "total": 1243
+  },
+  {
+    "ward": "City of Fitchburg Ward 3",
+    "biden": 313,
+    "trump": 227,
+    "total": 540
+  },
+  {
+    "ward": "City of Fitchburg Ward 2",
+    "biden": 393,
+    "trump": 264,
+    "total": 657
+  },
+  {
+    "ward": "City of Fitchburg Ward 21",
+    "biden": 992,
+    "trump": 406,
+    "total": 1398
+  },
+  {
+    "ward": "City of Fitchburg Ward 17",
+    "biden": 548,
+    "trump": 322,
+    "total": 870
+  },
+  {
+    "ward": "City of Fitchburg Ward 23",
+    "biden": 1014,
+    "trump": 408,
+    "total": 1422
+  },
+  {
+    "ward": "City of Fitchburg Ward 25",
+    "biden": 311,
+    "trump": 225,
+    "total": 536
+  },
+  {
+    "ward": "City of Madison Ward 123",
+    "biden": 473,
+    "trump": 126,
+    "total": 599
+  },
+  {
+    "ward": "City of Madison Ward 2",
+    "biden": 1275,
+    "trump": 126,
+    "total": 1401
+  },
+  {
+    "ward": "City of Madison Ward 1",
+    "biden": 537,
+    "trump": 134,
+    "total": 671
+  },
+  {
+    "ward": "City of Madison Ward 127",
+    "biden": 686,
+    "trump": 146,
+    "total": 832
+  },
+  {
+    "ward": "City of Madison Ward 130",
+    "biden": 1016,
+    "trump": 146,
+    "total": 1162
+  },
+  {
+    "ward": "City of Madison Ward 120",
+    "biden": 1227,
+    "trump": 131,
+    "total": 1358
+  },
+  {
+    "ward": "City of Madison Ward 135",
+    "biden": 1252,
+    "trump": 129,
+    "total": 1381
+  },
+  {
+    "ward": "City of Madison Ward 120",
+    "biden": 1227,
+    "trump": 131,
+    "total": 1358
+  },
+  {
+    "ward": "City of Madison Ward 136",
+    "biden": 647,
+    "trump": 144,
+    "total": 791
+  },
+  {
+    "ward": "City of Madison Ward 104",
+    "biden": 597,
+    "trump": 140,
+    "total": 737
+  },
+  {
+    "ward": "City of Madison Ward 30",
+    "biden": 1168,
+    "trump": 137,
+    "total": 1305
+  },
+  {
+    "ward": "City of Madison Ward 60",
+    "biden": 891,
+    "trump": 150,
+    "total": 1041
+  },
+  {
+    "ward": "City of Madison Ward 63",
+    "biden": 984,
+    "trump": 148,
+    "total": 1132
+  },
+  {
+    "ward": "City of Madison Ward 66",
+    "biden": 764,
+    "trump": 149,
+    "total": 913
+  },
+  {
+    "ward": "City of Madison Ward 112",
+    "biden": 509,
+    "trump": 131,
+    "total": 640
+  },
+  {
+    "ward": "City of Madison Ward 111",
+    "biden": 1070,
+    "trump": 144,
+    "total": 1214
+  },
+  {
+    "ward": "City of Madison Ward 71",
+    "biden": 561,
+    "trump": 137,
+    "total": 698
+  },
+  {
+    "ward": "City of Madison Ward 74",
+    "biden": 496,
+    "trump": 129,
+    "total": 625
+  },
+  {
+    "ward": "City of Madison Ward 117",
+    "biden": 671,
+    "trump": 145,
+    "total": 816
+  },
+  {
+    "ward": "City of Madison Ward 114",
+    "biden": 951,
+    "trump": 149,
+    "total": 1100
+  },
+  {
+    "ward": "City of Madison Ward 82",
+    "biden": 1035,
+    "trump": 146,
+    "total": 1181
+  },
+  {
+    "ward": "City of Madison Ward 94",
+    "biden": 1132,
+    "trump": 139,
+    "total": 1271
+  },
+  {
+    "ward": "City of Madison Ward 46",
+    "biden": 842,
+    "trump": 150,
+    "total": 992
+  },
+  {
+    "ward": "City of Madison Ward 126",
+    "biden": 1092,
+    "trump": 142,
+    "total": 1234
+  },
+  {
+    "ward": "City of Madison Ward 101",
+    "biden": 1363,
+    "trump": 116,
+    "total": 1479
+  },
+  {
+    "ward": "City of Madison Ward 35",
+    "biden": 893,
+    "trump": 150,
+    "total": 1043
+  },
+  {
+    "ward": "City of Madison Ward 39",
+    "biden": 540,
+    "trump": 135,
+    "total": 675
+  },
+  {
+    "ward": "City of Madison Ward 29",
+    "biden": 1055,
+    "trump": 144,
+    "total": 1199
+  },
+  {
+    "ward": "City of Madison Ward 19",
+    "biden": 1247,
+    "trump": 129,
+    "total": 1376
+  },
+  {
+    "ward": "City of Madison Ward 26",
+    "biden": 513,
+    "trump": 132,
+    "total": 645
+  },
+  {
+    "ward": "City of Madison Ward 123",
+    "biden": 473,
+    "trump": 126,
+    "total": 599
+  },
+  {
+    "ward": "City of Madison Ward 23",
+    "biden": 841,
+    "trump": 150,
+    "total": 991
+  },
+  {
+    "ward": "City of Madison Ward 22",
+    "biden": 1053,
+    "trump": 145,
+    "total": 1198
+  },
+  {
+    "ward": "City of Madison Ward 6",
+    "biden": 472,
+    "trump": 126,
+    "total": 598
+  },
+  {
+    "ward": "City of Madison Ward 3",
+    "biden": 643,
+    "trump": 144,
+    "total": 787
+  },
+  {
+    "ward": "City of Madison Ward 2",
+    "biden": 1275,
+    "trump": 126,
+    "total": 1401
+  },
+  {
+    "ward": "City of Madison Ward 107",
+    "biden": 1261,
+    "trump": 128,
+    "total": 1389
+  },
+  {
+    "ward": "City of Madison Ward 103",
+    "biden": 1319,
+    "trump": 121,
+    "total": 1440
+  },
+  {
+    "ward": "City of Madison Ward 106",
+    "biden": 1372,
+    "trump": 115,
+    "total": 1487
+  },
+  {
+    "ward": "City of Madison Ward 105",
+    "biden": 829,
+    "trump": 150,
+    "total": 979
+  },
+  {
+    "ward": "City of Madison Ward 34",
+    "biden": 857,
+    "trump": 150,
+    "total": 1007
+  },
+  {
+    "ward": "City of Madison Ward 14",
+    "biden": 1078,
+    "trump": 143,
+    "total": 1221
+  },
+  {
+    "ward": "City of Madison Ward 15",
+    "biden": 863,
+    "trump": 150,
+    "total": 1013
+  },
+  {
+    "ward": "City of Madison Ward 47",
+    "biden": 1257,
+    "trump": 128,
+    "total": 1385
+  },
+  {
+    "ward": "City of Madison Ward 54",
+    "biden": 1014,
+    "trump": 147,
+    "total": 1161
+  },
+  {
+    "ward": "City of Madison Ward 53",
+    "biden": 1141,
+    "trump": 139,
+    "total": 1280
+  },
+  {
+    "ward": "City of Madison Ward 52",
+    "biden": 505,
+    "trump": 130,
+    "total": 635
+  },
+  {
+    "ward": "City of Madison Ward 45",
+    "biden": 1022,
+    "trump": 146,
+    "total": 1168
+  },
+  {
+    "ward": "City of Madison Ward 43",
+    "biden": 776,
+    "trump": 150,
+    "total": 926
+  },
+  {
+    "ward": "City of Madison Ward 55",
+    "biden": 985,
+    "trump": 148,
+    "total": 1133
+  },
+  {
+    "ward": "City of Madison Ward 41",
+    "biden": 915,
+    "trump": 150,
+    "total": 1065
+  },
+  {
+    "ward": "City of Madison Ward 42",
+    "biden": 1330,
+    "trump": 120,
+    "total": 1450
+  },
+  {
+    "ward": "City of Madison Ward 30",
+    "biden": 1168,
+    "trump": 137,
+    "total": 1305
+  },
+  {
+    "ward": "City of Madison Ward 44",
+    "biden": 1208,
+    "trump": 133,
+    "total": 1341
+  },
+  {
+    "ward": "City of Madison Ward 27",
+    "biden": 746,
+    "trump": 149,
+    "total": 895
+  },
+  {
+    "ward": "City of Madison Ward 18",
+    "biden": 876,
+    "trump": 150,
+    "total": 1026
+  },
+  {
+    "ward": "City of Madison Ward 40",
+    "biden": 621,
+    "trump": 142,
+    "total": 763
+  },
+  {
+    "ward": "City of Madison Ward 28",
+    "biden": 1045,
+    "trump": 145,
+    "total": 1190
+  },
+  {
+    "ward": "City of Madison Ward 37",
+    "biden": 598,
+    "trump": 140,
+    "total": 738
+  },
+  {
+    "ward": "City of Madison Ward 33",
+    "biden": 664,
+    "trump": 145,
+    "total": 809
+  },
+  {
+    "ward": "City of Madison Ward 36",
+    "biden": 1188,
+    "trump": 135,
+    "total": 1323
+  },
+  {
+    "ward": "City of Madison Ward 38",
+    "biden": 1162,
+    "trump": 137,
+    "total": 1299
+  },
+  {
+    "ward": "City of Madison Ward 32",
+    "biden": 972,
+    "trump": 148,
+    "total": 1120
+  },
+  {
+    "ward": "City of Madison Ward 31",
+    "biden": 954,
+    "trump": 149,
+    "total": 1103
+  },
+  {
+    "ward": "City of Madison Ward 13",
+    "biden": 1358,
+    "trump": 117,
+    "total": 1475
+  },
+  {
+    "ward": "City of Madison Ward 25",
+    "biden": 694,
+    "trump": 147,
+    "total": 841
+  },
+  {
+    "ward": "City of Madison Ward 24",
+    "biden": 649,
+    "trump": 144,
+    "total": 793
+  },
+  {
+    "ward": "City of Madison Ward 21",
+    "biden": 563,
+    "trump": 137,
+    "total": 700
+  },
+  {
+    "ward": "City of Madison Ward 20",
+    "biden": 953,
+    "trump": 149,
+    "total": 1102
+  },
+  {
+    "ward": "City of Madison Ward 17",
+    "biden": 1163,
+    "trump": 137,
+    "total": 1300
+  },
+  {
+    "ward": "City of Madison Ward 12",
+    "biden": 683,
+    "trump": 146,
+    "total": 829
+  },
+  {
+    "ward": "City of Madison Ward 16",
+    "biden": 1275,
+    "trump": 126,
+    "total": 1401
+  },
+  {
+    "ward": "City of Madison Ward 11",
+    "biden": 1164,
+    "trump": 137,
+    "total": 1301
+  },
+  {
+    "ward": "City of Madison Ward 10",
+    "biden": 630,
+    "trump": 143,
+    "total": 773
+  },
+  {
+    "ward": "City of Madison Ward 9",
+    "biden": 843,
+    "trump": 150,
+    "total": 993
+  },
+  {
+    "ward": "City of Madison Ward 7",
+    "biden": 472,
+    "trump": 126,
+    "total": 598
+  },
+  {
+    "ward": "City of Madison Ward 4",
+    "biden": 1215,
+    "trump": 132,
+    "total": 1347
+  },
+  {
+    "ward": "City of Madison Ward 5",
+    "biden": 689,
+    "trump": 146,
+    "total": 835
+  },
+  {
+    "ward": "City of Madison Ward 50",
+    "biden": 767,
+    "trump": 149,
+    "total": 916
+  },
+  {
+    "ward": "City of Madison Ward 48",
+    "biden": 827,
+    "trump": 150,
+    "total": 977
+  },
+  {
+    "ward": "City of Madison Ward 49",
+    "biden": 600,
+    "trump": 140,
+    "total": 740
+  },
+  {
+    "ward": "City of Madison Ward 62",
+    "biden": 729,
+    "trump": 148,
+    "total": 877
+  },
+  {
+    "ward": "City of Madison Ward 61",
+    "biden": 851,
+    "trump": 150,
+    "total": 1001
+  },
+  {
+    "ward": "City of Madison Ward 59",
+    "biden": 685,
+    "trump": 146,
+    "total": 831
+  },
+  {
+    "ward": "City of Madison Ward 64",
+    "biden": 853,
+    "trump": 150,
+    "total": 1003
+  },
+  {
+    "ward": "City of Madison Ward 56",
+    "biden": 995,
+    "trump": 147,
+    "total": 1142
+  },
+  {
+    "ward": "City of Madison Ward 58",
+    "biden": 772,
+    "trump": 149,
+    "total": 921
+  },
+  {
+    "ward": "City of Madison Ward 57",
+    "biden": 1039,
+    "trump": 145,
+    "total": 1184
+  },
+  {
+    "ward": "City of Madison Ward 75",
+    "biden": 1000,
+    "trump": 147,
+    "total": 1147
+  },
+  {
+    "ward": "City of Madison Ward 73",
+    "biden": 645,
+    "trump": 144,
+    "total": 789
+  },
+  {
+    "ward": "City of Madison Ward 76",
+    "biden": 935,
+    "trump": 149,
+    "total": 1084
+  },
+  {
+    "ward": "City of Madison Ward 68",
+    "biden": 1120,
+    "trump": 140,
+    "total": 1260
+  },
+  {
+    "ward": "City of Madison Ward 72",
+    "biden": 574,
+    "trump": 138,
+    "total": 712
+  },
+  {
+    "ward": "City of Madison Ward 89",
+    "biden": 1040,
+    "trump": 145,
+    "total": 1185
+  },
+  {
+    "ward": "City of Madison Ward 88",
+    "biden": 822,
+    "trump": 150,
+    "total": 972
+  },
+  {
+    "ward": "City of Madison Ward 65",
+    "biden": 734,
+    "trump": 148,
+    "total": 882
+  },
+  {
+    "ward": "City of Madison Ward 67",
+    "biden": 693,
+    "trump": 147,
+    "total": 840
+  },
+  {
+    "ward": "City of Madison Ward 87",
+    "biden": 475,
+    "trump": 127,
+    "total": 602
+  },
+  {
+    "ward": "City of Madison Ward 85",
+    "biden": 1238,
+    "trump": 130,
+    "total": 1368
+  },
+  {
+    "ward": "City of Madison Ward 70",
+    "biden": 411,
+    "trump": 117,
+    "total": 528
+  },
+  {
+    "ward": "City of Madison Ward 69",
+    "biden": 828,
+    "trump": 150,
+    "total": 978
+  },
+  {
+    "ward": "City of Madison Ward 80",
+    "biden": 977,
+    "trump": 148,
+    "total": 1125
+  },
+  {
+    "ward": "City of Madison Ward 86",
+    "biden": 664,
+    "trump": 145,
+    "total": 809
+  },
+  {
+    "ward": "City of Madison Ward 91",
+    "biden": 557,
+    "trump": 136,
+    "total": 693
+  },
+  {
+    "ward": "City of Madison Ward 92",
+    "biden": 1370,
+    "trump": 115,
+    "total": 1485
+  },
+  {
+    "ward": "City of Madison Ward 115",
+    "biden": 913,
+    "trump": 150,
+    "total": 1063
+  },
+  {
+    "ward": "City of Madison Ward 93",
+    "biden": 694,
+    "trump": 147,
+    "total": 841
+  },
+  {
+    "ward": "City of Madison Ward 90",
+    "biden": 1240,
+    "trump": 130,
+    "total": 1370
+  },
+  {
+    "ward": "City of Madison Ward 78",
+    "biden": 1115,
+    "trump": 141,
+    "total": 1256
+  },
+  {
+    "ward": "City of Madison Ward 79",
+    "biden": 504,
+    "trump": 130,
+    "total": 634
+  },
+  {
+    "ward": "City of Madison Ward 81",
+    "biden": 1247,
+    "trump": 129,
+    "total": 1376
+  },
+  {
+    "ward": "City of Madison Ward 83",
+    "biden": 907,
+    "trump": 150,
+    "total": 1057
+  },
+  {
+    "ward": "City of Madison Ward 84",
+    "biden": 726,
+    "trump": 148,
+    "total": 874
+  },
+  {
+    "ward": "City of Madison Ward 96",
+    "biden": 755,
+    "trump": 149,
+    "total": 904
+  },
+  {
+    "ward": "City of Madison Ward 116",
+    "biden": 567,
+    "trump": 137,
+    "total": 704
+  },
+  {
+    "ward": "City of Madison Ward 95",
+    "biden": 491,
+    "trump": 129,
+    "total": 620
+  },
+  {
+    "ward": "City of Madison Ward 102",
+    "biden": 1338,
+    "trump": 119,
+    "total": 1457
+  },
+  {
+    "ward": "City of Madison Ward 108",
+    "biden": 715,
+    "trump": 148,
+    "total": 863
+  },
+  {
+    "ward": "City of Madison Ward 97",
+    "biden": 1193,
+    "trump": 134,
+    "total": 1327
+  },
+  {
+    "ward": "City of Madison Ward 98",
+    "biden": 816,
+    "trump": 150,
+    "total": 966
+  },
+  {
+    "ward": "City of Madison Ward 99",
+    "biden": 1062,
+    "trump": 144,
+    "total": 1206
+  },
+  {
+    "ward": "City of Madison Ward 100",
+    "biden": 1047,
+    "trump": 145,
+    "total": 1192
+  },
+  {
+    "ward": "City of Madison Ward 110",
+    "biden": 748,
+    "trump": 149,
+    "total": 897
+  },
+  {
+    "ward": "City of Madison Ward 119",
+    "biden": 876,
+    "trump": 150,
+    "total": 1026
+  },
+  {
+    "ward": "City of Madison Ward 118",
+    "biden": 787,
+    "trump": 150,
+    "total": 937
+  },
+  {
+    "ward": "City of Madison Ward 109",
+    "biden": 459,
+    "trump": 125,
+    "total": 584
+  },
+  {
+    "ward": "City of Madison Ward 113",
+    "biden": 1355,
+    "trump": 117,
+    "total": 1472
+  },
+  {
+    "ward": "City of Madison Ward 121",
+    "biden": 1138,
+    "trump": 139,
+    "total": 1277
+  },
+  {
+    "ward": "City of Madison Ward 8",
+    "biden": 1261,
+    "trump": 128,
+    "total": 1389
+  },
+  {
+    "ward": "City of Madison Ward 128",
+    "biden": 693,
+    "trump": 147,
+    "total": 840
+  },
+  {
+    "ward": "City of Madison Ward 129",
+    "biden": 653,
+    "trump": 144,
+    "total": 797
+  },
+  {
+    "ward": "City of Madison Ward 129",
+    "biden": 653,
+    "trump": 144,
+    "total": 797
+  },
+  {
+    "ward": "City of Madison Ward 131",
+    "biden": 1033,
+    "trump": 146,
+    "total": 1179
+  },
+  {
+    "ward": "City of Madison Ward 51",
+    "biden": 1059,
+    "trump": 144,
+    "total": 1203
+  },
+  {
+    "ward": "City of Madison Ward 132",
+    "biden": 434,
+    "trump": 121,
+    "total": 555
+  },
+  {
+    "ward": "City of Madison Ward 134",
+    "biden": 967,
+    "trump": 148,
+    "total": 1115
+  },
+  {
+    "ward": "City of Madison Ward 120",
+    "biden": 1227,
+    "trump": 131,
+    "total": 1358
+  },
+  {
+    "ward": "City of Madison Ward 125",
+    "biden": 765,
+    "trump": 149,
+    "total": 914
+  },
+  {
+    "ward": "City of Madison Ward 124",
+    "biden": 1370,
+    "trump": 115,
+    "total": 1485
+  },
+  {
+    "ward": "City of Madison Ward 122",
+    "biden": 1009,
+    "trump": 147,
+    "total": 1156
+  },
+  {
+    "ward": "City of Madison Ward 77",
+    "biden": 620,
+    "trump": 142,
+    "total": 762
+  },
+  {
+    "ward": "City of Madison Ward 133",
+    "biden": 542,
+    "trump": 135,
+    "total": 677
+  },
+  {
+    "ward": "City of Middleton Ward 18",
+    "biden": 662,
+    "trump": 354,
+    "total": 1016
+  },
+  {
+    "ward": "City of Middleton Ward 14",
+    "biden": 854,
+    "trump": 390,
+    "total": 1244
+  },
+  {
+    "ward": "City of Middleton Ward 1",
+    "biden": 615,
+    "trump": 341,
+    "total": 956
+  },
+  {
+    "ward": "City of Middleton Ward 5",
+    "biden": 427,
+    "trump": 279,
+    "total": 706
+  },
+  {
+    "ward": "City of Middleton Ward 3",
+    "biden": 441,
+    "trump": 284,
+    "total": 725
+  },
+  {
+    "ward": "City of Middleton Ward 2",
+    "biden": 1047,
+    "trump": 410,
+    "total": 1457
+  },
+  {
+    "ward": "City of Middleton Ward 4",
+    "biden": 607,
+    "trump": 339,
+    "total": 946
+  },
+  {
+    "ward": "City of Middleton Ward 11",
+    "biden": 955,
+    "trump": 403,
+    "total": 1358
+  },
+  {
+    "ward": "City of Middleton Ward 19",
+    "biden": 444,
+    "trump": 285,
+    "total": 729
+  },
+  {
+    "ward": "City of Middleton Ward 10",
+    "biden": 308,
+    "trump": 224,
+    "total": 532
+  },
+  {
+    "ward": "City of Middleton Ward 7",
+    "biden": 448,
+    "trump": 287,
+    "total": 735
+  },
+  {
+    "ward": "City of Middleton Ward 8",
+    "biden": 951,
+    "trump": 402,
+    "total": 1353
+  },
+  {
+    "ward": "City of Middleton Ward 6",
+    "biden": 661,
+    "trump": 353,
+    "total": 1014
+  },
+  {
+    "ward": "City of Middleton Ward 9",
+    "biden": 962,
+    "trump": 403,
+    "total": 1365
+  },
+  {
+    "ward": "City of Middleton Ward 13",
+    "biden": 295,
+    "trump": 217,
+    "total": 512
+  },
+  {
+    "ward": "City of Middleton Ward 18",
+    "biden": 662,
+    "trump": 354,
+    "total": 1016
+  },
+  {
+    "ward": "City of Middleton Ward 17",
+    "biden": 945,
+    "trump": 402,
+    "total": 1347
+  },
+  {
+    "ward": "City of Middleton Ward 12",
+    "biden": 816,
+    "trump": 385,
+    "total": 1201
+  },
+  {
+    "ward": "City of Middleton Ward 16",
+    "biden": 566,
+    "trump": 328,
+    "total": 894
+  },
+  {
+    "ward": "City of Middleton Ward 15",
+    "biden": 965,
+    "trump": 404,
+    "total": 1369
+  },
+  {
+    "ward": "City of Middleton Ward 20",
+    "biden": 638,
+    "trump": 348,
+    "total": 986
+  },
+  {
+    "ward": "City of Middleton Ward 21",
+    "biden": 1052,
+    "trump": 411,
+    "total": 1463
+  },
+  {
+    "ward": "City of Middleton Ward 22",
+    "biden": 716,
+    "trump": 366,
+    "total": 1082
+  },
+  {
+    "ward": "City of Middleton Ward 23",
+    "biden": 998,
+    "trump": 407,
+    "total": 1405
+  },
+  {
+    "ward": "City of Middleton Ward 24",
+    "biden": 1020,
+    "trump": 409,
+    "total": 1429
+  },
+  {
+    "ward": "City of Monona Ward 10",
+    "biden": 520,
+    "trump": 594,
+    "total": 1114
+  },
+  {
+    "ward": "City of Monona Ward 8",
+    "biden": 352,
+    "trump": 479,
+    "total": 831
+  },
+  {
+    "ward": "City of Monona Ward 8",
+    "biden": 352,
+    "trump": 479,
+    "total": 831
+  },
+  {
+    "ward": "City of Monona Ward 1",
+    "biden": 684,
+    "trump": 674,
+    "total": 1358
+  },
+  {
+    "ward": "City of Monona Ward 5",
+    "biden": 398,
+    "trump": 514,
+    "total": 912
+  },
+  {
+    "ward": "City of Monona Ward 3",
+    "biden": 268,
+    "trump": 402,
+    "total": 670
+  },
+  {
+    "ward": "City of Monona Ward 6",
+    "biden": 375,
+    "trump": 497,
+    "total": 872
+  },
+  {
+    "ward": "City of Monona Ward 10",
+    "biden": 520,
+    "trump": 594,
+    "total": 1114
+  },
+  {
+    "ward": "City of Monona Ward 7",
+    "biden": 261,
+    "trump": 396,
+    "total": 657
+  },
+  {
+    "ward": "City of Monona Ward 4",
+    "biden": 607,
+    "trump": 640,
+    "total": 1247
+  },
+  {
+    "ward": "City of Monona Ward 2",
+    "biden": 385,
+    "trump": 505,
+    "total": 890
+  },
+  {
+    "ward": "City of Monona Ward 9",
+    "biden": 596,
+    "trump": 634,
+    "total": 1230
+  },
+  {
+    "ward": "City of Sun Prairie Ward 9",
+    "biden": 710,
+    "trump": 364,
+    "total": 1074
+  },
+  {
+    "ward": "City of Sun Prairie Ward 22",
+    "biden": 330,
+    "trump": 235,
+    "total": 565
+  },
+  {
+    "ward": "City of Sun Prairie Ward 21",
+    "biden": 1005,
+    "trump": 407,
+    "total": 1412
+  },
+  {
+    "ward": "City of Sun Prairie Ward 19",
+    "biden": 1018,
+    "trump": 408,
+    "total": 1426
+  },
+  {
+    "ward": "City of Sun Prairie Ward 17",
+    "biden": 465,
+    "trump": 294,
+    "total": 759
+  },
+  {
+    "ward": "City of Sun Prairie Ward 29",
+    "biden": 469,
+    "trump": 295,
+    "total": 764
+  },
+  {
+    "ward": "City of Sun Prairie Ward 12",
+    "biden": 846,
+    "trump": 389,
+    "total": 1235
+  },
+  {
+    "ward": "City of Sun Prairie Ward 25",
+    "biden": 704,
+    "trump": 363,
+    "total": 1067
+  },
+  {
+    "ward": "City of Sun Prairie Ward 27",
+    "biden": 606,
+    "trump": 339,
+    "total": 945
+  },
+  {
+    "ward": "City of Sun Prairie Ward 14",
+    "biden": 999,
+    "trump": 407,
+    "total": 1406
+  },
+  {
+    "ward": "City of Sun Prairie Ward 23",
+    "biden": 779,
+    "trump": 378,
+    "total": 1157
+  },
+  {
+    "ward": "City of Sun Prairie Ward 24",
+    "biden": 406,
+    "trump": 270,
+    "total": 676
+  },
+  {
+    "ward": "City of Sun Prairie Ward 11",
+    "biden": 553,
+    "trump": 323,
+    "total": 876
+  },
+  {
+    "ward": "City of Sun Prairie Ward 10",
+    "biden": 303,
+    "trump": 221,
+    "total": 524
+  },
+  {
+    "ward": "City of Sun Prairie Ward 13",
+    "biden": 595,
+    "trump": 336,
+    "total": 931
+  },
+  {
+    "ward": "City of Sun Prairie Ward 26",
+    "biden": 756,
+    "trump": 374,
+    "total": 1130
+  },
+  {
+    "ward": "City of Sun Prairie Ward 20",
+    "biden": 694,
+    "trump": 361,
+    "total": 1055
+  },
+  {
+    "ward": "City of Sun Prairie Ward 8",
+    "biden": 380,
+    "trump": 259,
+    "total": 639
+  },
+  {
+    "ward": "City of Sun Prairie Ward 1",
+    "biden": 803,
+    "trump": 382,
+    "total": 1185
+  },
+  {
+    "ward": "City of Sun Prairie Ward 15",
+    "biden": 938,
+    "trump": 401,
+    "total": 1339
+  },
+  {
+    "ward": "City of Sun Prairie Ward 6",
+    "biden": 1068,
+    "trump": 412,
+    "total": 1480
+  },
+  {
+    "ward": "City of Sun Prairie Ward 5",
+    "biden": 663,
+    "trump": 354,
+    "total": 1017
+  },
+  {
+    "ward": "City of Sun Prairie Ward 7",
+    "biden": 666,
+    "trump": 355,
+    "total": 1021
+  },
+  {
+    "ward": "City of Sun Prairie Ward 3",
+    "biden": 687,
+    "trump": 359,
+    "total": 1046
+  },
+  {
+    "ward": "City of Sun Prairie Ward 4",
+    "biden": 326,
+    "trump": 233,
+    "total": 559
+  },
+  {
+    "ward": "City of Sun Prairie Ward 2",
+    "biden": 644,
+    "trump": 349,
+    "total": 993
+  },
+  {
+    "ward": "City of Sun Prairie Ward 16",
+    "biden": 503,
+    "trump": 307,
+    "total": 810
+  },
+  {
+    "ward": "City of Sun Prairie Ward 18",
+    "biden": 860,
+    "trump": 391,
+    "total": 1251
+  },
+  {
+    "ward": "City of Sun Prairie Ward 28",
+    "biden": 902,
+    "trump": 397,
+    "total": 1299
+  },
+  {
+    "ward": "City of Sun Prairie Ward 30",
+    "biden": 619,
+    "trump": 343,
+    "total": 962
+  },
+  {
+    "ward": "City of Verona Ward 2",
+    "biden": 519,
+    "trump": 371,
+    "total": 890
+  },
+  {
+    "ward": "City of Verona Ward 12",
+    "biden": 279,
+    "trump": 249,
+    "total": 528
+  },
+  {
+    "ward": "City of Verona Ward 11",
+    "biden": 659,
+    "trump": 419,
+    "total": 1078
+  },
+  {
+    "ward": "City of Verona Ward 9",
+    "biden": 458,
+    "trump": 345,
+    "total": 803
+  },
+  {
+    "ward": "City of Verona Ward 10",
+    "biden": 426,
+    "trump": 331,
+    "total": 757
+  },
+  {
+    "ward": "City of Verona Ward 6",
+    "biden": 820,
+    "trump": 458,
+    "total": 1278
+  },
+  {
+    "ward": "City of Verona Ward 4",
+    "biden": 395,
+    "trump": 315,
+    "total": 710
+  },
+  {
+    "ward": "City of Verona Ward 1",
+    "biden": 578,
+    "trump": 393,
+    "total": 971
+  },
+  {
+    "ward": "City of Verona Ward 5",
+    "biden": 424,
+    "trump": 330,
+    "total": 754
+  },
+  {
+    "ward": "City of Verona Ward 7",
+    "biden": 297,
+    "trump": 261,
+    "total": 558
+  },
+  {
+    "ward": "City of Verona Ward 3",
+    "biden": 413,
+    "trump": 324,
+    "total": 737
+  },
+  {
+    "ward": "City of Verona Ward 8",
+    "biden": 572,
+    "trump": 391,
+    "total": 963
+  },
+  {
+    "ward": "City of Verona Ward 13",
+    "biden": 280,
+    "trump": 249,
+    "total": 529
+  },
+  {
+    "ward": "City of Verona Ward 14",
+    "biden": 545,
+    "trump": 381,
+    "total": 926
+  },
+  {
+    "ward": "City of Verona Ward 15",
+    "biden": 586,
+    "trump": 396,
+    "total": 982
+  },
+  {
+    "ward": "Town of Albion Ward 3",
+    "biden": 721,
+    "trump": 689,
+    "total": 1410
+  },
+  {
+    "ward": "Town of Albion Ward 1",
+    "biden": 774,
+    "trump": 709,
+    "total": 1483
+  },
+  {
+    "ward": "Town of Albion Ward 2",
+    "biden": 462,
+    "trump": 559,
+    "total": 1021
+  },
+  {
+    "ward": "Town of Albion Ward 4",
+    "biden": 513,
+    "trump": 590,
+    "total": 1103
+  },
+  {
+    "ward": "Town of Berry Ward 2",
+    "biden": 619,
+    "trump": 646,
+    "total": 1265
+  },
+  {
+    "ward": "Town of Berry Ward 1",
+    "biden": 297,
+    "trump": 431,
+    "total": 728
+  },
+  {
+    "ward": "Town of Black Earth Ward 1",
+    "biden": 625,
+    "trump": 649,
+    "total": 1274
+  },
+  {
+    "ward": "Town of Blue Mounds Ward 1",
+    "biden": 603,
+    "trump": 638,
+    "total": 1241
+  },
+  {
+    "ward": "Town of Blue Mounds Ward 2",
+    "biden": 485,
+    "trump": 574,
+    "total": 1059
+  },
+  {
+    "ward": "Town of Bristol Ward 5",
+    "biden": 332,
+    "trump": 461,
+    "total": 793
+  },
+  {
+    "ward": "Town of Bristol Ward 1",
+    "biden": 245,
+    "trump": 379,
+    "total": 624
+  },
+  {
+    "ward": "Town of Bristol Ward 2",
+    "biden": 357,
+    "trump": 482,
+    "total": 839
+  },
+  {
+    "ward": "Town of Bristol Ward 4",
+    "biden": 502,
+    "trump": 583,
+    "total": 1085
+  },
+  {
+    "ward": "Town of Bristol Ward 3",
+    "biden": 705,
+    "trump": 683,
+    "total": 1388
+  },
+  {
+    "ward": "Town of Bristol Ward 5",
+    "biden": 332,
+    "trump": 461,
+    "total": 793
+  },
+  {
+    "ward": "Town of Bristol Ward 5",
+    "biden": 332,
+    "trump": 461,
+    "total": 793
+  },
+  {
+    "ward": "Town of Bristol Ward 5",
+    "biden": 332,
+    "trump": 461,
+    "total": 793
+  },
+  {
+    "ward": "Town of Bristol Ward 5",
+    "biden": 332,
+    "trump": 461,
+    "total": 793
+  },
+  {
+    "ward": "Town of Bristol Ward 5",
+    "biden": 332,
+    "trump": 461,
+    "total": 793
+  },
+  {
+    "ward": "Town of Christiana Ward 1",
+    "biden": 304,
+    "trump": 436,
+    "total": 740
+  },
+  {
+    "ward": "Town of Christiana Ward 1",
+    "biden": 304,
+    "trump": 436,
+    "total": 740
+  },
+  {
+    "ward": "Town of Christiana Ward 1",
+    "biden": 304,
+    "trump": 436,
+    "total": 740
+  },
+  {
+    "ward": "Town of Christiana Ward 2",
+    "biden": 525,
+    "trump": 597,
+    "total": 1122
+  },
+  {
+    "ward": "Town of Christiana Ward 1",
+    "biden": 304,
+    "trump": 436,
+    "total": 740
+  },
+  {
+    "ward": "Town of Cross Plains Ward 2",
+    "biden": 722,
+    "trump": 689,
+    "total": 1411
+  },
+  {
+    "ward": "Town of Cross Plains Ward 1",
+    "biden": 232,
+    "trump": 365,
+    "total": 597
+  },
+  {
+    "ward": "Town of Cross Plains Ward 1",
+    "biden": 232,
+    "trump": 365,
+    "total": 597
+  },
+  {
+    "ward": "Town of Cross Plains Ward 1",
+    "biden": 232,
+    "trump": 365,
+    "total": 597
+  },
+  {
+    "ward": "Town of Dane Ward 1",
+    "biden": 303,
+    "trump": 435,
+    "total": 738
+  },
+  {
+    "ward": "Town of Deerfield Ward 2",
+    "biden": 346,
+    "trump": 474,
+    "total": 820
+  },
+  {
+    "ward": "Town of Deerfield Ward 1",
+    "biden": 524,
+    "trump": 597,
+    "total": 1121
+  },
+  {
+    "ward": "Town of Deerfield Ward 2",
+    "biden": 346,
+    "trump": 474,
+    "total": 820
+  },
+  {
+    "ward": "Town of Mazomanie Ward 1",
+    "biden": 737,
+    "trump": 695,
+    "total": 1432
+  },
+  {
+    "ward": "Town of Mazomanie Ward 1",
+    "biden": 737,
+    "trump": 695,
+    "total": 1432
+  },
+  {
+    "ward": "Town of Mazomanie Ward 1",
+    "biden": 737,
+    "trump": 695,
+    "total": 1432
+  },
+  {
+    "ward": "Town of Mazomanie Ward 1",
+    "biden": 737,
+    "trump": 695,
+    "total": 1432
+  },
+  {
+    "ward": "Town of Mazomanie Ward 2",
+    "biden": 263,
+    "trump": 398,
+    "total": 661
+  },
+  {
+    "ward": "Town of Mazomanie Ward 2",
+    "biden": 263,
+    "trump": 398,
+    "total": 661
+  },
+  {
+    "ward": "Town of Mazomanie Ward 2",
+    "biden": 263,
+    "trump": 398,
+    "total": 661
+  },
+  {
+    "ward": "Town of Mazomanie Ward 2",
+    "biden": 263,
+    "trump": 398,
+    "total": 661
+  },
+  {
+    "ward": "Town of Mazomanie Ward 2",
+    "biden": 263,
+    "trump": 398,
+    "total": 661
+  },
+  {
+    "ward": "Town of Mazomanie Ward 1",
+    "biden": 737,
+    "trump": 695,
+    "total": 1432
+  },
+  {
+    "ward": "Town of Medina Ward 1",
+    "biden": 584,
+    "trump": 629,
+    "total": 1213
+  },
+  {
+    "ward": "Town of Medina Ward 2",
+    "biden": 366,
+    "trump": 490,
+    "total": 856
+  },
+  {
+    "ward": "Town of Middleton Ward 2",
+    "biden": 791,
+    "trump": 380,
+    "total": 1171
+  },
+  {
+    "ward": "Town of Middleton Ward 2",
+    "biden": 791,
+    "trump": 380,
+    "total": 1171
+  },
+  {
+    "ward": "Town of Middleton Ward 4A",
+    "biden": 1018,
+    "trump": 409,
+    "total": 1427
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8A",
+    "biden": 566,
+    "trump": 327,
+    "total": 893
+  },
+  {
+    "ward": "Town of Middleton Ward 8A",
+    "biden": 566,
+    "trump": 327,
+    "total": 893
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8A",
+    "biden": 566,
+    "trump": 327,
+    "total": 893
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 4",
+    "biden": 531,
+    "trump": 316,
+    "total": 847
+  },
+  {
+    "ward": "Town of Middleton Ward 3",
+    "biden": 1024,
+    "trump": 409,
+    "total": 1433
+  },
+  {
+    "ward": "Town of Middleton Ward 1",
+    "biden": 522,
+    "trump": 313,
+    "total": 835
+  },
+  {
+    "ward": "Town of Middleton Ward 2",
+    "biden": 791,
+    "trump": 380,
+    "total": 1171
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 7",
+    "biden": 807,
+    "trump": 383,
+    "total": 1190
+  },
+  {
+    "ward": "Town of Middleton Ward 6",
+    "biden": 1075,
+    "trump": 412,
+    "total": 1487
+  },
+  {
+    "ward": "Town of Middleton Ward 5",
+    "biden": 499,
+    "trump": 306,
+    "total": 805
+  },
+  {
+    "ward": "Town of Middleton Ward 4A",
+    "biden": 1018,
+    "trump": 409,
+    "total": 1427
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Middleton Ward 8",
+    "biden": 636,
+    "trump": 347,
+    "total": 983
+  },
+  {
+    "ward": "Town of Montrose Ward 1",
+    "biden": 586,
+    "trump": 630,
+    "total": 1216
+  },
+  {
+    "ward": "Town of Montrose Ward 2",
+    "biden": 460,
+    "trump": 557,
+    "total": 1017
+  },
+  {
+    "ward": "Town of Oregon Ward 4",
+    "biden": 452,
+    "trump": 343,
+    "total": 795
+  },
+  {
+    "ward": "Town of Oregon Ward 2",
+    "biden": 850,
+    "trump": 464,
+    "total": 1314
+  },
+  {
+    "ward": "Town of Oregon Ward 3",
+    "biden": 357,
+    "trump": 296,
+    "total": 653
+  },
+  {
+    "ward": "Town of Oregon Ward 4",
+    "biden": 452,
+    "trump": 343,
+    "total": 795
+  },
+  {
+    "ward": "Town of Oregon Ward 1",
+    "biden": 297,
+    "trump": 261,
+    "total": 558
+  },
+  {
+    "ward": "Town of Oregon Ward 1",
+    "biden": 297,
+    "trump": 261,
+    "total": 558
+  },
+  {
+    "ward": "Town of Perry Ward 1",
+    "biden": 682,
+    "trump": 674,
+    "total": 1356
+  },
+  {
+    "ward": "Town of Primrose Ward 1",
+    "biden": 362,
+    "trump": 486,
+    "total": 848
+  },
+  {
+    "ward": "Town of Roxbury Ward 2",
+    "biden": 544,
+    "trump": 608,
+    "total": 1152
+  },
+  {
+    "ward": "Town of Roxbury Ward 1",
+    "biden": 568,
+    "trump": 621,
+    "total": 1189
+  },
+  {
+    "ward": "Town of Springdale Ward 3",
+    "biden": 328,
+    "trump": 458,
+    "total": 786
+  },
+  {
+    "ward": "Town of Springdale Ward 2",
+    "biden": 270,
+    "trump": 405,
+    "total": 675
+  },
+  {
+    "ward": "Town of Springdale Ward 1",
+    "biden": 215,
+    "trump": 345,
+    "total": 560
+  },
+  {
+    "ward": "Town of Springfield Ward 4",
+    "biden": 646,
+    "trump": 658,
+    "total": 1304
+  },
+  {
+    "ward": "Town of Springfield Ward 1",
+    "biden": 715,
+    "trump": 687,
+    "total": 1402
+  },
+  {
+    "ward": "Town of Springfield Ward 2",
+    "biden": 698,
+    "trump": 681,
+    "total": 1379
+  },
+  {
+    "ward": "Town of Springfield Ward 3",
+    "biden": 219,
+    "trump": 350,
+    "total": 569
+  },
+  {
+    "ward": "Town of Springfield Ward 4",
+    "biden": 646,
+    "trump": 658,
+    "total": 1304
+  },
+  {
+    "ward": "Town of Vermont Ward 1",
+    "biden": 748,
+    "trump": 699,
+    "total": 1447
+  },
+  {
+    "ward": "Town of Verona Ward 3",
+    "biden": 757,
+    "trump": 445,
+    "total": 1202
+  },
+  {
+    "ward": "Town of Verona Ward 2",
+    "biden": 649,
+    "trump": 416,
+    "total": 1065
+  },
+  {
+    "ward": "Town of Verona Ward 3",
+    "biden": 757,
+    "trump": 445,
+    "total": 1202
+  },
+  {
+    "ward": "Town of Verona Ward 3",
+    "biden": 757,
+    "trump": 445,
+    "total": 1202
+  },
+  {
+    "ward": "Town of Verona Ward 3",
+    "biden": 757,
+    "trump": 445,
+    "total": 1202
+  },
+  {
+    "ward": "Town of Verona Ward 1",
+    "biden": 537,
+    "trump": 378,
+    "total": 915
+  },
+  {
+    "ward": "Town of Verona Ward 1",
+    "biden": 537,
+    "trump": 378,
+    "total": 915
+  },
+  {
+    "ward": "Town of Verona Ward 1",
+    "biden": 537,
+    "trump": 378,
+    "total": 915
+  },
+  {
+    "ward": "Town of Verona Ward 2",
+    "biden": 649,
+    "trump": 416,
+    "total": 1065
+  },
+  {
+    "ward": "Town of Verona Ward 2",
+    "biden": 649,
+    "trump": 416,
+    "total": 1065
+  },
+  {
+    "ward": "Town of Verona Ward 2",
+    "biden": 649,
+    "trump": 416,
+    "total": 1065
+  },
+  {
+    "ward": "Town of Verona Ward 1",
+    "biden": 537,
+    "trump": 378,
+    "total": 915
+  },
+  {
+    "ward": "Town of Verona Ward 1",
+    "biden": 537,
+    "trump": 378,
+    "total": 915
+  },
+  {
+    "ward": "Town of Verona Ward 2",
+    "biden": 649,
+    "trump": 416,
+    "total": 1065
+  },
+  {
+    "ward": "Town of Verona Ward 2",
+    "biden": 649,
+    "trump": 416,
+    "total": 1065
+  },
+  {
+    "ward": "Town of Verona Ward 2",
+    "biden": 649,
+    "trump": 416,
+    "total": 1065
+  },
+  {
+    "ward": "Town of Verona Ward 1",
+    "biden": 537,
+    "trump": 378,
+    "total": 915
+  },
+  {
+    "ward": "Town of Vienna Ward 2",
+    "biden": 249,
+    "trump": 383,
+    "total": 632
+  },
+  {
+    "ward": "Town of Vienna Ward 2",
+    "biden": 249,
+    "trump": 383,
+    "total": 632
+  },
+  {
+    "ward": "Town of Vienna Ward 1",
+    "biden": 317,
+    "trump": 448,
+    "total": 765
+  },
+  {
+    "ward": "Town of Westport Ward 1",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "Town of Westport Ward 1",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "Town of Westport Ward 3",
+    "biden": 357,
+    "trump": 483,
+    "total": 840
+  },
+  {
+    "ward": "Town of Westport Ward 3",
+    "biden": 357,
+    "trump": 483,
+    "total": 840
+  },
+  {
+    "ward": "Town of Westport Ward 3",
+    "biden": 357,
+    "trump": 483,
+    "total": 840
+  },
+  {
+    "ward": "Town of Westport Ward 3",
+    "biden": 357,
+    "trump": 483,
+    "total": 840
+  },
+  {
+    "ward": "Town of Westport Ward 1",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "Town of Westport Ward 4",
+    "biden": 521,
+    "trump": 595,
+    "total": 1116
+  },
+  {
+    "ward": "Town of Westport Ward 1",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "Town of Westport Ward 4",
+    "biden": 521,
+    "trump": 595,
+    "total": 1116
+  },
+  {
+    "ward": "Town of Westport Ward 5",
+    "biden": 326,
+    "trump": 456,
+    "total": 782
+  },
+  {
+    "ward": "Town of Westport Ward 3",
+    "biden": 357,
+    "trump": 483,
+    "total": 840
+  },
+  {
+    "ward": "Town of Westport Ward 2",
+    "biden": 202,
+    "trump": 330,
+    "total": 532
+  },
+  {
+    "ward": "Town of Westport Ward 1",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "Town of York Ward 1",
+    "biden": 515,
+    "trump": 591,
+    "total": 1106
+  },
+  {
+    "ward": "Village of Belleville Ward 2",
+    "biden": 551,
+    "trump": 611,
+    "total": 1162
+  },
+  {
+    "ward": "Village of Belleville Ward 1",
+    "biden": 377,
+    "trump": 498,
+    "total": 875
+  },
+  {
+    "ward": "Village of Black Earth Ward 2",
+    "biden": 766,
+    "trump": 706,
+    "total": 1472
+  },
+  {
+    "ward": "Village of Black Earth Ward 1",
+    "biden": 219,
+    "trump": 350,
+    "total": 569
+  },
+  {
+    "ward": "Village of Blue Mounds Ward 1",
+    "biden": 287,
+    "trump": 420,
+    "total": 707
+  },
+  {
+    "ward": "Village of Blue Mounds Ward 1",
+    "biden": 287,
+    "trump": 420,
+    "total": 707
+  },
+  {
+    "ward": "Village of Brooklyn Ward 3",
+    "biden": 303,
+    "trump": 435,
+    "total": 738
+  },
+  {
+    "ward": "Village of Brooklyn Ward 1",
+    "biden": 748,
+    "trump": 700,
+    "total": 1448
+  },
+  {
+    "ward": "Village of Brooklyn Ward 4",
+    "biden": 272,
+    "trump": 407,
+    "total": 679
+  },
+  {
+    "ward": "Village of Cambridge Ward 2",
+    "biden": 539,
+    "trump": 605,
+    "total": 1144
+  },
+  {
+    "ward": "Village of Cambridge Ward 3",
+    "biden": 322,
+    "trump": 453,
+    "total": 775
+  },
+  {
+    "ward": "Village of Cambridge Ward 2",
+    "biden": 539,
+    "trump": 605,
+    "total": 1144
+  },
+  {
+    "ward": "Village of Cross Plains Ward 6",
+    "biden": 358,
+    "trump": 483,
+    "total": 841
+  },
+  {
+    "ward": "Village of Cross Plains Ward 1",
+    "biden": 539,
+    "trump": 605,
+    "total": 1144
+  },
+  {
+    "ward": "Village of Cross Plains Ward 2",
+    "biden": 619,
+    "trump": 646,
+    "total": 1265
+  },
+  {
+    "ward": "Village of Cross Plains Ward 4",
+    "biden": 286,
+    "trump": 419,
+    "total": 705
+  },
+  {
+    "ward": "Village of Cross Plains Ward 3",
+    "biden": 507,
+    "trump": 586,
+    "total": 1093
+  },
+  {
+    "ward": "Village of Cross Plains Ward 5",
+    "biden": 297,
+    "trump": 430,
+    "total": 727
+  },
+  {
+    "ward": "Village of Cross Plains Ward 7",
+    "biden": 756,
+    "trump": 702,
+    "total": 1458
+  },
+  {
+    "ward": "Village of Dane Ward 1",
+    "biden": 329,
+    "trump": 459,
+    "total": 788
+  },
+  {
+    "ward": "Village of Deerfield Ward 3",
+    "biden": 367,
+    "trump": 490,
+    "total": 857
+  },
+  {
+    "ward": "Village of Deerfield Ward 2",
+    "biden": 706,
+    "trump": 684,
+    "total": 1390
+  },
+  {
+    "ward": "Village of Deerfield Ward 1",
+    "biden": 560,
+    "trump": 617,
+    "total": 1177
+  },
+  {
+    "ward": "Village of Deerfield Ward 3",
+    "biden": 367,
+    "trump": 490,
+    "total": 857
+  },
+  {
+    "ward": "Village of DeForest Ward 4",
+    "biden": 272,
+    "trump": 406,
+    "total": 678
+  },
+  {
+    "ward": "Village of DeForest Ward 10",
+    "biden": 242,
+    "trump": 375,
+    "total": 617
+  },
+  {
+    "ward": "Village of DeForest Ward 5",
+    "biden": 270,
+    "trump": 404,
+    "total": 674
+  },
+  {
+    "ward": "Village of DeForest Ward 1",
+    "biden": 585,
+    "trump": 630,
+    "total": 1215
+  },
+  {
+    "ward": "Village of DeForest Ward 6",
+    "biden": 743,
+    "trump": 698,
+    "total": 1441
+  },
+  {
+    "ward": "Village of DeForest Ward 7",
+    "biden": 785,
+    "trump": 712,
+    "total": 1497
+  },
+  {
+    "ward": "Village of DeForest Ward 9",
+    "biden": 566,
+    "trump": 620,
+    "total": 1186
+  },
+  {
+    "ward": "Village of DeForest Ward 8",
+    "biden": 433,
+    "trump": 539,
+    "total": 972
+  },
+  {
+    "ward": "Village of DeForest Ward 3",
+    "biden": 724,
+    "trump": 691,
+    "total": 1415
+  },
+  {
+    "ward": "Village of DeForest Ward 2",
+    "biden": 433,
+    "trump": 539,
+    "total": 972
+  },
+  {
+    "ward": "Village of DeForest Ward 12",
+    "biden": 206,
+    "trump": 335,
+    "total": 541
+  },
+  {
+    "ward": "Village of DeForest Ward 13",
+    "biden": 395,
+    "trump": 512,
+    "total": 907
+  },
+  {
+    "ward": "Village of DeForest Ward 11",
+    "biden": 438,
+    "trump": 542,
+    "total": 980
+  },
+  {
+    "ward": "Village of DeForest Ward 14",
+    "biden": 651,
+    "trump": 660,
+    "total": 1311
+  },
+  {
+    "ward": "Village of DeForest Ward 15",
+    "biden": 375,
+    "trump": 496,
+    "total": 871
+  },
+  {
+    "ward": "Village of DeForest Ward 16",
+    "biden": 505,
+    "trump": 586,
+    "total": 1091
+  },
+  {
+    "ward": "Village of DeForest Ward 17",
+    "biden": 621,
+    "trump": 647,
+    "total": 1268
+  },
+  {
+    "ward": "Village of DeForest Ward 18",
+    "biden": 693,
+    "trump": 678,
+    "total": 1371
+  },
+  {
+    "ward": "Village of DeForest Ward 19",
+    "biden": 287,
+    "trump": 420,
+    "total": 707
+  },
+  {
+    "ward": "Village of Marshall Ward 4",
+    "biden": 285,
+    "trump": 418,
+    "total": 703
+  },
+  {
+    "ward": "Village of Marshall Ward 3",
+    "biden": 281,
+    "trump": 415,
+    "total": 696
+  },
+  {
+    "ward": "Village of Marshall Ward 5",
+    "biden": 686,
+    "trump": 676,
+    "total": 1362
+  },
+  {
+    "ward": "Village of Marshall Ward 1",
+    "biden": 248,
+    "trump": 381,
+    "total": 629
+  },
+  {
+    "ward": "Village of Marshall Ward 2",
+    "biden": 353,
+    "trump": 479,
+    "total": 832
+  },
+  {
+    "ward": "Village of Marshall Ward 3",
+    "biden": 281,
+    "trump": 415,
+    "total": 696
+  },
+  {
+    "ward": "Village of Marshall Ward 4",
+    "biden": 285,
+    "trump": 418,
+    "total": 703
+  },
+  {
+    "ward": "Village of Mazomanie Ward 2",
+    "biden": 404,
+    "trump": 518,
+    "total": 922
+  },
+  {
+    "ward": "Village of Mazomanie Ward 1",
+    "biden": 303,
+    "trump": 435,
+    "total": 738
+  },
+  {
+    "ward": "Village of Mazomanie Ward 3",
+    "biden": 253,
+    "trump": 387,
+    "total": 640
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 2",
+    "biden": 259,
+    "trump": 394,
+    "total": 653
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 6",
+    "biden": 757,
+    "trump": 703,
+    "total": 1460
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 7",
+    "biden": 192,
+    "trump": 319,
+    "total": 511
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 10",
+    "biden": 774,
+    "trump": 708,
+    "total": 1482
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 9",
+    "biden": 465,
+    "trump": 560,
+    "total": 1025
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 8",
+    "biden": 326,
+    "trump": 457,
+    "total": 783
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 5",
+    "biden": 625,
+    "trump": 649,
+    "total": 1274
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 4",
+    "biden": 343,
+    "trump": 470,
+    "total": 813
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 1",
+    "biden": 444,
+    "trump": 547,
+    "total": 991
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 3",
+    "biden": 329,
+    "trump": 458,
+    "total": 787
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 11",
+    "biden": 321,
+    "trump": 451,
+    "total": 772
+  },
+  {
+    "ward": "Village of Mount Horeb Ward 12",
+    "biden": 610,
+    "trump": 642,
+    "total": 1252
+  },
+  {
+    "ward": "Village of Oregon Ward 4",
+    "biden": 529,
+    "trump": 375,
+    "total": 904
+  },
+  {
+    "ward": "Village of Oregon Ward 11",
+    "biden": 921,
+    "trump": 476,
+    "total": 1397
+  },
+  {
+    "ward": "Village of Oregon Ward 1",
+    "biden": 852,
+    "trump": 464,
+    "total": 1316
+  },
+  {
+    "ward": "Village of Oregon Ward 14",
+    "biden": 531,
+    "trump": 376,
+    "total": 907
+  },
+  {
+    "ward": "Village of Oregon Ward 13",
+    "biden": 652,
+    "trump": 417,
+    "total": 1069
+  },
+  {
+    "ward": "Village of Oregon Ward 7",
+    "biden": 781,
+    "trump": 450,
+    "total": 1231
+  },
+  {
+    "ward": "Village of Oregon Ward 9",
+    "biden": 919,
+    "trump": 476,
+    "total": 1395
+  },
+  {
+    "ward": "Village of Oregon Ward 10",
+    "biden": 426,
+    "trump": 331,
+    "total": 757
+  },
+  {
+    "ward": "Village of Oregon Ward 8",
+    "biden": 707,
+    "trump": 432,
+    "total": 1139
+  },
+  {
+    "ward": "Village of Oregon Ward 2",
+    "biden": 702,
+    "trump": 431,
+    "total": 1133
+  },
+  {
+    "ward": "Village of Oregon Ward 6",
+    "biden": 515,
+    "trump": 369,
+    "total": 884
+  },
+  {
+    "ward": "Village of Oregon Ward 5",
+    "biden": 760,
+    "trump": 446,
+    "total": 1206
+  },
+  {
+    "ward": "Village of Oregon Ward 12",
+    "biden": 363,
+    "trump": 298,
+    "total": 661
+  },
+  {
+    "ward": "Village of Oregon Ward 3",
+    "biden": 639,
+    "trump": 413,
+    "total": 1052
+  },
+  {
+    "ward": "Village of Oregon Ward 15",
+    "biden": 497,
+    "trump": 362,
+    "total": 859
+  },
+  {
+    "ward": "Village of Rockdale Ward 1",
+    "biden": 271,
+    "trump": 406,
+    "total": 677
+  },
+  {
+    "ward": "Village of Shorewood Hills Ward 2",
+    "biden": 737,
+    "trump": 695,
+    "total": 1432
+  },
+  {
+    "ward": "Village of Shorewood Hills Ward 1",
+    "biden": 774,
+    "trump": 708,
+    "total": 1482
+  },
+  {
+    "ward": "Village of Waunakee Ward 9",
+    "biden": 329,
+    "trump": 459,
+    "total": 788
+  },
+  {
+    "ward": "Village of Waunakee Ward 3",
+    "biden": 453,
+    "trump": 552,
+    "total": 1005
+  },
+  {
+    "ward": "Village of Waunakee Ward 1",
+    "biden": 629,
+    "trump": 650,
+    "total": 1279
+  },
+  {
+    "ward": "Village of Waunakee Ward 2",
+    "biden": 730,
+    "trump": 693,
+    "total": 1423
+  },
+  {
+    "ward": "Village of Waunakee Ward 4",
+    "biden": 268,
+    "trump": 403,
+    "total": 671
+  },
+  {
+    "ward": "Village of Waunakee Ward 5",
+    "biden": 333,
+    "trump": 462,
+    "total": 795
+  },
+  {
+    "ward": "Village of Waunakee Ward 6",
+    "biden": 242,
+    "trump": 376,
+    "total": 618
+  },
+  {
+    "ward": "Village of Waunakee Ward 11",
+    "biden": 338,
+    "trump": 467,
+    "total": 805
+  },
+  {
+    "ward": "Village of Waunakee Ward 7",
+    "biden": 388,
+    "trump": 507,
+    "total": 895
+  },
+  {
+    "ward": "Village of Waunakee Ward 10",
+    "biden": 412,
+    "trump": 524,
+    "total": 936
+  },
+  {
+    "ward": "Village of Waunakee Ward 8",
+    "biden": 634,
+    "trump": 653,
+    "total": 1287
+  },
+  {
+    "ward": "Village of Waunakee Ward 12",
+    "biden": 700,
+    "trump": 681,
+    "total": 1381
+  },
+  {
+    "ward": "Village of Waunakee Ward 13",
+    "biden": 321,
+    "trump": 452,
+    "total": 773
+  },
+  {
+    "ward": "Village of Waunakee Ward 14",
+    "biden": 562,
+    "trump": 618,
+    "total": 1180
+  },
+  {
+    "ward": "Village of Waunakee Ward 15",
+    "biden": 287,
+    "trump": 420,
+    "total": 707
+  },
+  {
+    "ward": "Village of Waunakee Ward 16",
+    "biden": 276,
+    "trump": 411,
+    "total": 687
+  },
+  {
+    "ward": "Village of Windsor Ward 2",
+    "biden": 501,
+    "trump": 583,
+    "total": 1084
+  },
+  {
+    "ward": "Village of Windsor Ward 11",
+    "biden": 543,
+    "trump": 607,
+    "total": 1150
+  },
+  {
+    "ward": "Village of Windsor Ward 7",
+    "biden": 244,
+    "trump": 377,
+    "total": 621
+  },
+  {
+    "ward": "Village of Windsor Ward 6",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "Village of Windsor Ward 12",
+    "biden": 297,
+    "trump": 430,
+    "total": 727
+  },
+  {
+    "ward": "Village of Windsor Ward 8",
+    "biden": 680,
+    "trump": 673,
+    "total": 1353
+  },
+  {
+    "ward": "Village of Windsor Ward 14",
+    "biden": 412,
+    "trump": 524,
+    "total": 936
+  },
+  {
+    "ward": "Village of Windsor Ward 13",
+    "biden": 380,
+    "trump": 500,
+    "total": 880
+  },
+  {
+    "ward": "Village of Windsor Ward 10",
+    "biden": 325,
+    "trump": 456,
+    "total": 781
+  },
+  {
+    "ward": "Village of Windsor Ward 9",
+    "biden": 197,
+    "trump": 325,
+    "total": 522
+  },
+  {
+    "ward": "Village of Windsor Ward 1",
+    "biden": 190,
+    "trump": 317,
+    "total": 507
+  },
+  {
+    "ward": "Village of Windsor Ward 4",
+    "biden": 594,
+    "trump": 634,
+    "total": 1228
+  },
+  {
+    "ward": "Village of Windsor Ward 5",
+    "biden": 749,
+    "trump": 699,
+    "total": 1448
+  },
+  {
+    "ward": "Village of Windsor Ward 3",
+    "biden": 425,
+    "trump": 534,
+    "total": 959
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 5",
+    "biden": 704,
+    "trump": 683,
+    "total": 1387
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 6",
+    "biden": 191,
+    "trump": 318,
+    "total": 509
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 6",
+    "biden": 191,
+    "trump": 318,
+    "total": 509
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 2",
+    "biden": 289,
+    "trump": 422,
+    "total": 711
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 3",
+    "biden": 329,
+    "trump": 458,
+    "total": 787
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 4",
+    "biden": 201,
+    "trump": 330,
+    "total": 531
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 6",
+    "biden": 191,
+    "trump": 318,
+    "total": 509
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 6",
+    "biden": 191,
+    "trump": 318,
+    "total": 509
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 1",
+    "biden": 456,
+    "trump": 554,
+    "total": 1010
+  },
+  {
+    "ward": "Town of Cottage Grove Ward 4",
+    "biden": 201,
+    "trump": 330,
+    "total": 531
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 2",
+    "biden": 210,
+    "trump": 340,
+    "total": 550
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 1",
+    "biden": 458,
+    "trump": 556,
+    "total": 1014
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 3",
+    "biden": 222,
+    "trump": 353,
+    "total": 575
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 4",
+    "biden": 350,
+    "trump": 476,
+    "total": 826
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 7",
+    "biden": 485,
+    "trump": 573,
+    "total": 1058
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 8",
+    "biden": 550,
+    "trump": 611,
+    "total": 1161
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 9",
+    "biden": 659,
+    "trump": 664,
+    "total": 1323
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 6",
+    "biden": 660,
+    "trump": 665,
+    "total": 1325
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 5",
+    "biden": 287,
+    "trump": 420,
+    "total": 707
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 10",
+    "biden": 729,
+    "trump": 692,
+    "total": 1421
+  },
+  {
+    "ward": "Village of Cottage Grove Ward 11",
+    "biden": 396,
+    "trump": 513,
+    "total": 909
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 3",
+    "biden": 1057,
+    "trump": 411,
+    "total": 1468
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 3",
+    "biden": 1057,
+    "trump": 411,
+    "total": 1468
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 2",
+    "biden": 562,
+    "trump": 326,
+    "total": 888
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 3",
+    "biden": 1057,
+    "trump": 411,
+    "total": 1468
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 3",
+    "biden": 1057,
+    "trump": 411,
+    "total": 1468
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 1",
+    "biden": 667,
+    "trump": 355,
+    "total": 1022
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 3",
+    "biden": 1057,
+    "trump": 411,
+    "total": 1468
+  },
+  {
+    "ward": "Town of Sun Prairie Ward 2",
+    "biden": 562,
+    "trump": 326,
+    "total": 888
+  },
+  {
+    "ward": "Village of McFarland Ward 3",
+    "biden": 333,
+    "trump": 462,
+    "total": 795
+  },
+  {
+    "ward": "Village of McFarland Ward 1",
+    "biden": 572,
+    "trump": 622,
+    "total": 1194
+  },
+  {
+    "ward": "Village of McFarland Ward 5",
+    "biden": 713,
+    "trump": 686,
+    "total": 1399
+  },
+  {
+    "ward": "Village of McFarland Ward 10",
+    "biden": 208,
+    "trump": 337,
+    "total": 545
+  },
+  {
+    "ward": "Village of McFarland Ward 7",
+    "biden": 231,
+    "trump": 363,
+    "total": 594
+  },
+  {
+    "ward": "Village of McFarland Ward 9",
+    "biden": 512,
+    "trump": 589,
+    "total": 1101
+  },
+  {
+    "ward": "Village of McFarland Ward 6",
+    "biden": 404,
+    "trump": 519,
+    "total": 923
+  },
+  {
+    "ward": "Village of McFarland Ward 2",
+    "biden": 535,
+    "trump": 602,
+    "total": 1137
+  },
+  {
+    "ward": "Village of McFarland Ward 8",
+    "biden": 599,
+    "trump": 637,
+    "total": 1236
+  },
+  {
+    "ward": "Village of McFarland Ward 4",
+    "biden": 205,
+    "trump": 335,
+    "total": 540
+  },
+  {
+    "ward": "Village of McFarland Ward 12",
+    "biden": 740,
+    "trump": 696,
+    "total": 1436
+  },
+  {
+    "ward": "Village of McFarland Ward 13",
+    "biden": 584,
+    "trump": 628,
+    "total": 1212
+  },
+  {
+    "ward": "Village of McFarland Ward 11",
+    "biden": 375,
+    "trump": 497,
+    "total": 872
+  },
+  {
+    "ward": "City of Stoughton Ward 4",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "City of Stoughton Ward 3",
+    "biden": 205,
+    "trump": 334,
+    "total": 539
+  },
+  {
+    "ward": "City of Stoughton Ward 8",
+    "biden": 229,
+    "trump": 361,
+    "total": 590
+  },
+  {
+    "ward": "City of Stoughton Ward 1",
+    "biden": 208,
+    "trump": 338,
+    "total": 546
+  },
+  {
+    "ward": "City of Stoughton Ward 7",
+    "biden": 502,
+    "trump": 583,
+    "total": 1085
+  },
+  {
+    "ward": "City of Stoughton Ward 6",
+    "biden": 357,
+    "trump": 483,
+    "total": 840
+  },
+  {
+    "ward": "City of Stoughton Ward 2",
+    "biden": 777,
+    "trump": 709,
+    "total": 1486
+  },
+  {
+    "ward": "City of Stoughton Ward 5",
+    "biden": 777,
+    "trump": 709,
+    "total": 1486
+  },
+  {
+    "ward": "City of Stoughton Ward 4",
+    "biden": 393,
+    "trump": 511,
+    "total": 904
+  },
+  {
+    "ward": "City of Stoughton Ward 9",
+    "biden": 623,
+    "trump": 647,
+    "total": 1270
+  },
+  {
+    "ward": "Town of Dunkirk Ward 1",
+    "biden": 364,
+    "trump": 488,
+    "total": 852
+  },
+  {
+    "ward": "Town of Dunkirk Ward 3",
+    "biden": 512,
+    "trump": 589,
+    "total": 1101
+  },
+  {
+    "ward": "Town of Dunkirk Ward 1",
+    "biden": 364,
+    "trump": 488,
+    "total": 852
+  },
+  {
+    "ward": "Town of Dunkirk Ward 6",
+    "biden": 721,
+    "trump": 689,
+    "total": 1410
+  },
+  {
+    "ward": "Town of Dunkirk Ward 3",
+    "biden": 512,
+    "trump": 589,
+    "total": 1101
+  },
+  {
+    "ward": "Town of Dunkirk Ward 1",
+    "biden": 364,
+    "trump": 488,
+    "total": 852
+  },
+  {
+    "ward": "Town of Dunkirk Ward 2",
+    "biden": 442,
+    "trump": 546,
+    "total": 988
+  },
+  {
+    "ward": "Town of Dunkirk Ward 5",
+    "biden": 404,
+    "trump": 519,
+    "total": 923
+  },
+  {
+    "ward": "Town of Dunkirk Ward 4",
+    "biden": 253,
+    "trump": 386,
+    "total": 639
+  },
+  {
+    "ward": "Town of Dunkirk Ward 3",
+    "biden": 512,
+    "trump": 589,
+    "total": 1101
+  },
+  {
+    "ward": "Town of Dunkirk Ward 3",
+    "biden": 512,
+    "trump": 589,
+    "total": 1101
+  },
+  {
+    "ward": "Town of Dunkirk Ward 3",
+    "biden": 512,
+    "trump": 589,
+    "total": 1101
+  },
+  {
+    "ward": "Town of Dunkirk Ward 1",
+    "biden": 364,
+    "trump": 488,
+    "total": 852
+  },
+  {
+    "ward": "Town of Pleasant Springs Ward 4",
+    "biden": 503,
+    "trump": 584,
+    "total": 1087
+  },
+  {
+    "ward": "Town of Pleasant Springs Ward 2",
+    "biden": 622,
+    "trump": 647,
+    "total": 1269
+  },
+  {
+    "ward": "Town of Pleasant Springs Ward 1",
+    "biden": 216,
+    "trump": 346,
+    "total": 562
+  },
+  {
+    "ward": "Town of Pleasant Springs Ward 3",
+    "biden": 653,
+    "trump": 661,
+    "total": 1314
+  },
+  {
+    "ward": "Town of Dunn Ward 4",
+    "biden": 377,
+    "trump": 498,
+    "total": 875
+  },
+  {
+    "ward": "Town of Dunn Ward 5",
+    "biden": 497,
+    "trump": 581,
+    "total": 1078
+  },
+  {
+    "ward": "Town of Dunn Ward 1",
+    "biden": 349,
+    "trump": 476,
+    "total": 825
+  },
+  {
+    "ward": "Town of Dunn Ward 7",
+    "biden": 687,
+    "trump": 675,
+    "total": 1362
+  },
+  {
+    "ward": "Town of Dunn Ward 6",
+    "biden": 759,
+    "trump": 703,
+    "total": 1462
+  },
+  {
+    "ward": "Town of Dunn Ward 2",
+    "biden": 208,
+    "trump": 338,
+    "total": 546
+  },
+  {
+    "ward": "Town of Dunn Ward 3",
+    "biden": 237,
+    "trump": 370,
+    "total": 607
+  },
+  {
+    "ward": "Town of Dunn Ward 7",
+    "biden": 687,
+    "trump": 675,
+    "total": 1362
+  },
+  {
+    "ward": "Town of Rutland Ward 1",
+    "biden": 674,
+    "trump": 671,
+    "total": 1345
+  },
+  {
+    "ward": "Town of Rutland Ward 1",
+    "biden": 674,
+    "trump": 671,
+    "total": 1345
+  },
+  {
+    "ward": "Town of Rutland Ward 2",
+    "biden": 196,
+    "trump": 323,
+    "total": 519
+  },
+  {
+    "ward": "Town of Rutland Ward 1",
+    "biden": 674,
+    "trump": 671,
+    "total": 1345
+  },
+  {
+    "ward": "Town of Rutland Ward 2",
+    "biden": 196,
+    "trump": 323,
+    "total": 519
+  },
+  {
+    "ward": "Town of Burke Ward 2",
+    "biden": 293,
+    "trump": 426,
+    "total": 719
+  },
+  {
+    "ward": "Town of Burke Ward 4",
+    "biden": 283,
+    "trump": 417,
+    "total": 700
+  },
+  {
+    "ward": "Town of Burke Ward 6",
+    "biden": 209,
+    "trump": 339,
+    "total": 548
+  },
+  {
+    "ward": "Town of Burke Ward 7",
+    "biden": 307,
+    "trump": 439,
+    "total": 746
+  },
+  {
+    "ward": "Town of Burke Ward 2",
+    "biden": 293,
+    "trump": 426,
+    "total": 719
+  },
+  {
+    "ward": "Town of Burke Ward 5",
+    "biden": 724,
+    "trump": 691,
+    "total": 1415
+  },
+  {
+    "ward": "Town of Burke Ward 5",
+    "biden": 724,
+    "trump": 691,
+    "total": 1415
+  },
+  {
+    "ward": "Town of Burke Ward 6",
+    "biden": 209,
+    "trump": 339,
+    "total": 548
+  },
+  {
+    "ward": "Town of Burke Ward 2",
+    "biden": 293,
+    "trump": 426,
+    "total": 719
+  },
+  {
+    "ward": "Town of Burke Ward 2",
+    "biden": 293,
+    "trump": 426,
+    "total": 719
+  },
+  {
+    "ward": "Town of Burke Ward 1",
+    "biden": 391,
+    "trump": 509,
+    "total": 900
+  },
+  {
+    "ward": "Town of Burke Ward 1",
+    "biden": 391,
+    "trump": 509,
+    "total": 900
+  },
+  {
+    "ward": "Town of Burke Ward 2",
+    "biden": 293,
+    "trump": 426,
+    "total": 719
+  },
+  {
+    "ward": "Town of Burke Ward 5",
+    "biden": 724,
+    "trump": 691,
+    "total": 1415
+  },
+  {
+    "ward": "Town of Burke Ward 4",
+    "biden": 283,
+    "trump": 417,
+    "total": 700
+  },
+  {
+    "ward": "Town of Burke Ward 3",
+    "biden": 446,
+    "trump": 548,
+    "total": 994
+  },
+  {
+    "ward": "Town of Burke Ward 7",
+    "biden": 307,
+    "trump": 439,
+    "total": 746
+  },
+  {
+    "ward": "Town of Burke Ward 2",
+    "biden": 293,
+    "trump": 426,
+    "total": 719
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 2",
+    "biden": 627,
+    "trump": 649,
+    "total": 1276
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 1",
+    "biden": 290,
+    "trump": 424,
+    "total": 714
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 3",
+    "biden": 771,
+    "trump": 707,
+    "total": 1478
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 4",
+    "biden": 745,
+    "trump": 698,
+    "total": 1443
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 4",
+    "biden": 745,
+    "trump": 698,
+    "total": 1443
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 6",
+    "biden": 588,
+    "trump": 631,
+    "total": 1219
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 6",
+    "biden": 588,
+    "trump": 631,
+    "total": 1219
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 6",
+    "biden": 588,
+    "trump": 631,
+    "total": 1219
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 6",
+    "biden": 588,
+    "trump": 631,
+    "total": 1219
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 4",
+    "biden": 745,
+    "trump": 698,
+    "total": 1443
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 4",
+    "biden": 745,
+    "trump": 698,
+    "total": 1443
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 4",
+    "biden": 745,
+    "trump": 698,
+    "total": 1443
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 6",
+    "biden": 588,
+    "trump": 631,
+    "total": 1219
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 7",
+    "biden": 359,
+    "trump": 484,
+    "total": 843
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 7",
+    "biden": 359,
+    "trump": 484,
+    "total": 843
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 4",
+    "biden": 745,
+    "trump": 698,
+    "total": 1443
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 5",
+    "biden": 642,
+    "trump": 656,
+    "total": 1298
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 5",
+    "biden": 642,
+    "trump": 656,
+    "total": 1298
+  },
+  {
+    "ward": "Town of Blooming Grove Ward 7",
+    "biden": 359,
+    "trump": 484,
+    "total": 843
+  },
+  {
+    "ward": "Village of Maple Bluff Ward 1",
+    "biden": 408,
+    "trump": 521,
+    "total": 929
+  },
+  {
+    "ward": "Village of Maple Bluff Ward 2",
+    "biden": 753,
+    "trump": 701,
+    "total": 1454
+  }
+]
