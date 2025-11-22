@@ -55,7 +55,7 @@ export default function Home() {
 
   // Calculate current total votes for turnout estimation
   const currentTotalVotes = raceResult?.totalVotes || 0;
-  const { turnoutData } = useHistoricalTurnout(selectedRaceId, currentTotalVotes);
+  const { turnoutData } = useHistoricalTurnout(selectedRaceId, currentTotalVotes, raceResult?.raceName);
 
   const isLoading = isLoadingRace || isLoadingPrecincts;
 

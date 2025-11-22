@@ -77,10 +77,10 @@ export function usePrecinctResults(electionId: string | null, raceId: string | n
     };
 }
 
-export function useHistoricalTurnout(raceId: string | null, currentVotes: number | undefined) {
+export function useHistoricalTurnout(raceId: string | null, currentVotes: number | undefined, raceName?: string) {
     const { data, error, isLoading } = useSWR<HistoricalTurnout>(
-        raceId && currentVotes !== undefined ? ['historicalTurnout', raceId, currentVotes] : null,
-        ([_, rId, votes]) => getHistoricalTurnout(rId as string, votes as number)
+        raceId && currentVotes !== undefined ? ['historicalTurnout', raceId, currentVotes, raceName] : null,
+        ([_, rId, votes, rName]) => getHistoricalTurnout(rId as string, votes as number, rName as string | undefined)
     );
     return {
         turnoutData: data,

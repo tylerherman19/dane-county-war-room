@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -176,6 +176,47 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
 
+    // OPTIMIZATION: Create a fast lookup dictionary for results
+    // Key: "Municipality Name-WardNumber" (normalized)
+    // Value: PrecinctResult[] (usually just one, but keeping array structure for compatibility)
+    const resultsMap = useMemo(() => {
+        if (!precinctResults) return {};
+
+        const map: Record<string, PrecinctResult[]> = {};
+        precinctResults.forEach(r => {
+            // Normalize keys for consistent lookup
+            // Note: The GeoJSON properties might differ slightly, so we need a robust key.
+            // We'll use a combination of normalized name and ward number.
+            // Ideally, we should use a unique ID if available, but name+ward is what we have.
+
+            // We need to match how we construct the key in the style function.
+            // Let's store by Ward Number primarily if unique within a race? 
+            // No, ward numbers repeat across municipalities (e.g. Madison Ward 1 vs Fitchburg Ward 1).
+            // So we need Municipality + Ward.
+
+            // Let's use a simplified key: `${wardNumber}-${precinctName.toLowerCase()}`
+            // But precinctName in result might be "City of Madison" and GeoJSON might be "Madison City" or "Madison".
+            // The existing logic used `includes`.
+
+            // To support O(1), we need exact matches or a better strategy.
+            // Since we can't easily normalize all names perfectly for O(1) without a fuzzy match map,
+            // we might need a hybrid approach or pre-process the GeoJSON names to match API names.
+
+            // However, for this specific app, let's look at the data.
+            // API: "City of Madison"
+            // GeoJSON: "Madison" or "City of Madison"?
+
+            // Let's stick to the existing logic BUT optimize it by pre-grouping by Ward Number.
+            // Then we only filter a tiny subset (wards with same number).
+            // This is O(1) effectively (O(M) where M is small, like < 5 municipalities share a ward number).
+
+            const wardNum = parseInt(r.wardNumber).toString(); // Normalize to string "1", "2"
+            if (!map[wardNum]) map[wardNum] = [];
+            map[wardNum].push(r);
+        });
+        return map;
+    }, [precinctResults]);
+
     useEffect(() => {
         if (raceResult?.candidates) {
             setCandidateColors(assignCandidateColors(raceResult.candidates));
@@ -189,15 +230,19 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             .catch(err => console.error('Error loading GeoJSON:', err));
     }, []);
 
-    const style = (feature: any, currentSelectedWard: { name: string; num: string } | null = null) => {
+    // Memoize style function to prevent recreation on every render
+    const style = useCallback((feature: any, currentSelectedWard: { name: string; num: string } | null = null) => {
         const municipality = feature.properties.NAME;
-        const wardNum = feature.properties.WardNumber;
+        const wardNum = parseInt(feature.properties.WardNumber).toString(); // Normalize
 
-        // Filter results for this ward
-        const relevantResults = precinctResults?.filter(r =>
-            parseInt(r.wardNumber) === parseInt(wardNum) &&
-            (r.precinctName.toLowerCase().includes(municipality.toLowerCase()) || municipality.toLowerCase().includes(r.precinctName.toLowerCase()))
-        ) || [];
+        // OPTIMIZED LOOKUP: Get candidates by ward number first
+        const potentialMatches = resultsMap[wardNum] || [];
+
+        // Then do the string matching on this small subset
+        const relevantResults = potentialMatches.filter((r: PrecinctResult) =>
+            r.precinctName.toLowerCase().includes(municipality.toLowerCase()) ||
+            municipality.toLowerCase().includes(r.precinctName.toLowerCase())
+        );
 
         // Base style for empty/irrelevant wards
         let baseStyle = {
@@ -210,7 +255,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
 
         if (relevantResults.length > 0) {
             const total = relevantResults[0].ballotscast;
-            const sorted = relevantResults.sort((a, b) => b.votes - a.votes);
+            const sorted = relevantResults.sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
             const winner = sorted[0];
             const runnerUp = sorted[1];
 
@@ -221,10 +266,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
 
             // Calculate Lightness based on Margin - Traditional Election Map Style
-            // Use a narrower range for more opaque, vibrant colors
-            // Margin 0 (Tie) -> Lightness 60% (Lighter but still vibrant)
-            // Calculate Lightness based on Margin (50% to 65%)
-            // Close races (margin ~0) = lighter (65%), Definitive wins (margin > 0.5) = darker (50%)
             const lightness = 65 - (Math.min(margin, 0.5) * 30);
 
             const colorString = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
@@ -257,27 +298,29 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         return baseStyle;
-    };
+    }, [resultsMap, candidateColors]); // Re-create only if data changes
 
-    const onEachFeature = (feature: any, layer: L.Layer) => {
+    const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
-        const wardNum = feature.properties.WardNumber;
+        const wardNum = parseInt(feature.properties.WardNumber).toString();
 
-        const relevantResults = precinctResults?.filter(r =>
-            parseInt(r.wardNumber) === parseInt(wardNum) &&
-            (r.precinctName.toLowerCase().includes(municipality.toLowerCase()) || municipality.toLowerCase().includes(r.precinctName.toLowerCase()))
-        ) || [];
+        // OPTIMIZED LOOKUP
+        const potentialMatches = resultsMap[wardNum] || [];
+        const relevantResults = potentialMatches.filter((r: PrecinctResult) =>
+            r.precinctName.toLowerCase().includes(municipality.toLowerCase()) ||
+            municipality.toLowerCase().includes(r.precinctName.toLowerCase())
+        );
 
         if (relevantResults.length > 0) {
             const total = relevantResults[0].ballotscast;
-            const sorted = relevantResults.sort((a, b) => b.votes - a.votes);
+            const sorted = relevantResults.sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
 
             let popupContent = `<div class="p-2 font-sans text-sm">
                 <div class="text-xs text-slate-400 mb-1 uppercase tracking-wider">${raceResult?.raceName || 'Election Results'}</div>
                 <h3 class="font-bold border-b pb-1 mb-2">${municipality} Ward ${wardNum}</h3>
                 <div class="space-y-1">`;
 
-            sorted.forEach(r => {
+            sorted.forEach((r: PrecinctResult) => {
                 const pct = ((r.votes / total) * 100).toFixed(1);
                 popupContent += `<div class="flex justify-between gap-4">
                     <span>${r.candidateName}</span>
@@ -309,12 +352,32 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 mouseout: (e) => {
                     const layer = e.target;
                     // Manually recalculate the original style with current selectedWard
+                    // Note: We need to access the LATEST selectedWard here.
+                    // Since onEachFeature is a closure, 'selectedWard' might be stale if we used it directly.
+                    // BUT, we are calling 'style' which is now a useCallback dependency.
+                    // Wait, if 'style' changes, 'onEachFeature' changes?
+                    // No, onEachFeature is passed to GeoJSON once. Leaflet doesn't re-bind easily.
+
+                    // CRITICAL FIX: We cannot pass 'selectedWard' from the closure if it changes.
+                    // We need a ref to the current selectedWard or rely on the fact that 
+                    // we are re-rendering the GeoJSON when selectedWard changes (via the key prop).
+
+                    // The GeoJSON component has: key={`${selectedWard ? selectedWard.num : 'all'}...`}
+                    // This forces a full re-render of the GeoJSON layer when selectedWard changes.
+                    // So the closure 'selectedWard' inside 'style' (if we used it) would be fresh.
+                    // But 'style' function itself takes 'currentSelectedWard' as arg.
+
+                    // In mouseout, we call: style(feature, selectedWard)
+                    // If 'selectedWard' is from the props of Map component, it is fresh because
+                    // the Map component re-renders, and GeoJSON re-renders (new key), so onEachFeature is re-created and re-bound.
+
+                    // So this is safe.
                     const originalStyle = style(feature, selectedWard);
                     layer.setStyle(originalStyle);
                 }
             });
         }
-    };
+    }, [resultsMap, raceResult, selectedWard, style]); // Dependencies
 
     return (
         <MapContainer

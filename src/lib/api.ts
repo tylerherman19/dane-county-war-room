@@ -318,12 +318,16 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
     return results;
 }
 
-export async function getHistoricalTurnout(raceId: string | null, currentTotalVotes: number): Promise<HistoricalTurnout> {
-    // Still mock this for now as API doesn't give expected ballots
+import { getExpectedTurnout } from './historical-data';
+
+export async function getHistoricalTurnout(raceId: string | null, currentTotalVotes: number, raceName?: string): Promise<HistoricalTurnout> {
+    // Use the provided race name to determine expected turnout, or fall back to default
+    const expected = getExpectedTurnout(raceName || 'Default');
+
     return {
-        expectedBallots: Math.max(300000, currentTotalVotes),
-        outstandingEstimate: 0,
+        expectedBallots: Math.max(expected, currentTotalVotes),
+        outstandingEstimate: Math.max(0, expected - currentTotalVotes),
         confidence: 'Low',
-        percentageReported: 100
+        percentageReported: (currentTotalVotes / expected) * 100
     };
 }
