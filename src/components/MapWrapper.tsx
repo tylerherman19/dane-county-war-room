@@ -1,6 +1,8 @@
 'use client';
 
-import Map from './Map';
+import dynamic from 'next/dynamic';
+
+const Map = dynamic(() => import('./Map'), { ssr: false });
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
 import { useState } from 'react';

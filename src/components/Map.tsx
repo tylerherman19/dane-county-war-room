@@ -110,7 +110,7 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
 interface HSL { h: number; s: number; l: number; }
 
 // Helper to assign colors to candidates dynamically
-function assignCandidateColors(candidates: { candidateName: string; party: string }[]): Record<string, HSL> {
+function assignCandidateColors(candidates: { candidateName: string; party?: string }[]): Record<string, HSL> {
     const colors: Record<string, HSL> = {};
 
     // Standard party colors
@@ -141,7 +141,7 @@ function assignCandidateColors(candidates: { candidateName: string; party: strin
             colors[name] = { h: 215, s: 90, l: 50 };
         } else if (name.includes('Trump') || name.includes('Michels')) {
             colors[name] = { h: 0, s: 90, l: 50 };
-        } else if (partyColors[c.party]) {
+        } else if (c.party && partyColors[c.party]) {
             colors[name] = partyColors[c.party];
         } else {
             colors[name] = palette[paletteIndex % palette.length];
@@ -162,11 +162,13 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
     // Value: PrecinctResult[] (usually just one, but keeping array structure for compatibility)
     const resultsMap = useMemo(() => {
         const map: Record<string, PrecinctResult[]> = {};
-        precinctResults.forEach(r => {
-            const wardNum = parseInt(r.wardNumber).toString(); // Normalize to string "1", "2"
-            if (!map[wardNum]) map[wardNum] = [];
-            map[wardNum].push(r);
-        });
+        if (precinctResults) {
+            precinctResults.forEach(r => {
+                const wardNum = parseInt(r.wardNumber).toString(); // Normalize to string "1", "2"
+                if (!map[wardNum]) map[wardNum] = [];
+                map[wardNum].push(r);
+            });
+        }
         return map;
     }, [precinctResults]);
 
