@@ -1,141 +1,178 @@
-// Analysis Data Layer
-// Fetches real historical data from JSON files.
-
-import president2020 from './real-data/president-2020.json';
-import mayor2023 from './real-data/mayor-2023.json';
-
-// Type definitions for our data files
-interface PresidentialResult {
-    ward: string;
-    biden: number;
-    trump: number;
-    total: number;
-}
-
-interface MayorResult {
-    ward: string;
-    satya: string | number; // JSON might have strings
-    gloria: string | number;
-    total: number;
-}
+// Ward Analysis using API data with progressive loading
+import { getHistoricalComparison } from './historical-api-data';
+import { RaceType } from './api';
 
 export interface WardAnalysis {
-    presidentialMargin2020: number; // e.g., 0.45 (Biden +45)
-    averageTurnout: number;         // e.g., 0.65 (65%)
-    previousMargin: number;         // e.g., 0.40 (Last similar election)
-    trend: number[];                // Last available margins
+    historicalMargin: number;
+    historicalVotes: number;
+    historicalRaceName: string | null;
+    historicalDate: string | null;
 }
 
-// Helper to normalize ward names for matching
-// "City of Madison Ward 56" -> "madison-56"
-// "MADISON CITY WARD 002" -> "madison-2"
-// "MAPLE BLUFF VLG" -> "maple-bluff"
-const normalizeWard = (name: string): string => {
-    let s = name.toLowerCase();
+// Cache for ward analysis data
+const analysisCache = new Map<string, WardAnalysis>();
+let currentRaceType: RaceType | null = null;
+let isLoading = false;
 
-    // Remove common prefixes
+// Normalize ward name to match API format
+function normalizeWardName(municipality: string, wardId: string): string {
+    let s = municipality.toLowerCase();
+    let type = '';
+
+    // Detect type
+    if (s.includes('town')) type = 'town';
+    else if (s.includes('village')) type = 'village';
+    else if (s.includes('city')) type = 'city';
+
+    // Remove "of" and type keywords
     s = s.replace(/^(city|village|town) of\s+/, '');
+    s = s.replace(/\s+(city|village|town)\b/g, '');
+    s = s.trim().replace(/\s+/g, '-');
 
-    // Remove common suffixes (often found in the data files)
-    s = s.replace(/\s+(city|vlg|town|village)$/, '');
+    // Construct key: name-type-ward
+    let key = s;
+    if (type) key += `-${type}`;
+    if (wardId && wardId !== '0') key += `-${wardId}`;
 
-    // Extract ward number if present
-    const wardMatch = s.match(/ward\s+(\d+)/);
-    const wardNum = wardMatch ? parseInt(wardMatch[1], 10).toString() : '';
+    return key;
+}
 
-    // Remove "ward X" from the name part to get the base municipality name
-    s = s.replace(/ward\s+\d+/, '').trim();
-
-    // Replace spaces with dashes
-    s = s.replace(/\s+/g, '-');
-
-    // Special case for "madison" if it still has "city" or similar attached in a weird way, 
-    // but the above regexes should handle "madison city" -> "madison"
-
-    if (wardNum) return `${s}-${wardNum}`;
-    return s;
-};
-
-// Create lookup maps for O(1) access
-const presidentMap = new Map<string, PresidentialResult>();
-(president2020 as PresidentialResult[]).forEach(r => {
-    presidentMap.set(normalizeWard(r.ward), r);
-});
-
-const mayorMap = new Map<string, MayorResult>();
-(mayor2023 as any[]).forEach((r: any) => {
-    if (r.ward) mayorMap.set(normalizeWard(r.ward), r);
-});
-
-export function getWardAnalysis(wardId: string, municipality: string): WardAnalysis {
-    const normalizedKey = normalizeWard(`${municipality} Ward ${wardId}`);
-    // Fallback key without ward number (for places like Maple Bluff that might be reported as a whole)
-    const baseKey = normalizedKey.split('-').slice(0, -1).join('-');
-    // Actually, normalizeWard("Maple Bluff") returns "maple-bluff". 
-    // normalizeWard("Maple Bluff Ward 1") returns "maple-bluff-1".
-    // So if we don't find "maple-bluff-1", we should try "maple-bluff".
-    const fallbackKey = normalizedKey.replace(/-\d+$/, '');
-
-    // 1. Presidential Benchmark (2020)
-    let presResult = presidentMap.get(normalizedKey);
-    if (!presResult) presResult = presidentMap.get(fallbackKey);
-
-    let presidentialMargin2020 = 0;
-    let turnout2020 = 0;
-
-    if (presResult && presResult.total > 0) {
-        // Margin = (Biden - Trump) / Total
-        presidentialMargin2020 = (presResult.biden - presResult.trump) / presResult.total;
-        // We don't have registered voters in this simple file, so we can't calc exact turnout %
-        // But we can use raw votes as a proxy or default to a high baseline
-        turnout2020 = 0.85; // Assumed high turnout for 2020
-    } else {
-        // NO PLACEHOLDERS: Return 0 if no data
-        presidentialMargin2020 = 0;
+/**
+ * Start loading historical data in the background for a specific race type
+ * This is called when the map component mounts or when the race changes
+ */
+export function startLoadingHistoricalData(raceType: RaceType): void {
+    if (currentRaceType === raceType && analysisCache.size > 0) {
+        // Already loaded for this race type
+        return;
     }
 
-    // 2. Previous Margin (Mayor 2023 as proxy for "Previous")
-    // Satya (Left) vs Gloria (Center/Right)
-    let mayorResult = mayorMap.get(normalizedKey);
-    if (!mayorResult) mayorResult = mayorMap.get(fallbackKey);
+    if (isLoading) {
+        return; // Already loading
+    }
 
-    let previousMargin = 0;
-    let turnout2023 = 0;
+    isLoading = true;
+    currentRaceType = raceType;
+    analysisCache.clear();
 
-    if (mayorResult) {
-        const satya = Number(mayorResult.satya || 0);
-        const gloria = Number(mayorResult.gloria || 0);
-        const total = satya + gloria; // Use calculated total from candidates to be safe
-        if (total > 0) {
-            previousMargin = (satya - gloria) / total;
-            turnout2023 = 0.55; // Lower turnout for Spring
+    console.log(`[Analysis Data] Starting background load for ${raceType}...`);
+
+    // Load data asynchronously (fire and forget)
+    loadHistoricalDataForRaceType(raceType).then(() => {
+        isLoading = false;
+        console.log(`[Analysis Data] Loaded ${analysisCache.size} wards for ${raceType}`);
+    }).catch(error => {
+        isLoading = false;
+        console.error('[Analysis Data] Error loading historical data:', error);
+    });
+}
+
+/**
+ * Internal function to load all historical data for a race type
+ */
+async function loadHistoricalDataForRaceType(raceType: RaceType): Promise<void> {
+    console.log(`[Analysis Data] Fetching historical data for ${raceType}...`);
+
+    try {
+        // Get the most recent historical race of this type
+        const comparison = await getHistoricalComparison('test-ward', raceType);
+
+        if (comparison && comparison.historicalRaceName) {
+            console.log(`[Analysis Data] Found historical race: ${comparison.historicalRaceName} (${comparison.historicalElectionDate})`);
+        } else {
+            console.log(`[Analysis Data] No historical data available for ${raceType}`);
         }
-    } else {
-        // NO PLACEHOLDERS: Return 0 if no data
-        previousMargin = 0;
+
+        // The actual ward data will be fetched on-demand via getHistoricalComparison
+        // when wards are clicked/hovered
+    } catch (error) {
+        console.error(`[Analysis Data] Error fetching historical data for ${raceType}:`, error);
+    }
+}
+
+/**
+ * Get ward analysis synchronously (returns cached data or empty if not loaded yet)
+ * This can be called from synchronous contexts like Leaflet callbacks
+ * If data isn't cached, it will be fetched asynchronously in the background
+ */
+export function getWardAnalysis(
+    wardId: string,
+    municipality: string
+): WardAnalysis {
+    const wardKey = normalizeWardName(municipality, wardId);
+
+    // Return cached data if available
+    if (analysisCache.has(wardKey)) {
+        return analysisCache.get(wardKey)!;
     }
 
-    // 3. Average Turnout
-    // Simple average of available data points
-    let averageTurnout = 0;
-    if (turnout2020 > 0 && turnout2023 > 0) {
-        averageTurnout = (turnout2020 + turnout2023) / 2;
-    } else if (turnout2020 > 0) {
-        averageTurnout = turnout2020;
-    } else if (turnout2023 > 0) {
-        averageTurnout = turnout2023;
+    // If we have a current race type, fetch data in background
+    if (currentRaceType) {
+        // Fetch asynchronously (fire and forget)
+        fetchWardAnalysis(wardId, municipality, currentRaceType).catch(error => {
+            console.error(`[Analysis Data] Error fetching ward ${wardKey}:`, error);
+        });
     }
 
-    // 4. Trend
-    const trend = [
-        previousMargin, // 2023
-        presidentialMargin2020 // 2020
-    ];
-
+    // Return empty data for now (will be populated when fetch completes)
     return {
-        presidentialMargin2020,
-        averageTurnout,
-        previousMargin,
-        trend
+        historicalMargin: 0,
+        historicalVotes: 0,
+        historicalRaceName: null,
+        historicalDate: null
     };
+}
+
+/**
+ * Fetch analysis data for a specific ward asynchronously
+ * This is called on-demand when a ward is hovered/clicked
+ */
+export async function fetchWardAnalysis(
+    wardId: string,
+    municipality: string,
+    raceType: RaceType
+): Promise<WardAnalysis> {
+    const wardKey = normalizeWardName(municipality, wardId);
+
+    console.log(`[Analysis Data] Fetching analysis for ${municipality} Ward ${wardId} (${raceType})...`);
+
+    // Check cache first
+    if (analysisCache.has(wardKey) && currentRaceType === raceType) {
+        console.log(`[Analysis Data] ✓ Using cached data for ${wardKey}`);
+        return analysisCache.get(wardKey)!;
+    }
+
+    // Fetch from API
+    const comparison = await getHistoricalComparison(wardKey, raceType);
+
+    const analysis: WardAnalysis = comparison && comparison.historical ? {
+        historicalMargin: comparison.historical.margin,
+        historicalVotes: comparison.historical.totalVotes,
+        historicalRaceName: comparison.historicalRaceName,
+        historicalDate: comparison.historicalElectionDate
+    } : {
+        historicalMargin: 0,
+        historicalVotes: 0,
+        historicalRaceName: null,
+        historicalDate: null
+    };
+
+    if (analysis.historicalRaceName) {
+        console.log(`[Analysis Data] ✓ Fetched historical data for ${wardKey}: ${analysis.historicalRaceName} (${(analysis.historicalMargin * 100).toFixed(1)}%)`);
+    } else {
+        console.log(`[Analysis Data] ✗ No historical data found for ${wardKey} (${raceType})`);
+    }
+
+    // Cache it
+    analysisCache.set(wardKey, analysis);
+
+    return analysis;
+}
+
+/**
+ * Clear the cache (useful when switching races)
+ */
+export function clearAnalysisCache(): void {
+    analysisCache.clear();
+    currentRaceType = null;
 }

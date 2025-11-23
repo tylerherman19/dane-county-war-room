@@ -137,10 +137,6 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                                         <div>Leader: {ward.winner?.candidateName || 'N/A'}</div>
                                         <div>Votes: {ward.total}</div>
                                     </div>
-                                    <div className="flex flex-col items-end">
-                                        <div className="text-[10px] text-slate-600 mb-0.5 uppercase tracking-wider">Trend</div>
-                                        <TrendSparkline data={getWardAnalysis(ward.num, ward.name).trend} />
-                                    </div>
                                 </div>
                             </button>
                         ))}

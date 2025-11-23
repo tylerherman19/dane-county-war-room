@@ -33,6 +33,7 @@ export interface Race {
 export interface RaceResult {
     id: string;
     raceName: string;
+    type?: RaceType;
     candidates: Candidate[];
     totalVotes: number;
     precinctsReporting: number;
@@ -247,9 +248,25 @@ export async function getRaceResults(electionId: string, raceId: string): Promis
         };
     });
 
+    // Detect race type from name
+    let type: RaceType = 'Other';
+    const name = data.RaceName.toLowerCase();
+    console.log(`[API] Detecting race type for: "${data.RaceName}" (lowercase: "${name}")`);
+
+    if (name.includes('president')) type = 'Presidential';
+    else if (name.includes('senator') || name.includes('senate')) type = 'Senate';
+    else if (name.includes('congress') || name.includes('representative')) type = 'Congress';
+    else if (name.includes('assembly')) type = 'Assembly';
+    else if (name.includes('referendum')) type = 'Referendum';
+    else if (name.includes('mayor')) type = 'Mayor';
+    else if (name.includes('governor')) type = 'Governor';
+
+    console.log(`[API] Detected race type: ${type}`);
+
     return {
         id: data.RaceNumber,
         raceName: data.RaceName.trim(),
+        type: type,
         candidates: candidates,
         totalVotes: totalVotes, // Or use calculated sum if API sum is different
         precinctsReporting: data.PrecinctsReported,

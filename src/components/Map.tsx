@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { PrecinctResult, RaceResult } from '@/lib/api';
-import { getWardAnalysis, WardAnalysis } from '@/lib/analysis-data';
+import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData } from '@/lib/analysis-data';
 import { OverlayMode } from './MapOverlayControl';
 
 // Fix for default marker icon
@@ -157,6 +157,13 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
 
+    // Start loading historical data when race changes
+    useEffect(() => {
+        if (raceResult?.type) {
+            startLoadingHistoricalData(raceResult.type);
+        }
+    }, [raceResult?.type]);
+
     // OPTIMIZATION: Create a fast lookup dictionary for results
     // Key: "Municipality Name-WardNumber" (normalized)
     // Value: PrecinctResult[] (usually just one, but keeping array structure for compatibility)
@@ -250,7 +257,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 if (!isBlue) currentMargin = -currentMargin; // If winner is Red, margin is negative (from Dem perspective)
 
                 // Compare to Biden 2020
-                const diff = currentMargin - analysis.presidentialMargin2020;
+                const diff = currentMargin - analysis.historicalMargin;
 
                 // Color Scale: Red (Underperform) -> Grey -> Blue (Overperform)
                 // Range: -0.2 to +0.2
@@ -286,11 +293,14 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     fillOpacity: 0.75
                 };
             }
-            // --- TURNOUT HEATMAP ---
+            // --- TURNOUT HEATMAP (VOTE VOLUME) ---
             else if (overlayMode === 'TURNOUT') {
-                const currentTurnout = total / relevantResults[0].registeredVoters;
-                // Compare to average
-                const ratio = currentTurnout / analysis.averageTurnout;
+                // We don't have registered voters for historical data, so we compare RAW VOTE VOLUME
+                const currentVotes = total;
+                const avgVotes = analysis.historicalVotes || 0; // Historical vote volume
+
+                // Avoid division by zero
+                const ratio = avgVotes > 0 ? currentVotes / avgVotes : 0;
 
                 // Scale: 0.5 (Low) -> 1.0 (Avg) -> 1.5 (High)
                 // Red -> Grey -> Green
@@ -306,17 +316,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     const intensity = Math.min((ratio - 1.0) / 0.5, 1);
                     l = 50 - (intensity * 10); // Slightly darker green for intensity
                     s = 50 + (intensity * 50); // More saturated
-                }
-
-                // Simplified Heatmap:
-                // 0% -> 100% turnout
-                // 0 = Black, 50 = Grey, 80+ = Bright Green
-                const t = Math.min(currentTurnout, 1.0);
-                if (t < 0.5) {
-                    h = 0; s = 0; l = t * 100; // Black to Grey
-                } else {
-                    h = 140; s = 100; l = 20 + ((t - 0.5) * 120); // Dark Green to Neon
-                    if (l > 70) l = 70; // Cap lightness
                 }
 
                 baseStyle = {
@@ -336,7 +335,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
                 if (!isBlue) currentMargin = -currentMargin;
 
-                const diff = currentMargin - analysis.previousMargin;
+                const diff = currentMargin - analysis.historicalMargin;
 
                 // Red Shift vs Blue Shift
                 let h = 215;
@@ -419,38 +418,49 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
                 if (!isBlue) currentMargin = -currentMargin; // Convert to Dem margin perspective
 
-                const diff = currentMargin - analysis.presidentialMargin2020;
-                const diffPct = (diff * 100).toFixed(1);
-                const sign = diff > 0 ? '+' : '';
-                const colorClass = diff > 0 ? 'text-blue-400' : 'text-red-400';
+                // Only show comparison if historical data exists
+                if (analysis.historicalRaceName) {
+                    const diff = currentMargin - analysis.historicalMargin;
+                    const diffPct = (diff * 100).toFixed(1);
+                    const sign = diff > 0 ? '+' : '';
+                    const colorClass = diff > 0 ? 'text-blue-400' : 'text-red-400';
+                    const historicalYear = analysis.historicalDate ? new Date(analysis.historicalDate).getFullYear() : '';
 
-                popupContent += `
-                    <div class="mb-2">
-                        <div class="text-xs text-slate-400">Vs. Biden 2020</div>
-                        <div class="text-lg font-bold ${colorClass}">${sign}${diffPct}%</div>
-                        <div class="text-xs text-slate-500 mt-1">
-                            Current Margin: ${(currentMargin * 100).toFixed(1)}%<br>
-                            2020 Margin: ${(analysis.presidentialMargin2020 * 100).toFixed(1)}%
+                    popupContent += `
+                        <div class="mb-2">
+                            <div class="text-xs text-slate-400">Vs. ${historicalYear || 'Previous'}</div>
+                            <div class="text-lg font-bold ${colorClass}">${sign}${diffPct}%</div>
+                            <div class="text-xs text-slate-500 mt-1">
+                                Current Margin: ${(currentMargin * 100).toFixed(1)}%<br>
+                                ${historicalYear} Margin: ${(analysis.historicalMargin * 100).toFixed(1)}%
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             }
             else if (overlayMode === 'TURNOUT') {
-                const currentTurnout = total / relevantResults[0].registeredVoters;
-                const avgTurnout = analysis.averageTurnout;
-                const diff = currentTurnout - avgTurnout;
-                const sign = diff > 0 ? '+' : '';
-                const colorClass = diff > 0 ? 'text-green-400' : 'text-slate-400';
+                const currentVotes = total;
+                const avgVotes = analysis.historicalVotes || 0; // Historical vote volume
+
+                // Calculate % difference
+                // If avg is 1000 and current is 1100, diff is +10%
+                let diffPct = 0;
+                if (avgVotes > 0) {
+                    diffPct = ((currentVotes - avgVotes) / avgVotes) * 100;
+                }
+
+                const sign = diffPct > 0 ? '+' : '';
+                const colorClass = diffPct > 0 ? 'text-green-400' : 'text-slate-400';
 
                 popupContent += `
                     <div class="mb-2">
-                        <div class="text-xs text-slate-400">Turnout</div>
-                        <div class="text-lg font-bold text-white">${(currentTurnout * 100).toFixed(1)}%</div>
+                        <div class="text-xs text-slate-400">Vote Volume</div>
+                        <div class="text-lg font-bold text-white">${currentVotes.toLocaleString()} Votes</div>
                         <div class="text-sm font-medium ${colorClass} mt-1">
-                            ${sign}${(diff * 100).toFixed(1)}% vs Avg
+                            ${sign}${diffPct.toFixed(1)}% vs Avg
                         </div>
                         <div class="text-xs text-slate-500 mt-1">
-                            Avg Turnout: ${(avgTurnout * 100).toFixed(1)}%
+                            Avg Volume: ${Math.round(avgVotes).toLocaleString()}
                         </div>
                     </div>
                 `;
@@ -464,21 +474,32 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
                 if (!isBlue) currentMargin = -currentMargin;
 
-                const swing = currentMargin - analysis.previousMargin;
-                const swingPct = (swing * 100).toFixed(1);
-                const direction = swing > 0 ? 'Dem' : 'Rep';
-                const colorClass = swing > 0 ? 'text-blue-400' : 'text-red-400';
+                // Only show swing if we have historical data
+                if (analysis.historicalRaceName && analysis.historicalMargin !== 0) {
+                    const swing = currentMargin - analysis.historicalMargin;
+                    const swingPct = (swing * 100).toFixed(1);
+                    const direction = swing > 0 ? 'Dem' : 'Rep';
+                    const colorClass = swing > 0 ? 'text-blue-400' : 'text-red-400';
+                    const historicalYear = analysis.historicalDate ? new Date(analysis.historicalDate).getFullYear() : '';
 
-                popupContent += `
-                    <div class="mb-2">
-                        <div class="text-xs text-slate-400">Swing vs Previous</div>
-                        <div class="text-lg font-bold ${colorClass}">${direction} +${Math.abs(parseFloat(swingPct))}%</div>
-                        <div class="text-xs text-slate-500 mt-1">
-                            Current Margin: ${(currentMargin * 100).toFixed(1)}%<br>
-                            Prev Margin: ${(analysis.previousMargin * 100).toFixed(1)}%
+                    popupContent += `
+                        <div class="mb-2">
+                            <div class="text-xs text-slate-400">Swing vs ${historicalYear || 'Previous'}</div>
+                            <div class="text-lg font-bold ${colorClass}">${direction} +${Math.abs(parseFloat(swingPct))}%</div>
+                            <div class="text-xs text-slate-500 mt-1">
+                                Current: ${(currentMargin * 100).toFixed(1)}% | ${historicalYear}: ${(analysis.historicalMargin * 100).toFixed(1)}%
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    popupContent += `
+                        <div class="mb-2">
+                            <div class="text-xs text-slate-400">Current Margin</div>
+                            <div class="text-lg font-bold text-white">${(currentMargin * 100).toFixed(1)}%</div>
+                            <div class="text-xs text-slate-500 mt-1">No historical comparison available</div>
+                        </div>
+                    `;
+                }
             }
             else {
                 // --- STANDARD VIEW (Existing Logic) ---
