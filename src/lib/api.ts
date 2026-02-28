@@ -1,6 +1,5 @@
 // API client for Dane County Elections
-// All requests go through the /api/elections proxy route to avoid CORS issues.
-const BASE_PATH = '/api/elections';
+const BASE_PATH = 'https://api.danecounty.gov/api/v1/elections';
 
 // --- Internal Interfaces (Used by App) ---
 
