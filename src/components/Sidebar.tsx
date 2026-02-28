@@ -37,10 +37,14 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
         w.wardNumber.toString().includes(searchTerm)
     ) || [];
 
-    // Group by ward for list view (since precinctResults has one row per candidate)
-    const uniqueWards = Array.from(new Set(filteredWards.map(w => `${w.precinctName}-${w.wardNumber}`)))
+    // Group by ward for list view (since precinctResults has one row per candidate).
+    // Use ||| as delimiter — safe because municipality names never contain it.
+    const DELIM = '|||';
+    const uniqueWards = Array.from(new Set(filteredWards.map(w => `${w.precinctName}${DELIM}${w.wardNumber}`)))
         .map(key => {
-            const [name, num] = key.split('-');
+            const delimIdx = key.indexOf(DELIM);
+            const name = key.slice(0, delimIdx);
+            const num = key.slice(delimIdx + DELIM.length);
             // Find results for this ward
             const wardResults = filteredWards.filter(w => w.precinctName === name && w.wardNumber === num);
             const total = wardResults[0]?.ballotscast || 0;

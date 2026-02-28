@@ -6,7 +6,6 @@ import {
     getRaces,
     getRaceResults,
     getPrecinctResults,
-    getLastPublished,
     getHistoricalTurnout,
     Election,
     Race,
@@ -19,7 +18,9 @@ import {
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
 export function useElections() {
-    const { data, error, isLoading } = useSWR<Election[]>('elections', getElections);
+    const { data, error, isLoading } = useSWR<Election[]>('elections', getElections, {
+        refreshInterval: REFRESH_INTERVAL,
+    });
     return {
         elections: data,
         isLoading,
@@ -27,16 +28,17 @@ export function useElections() {
     };
 }
 
+/**
+ * Derives lastPublished from the already-cached elections list.
+ * No extra network request needed.
+ */
 export function useLastPublished(electionId: string | null) {
-    const { data, error } = useSWR<LastPublished>(
-        electionId ? ['lastPublished', electionId] : null,
-        ([_, id]) => getLastPublished(id as string),
-        { refreshInterval: REFRESH_INTERVAL }
-    );
-    return {
-        lastPublished: data,
-        isError: error
-    };
+    const { data: elections } = useSWR<Election[]>('elections', getElections);
+    const election = elections?.find(e => e.electionId === electionId);
+    const lastPublished: LastPublished | undefined = election
+        ? { lastPublished: election.lastPublished }
+        : undefined;
+    return { lastPublished };
 }
 
 export function useRaces(electionId: string | null) {
@@ -78,9 +80,11 @@ export function usePrecinctResults(electionId: string | null, raceId: string | n
 }
 
 export function useHistoricalTurnout(raceId: string | null, currentVotes: number | undefined, raceName?: string) {
+    // currentVotes is intentionally excluded from the SWR key — it changes every poll cycle
+    // and getHistoricalTurnout uses it only to clamp the outstanding estimate, not for caching.
     const { data, error, isLoading } = useSWR<HistoricalTurnout>(
-        raceId && currentVotes !== undefined ? ['historicalTurnout', raceId, currentVotes, raceName] : null,
-        ([_, rId, votes, rName]) => getHistoricalTurnout(rId as string, votes as number, rName as string | undefined)
+        raceId ? ['historicalTurnout', raceId, raceName] : null,
+        ([_, rId, rName]) => getHistoricalTurnout(rId as string, currentVotes ?? 0, rName as string | undefined)
     );
     return {
         turnoutData: data,
