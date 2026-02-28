@@ -1,6 +1,7 @@
 // Ward Analysis using API data with progressive loading
 import { fetchHistoricalData } from './historical-api-data';
 import { RaceType } from './api';
+import { addLog } from './debug-log';
 
 export interface WardAnalysis {
     historicalMargin: number;
@@ -15,7 +16,7 @@ let currentRaceType: RaceType | null = null;
 let isLoading = false;
 
 // Normalize ward name to match the key format produced by historical-api-data.ts
-function normalizeWardName(municipality: string, wardId: string): string {
+export function normalizeWardName(municipality: string, wardId: string): string {
     let s = municipality.toLowerCase();
     let type = '';
 
@@ -50,21 +51,19 @@ export function startLoadingHistoricalData(raceType: RaceType): void {
     currentRaceType = raceType;
     analysisCache.clear();
 
-    console.log(`[Analysis Data] Starting background load for ${raceType}...`);
+    addLog('info', 'Analysis', `→ Loading baseline for ${raceType}...`);
 
     fetchHistoricalData()
         .then(allData => {
             const races = allData.get(raceType);
 
             if (!races || races.length === 0) {
-                console.log(`[Analysis Data] No historical data available for ${raceType}`);
+                addLog('warn', 'Analysis', `No historical data for ${raceType}`);
                 isLoading = false;
                 return;
             }
 
-            // Use the most recent race (already sorted desc by date in fetchHistoricalData)
             const mostRecent = races[0];
-            console.log(`[Analysis Data] Pre-populating ${mostRecent.wardResults.size} wards from "${mostRecent.raceName}" (${mostRecent.electionDate})`);
 
             mostRecent.wardResults.forEach((wardResult, wardKey) => {
                 analysisCache.set(wardKey, {
@@ -75,12 +74,12 @@ export function startLoadingHistoricalData(raceType: RaceType): void {
                 });
             });
 
-            console.log(`[Analysis Data] Cache ready: ${analysisCache.size} wards for ${raceType}`);
+            addLog('success', 'Analysis', `✓ ${analysisCache.size} wards cached from "${mostRecent.raceName}" (${mostRecent.electionDate?.slice(0, 10)})`);
             isLoading = false;
         })
         .catch(error => {
             isLoading = false;
-            console.error('[Analysis Data] Error loading historical data:', error);
+            addLog('error', 'Analysis', `✗ ${String(error)}`);
         });
 }
 
@@ -109,4 +108,30 @@ export function getWardAnalysis(wardId: string, municipality: string): WardAnaly
 export function clearAnalysisCache(): void {
     analysisCache.clear();
     currentRaceType = null;
+}
+
+/**
+ * Sum of all historical votes across cached wards.
+ * Returns real API-derived expected total for the current race type.
+ * Returns 0 if cache not yet populated — callers should fall back to static estimate.
+ */
+export function getExpectedTotalVotes(): number {
+    let total = 0;
+    analysisCache.forEach(a => { total += a.historicalVotes; });
+    return total;
+}
+
+/**
+ * True once the cache has been populated with real historical ward data.
+ */
+export function isHistoricalDataLoaded(): boolean {
+    return analysisCache.size > 0 && !isLoading;
+}
+
+/**
+ * Returns a snapshot copy of the full analysis cache.
+ * Used by the projection engine.
+ */
+export function getAllCachedWards(): Map<string, WardAnalysis> {
+    return new Map(analysisCache);
 }

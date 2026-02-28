@@ -47,10 +47,18 @@ export default function Home() {
 
   const { races } = useRaces(selectedElectionId);
 
-  // Auto-select first race of the current election.
+  // Auto-select the highest-priority race for the current election.
+  // Priority order: Presidential > Governor > Senate > Congress > Mayor > StateSenate > Assembly > Referendum > Other
+  const RACE_PRIORITY: Record<string, number> = {
+    Presidential: 0, Governor: 1, Senate: 2, Congress: 3,
+    Mayor: 4, StateSenate: 5, Assembly: 6, Referendum: 7, Other: 8,
+  };
   useEffect(() => {
     if (races && races.length > 0 && !selectedRaceId) {
-      setSelectedRaceId(races[0].id);
+      const sorted = [...races].sort(
+        (a, b) => (RACE_PRIORITY[a.type] ?? 99) - (RACE_PRIORITY[b.type] ?? 99)
+      );
+      setSelectedRaceId(sorted[0].id);
     }
   }, [races, selectedRaceId]);
 
