@@ -1,11 +1,13 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-
-const Map = dynamic(() => import('./Map'), { ssr: false });
+import { useState } from 'react';
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
-import { useState } from 'react';
+import { HoveredWard } from './Map';
+
+const Map = dynamic(() => import('./Map'), { ssr: false });
+const DebugPanel = dynamic(() => import('./DebugPanel'), { ssr: false });
 
 interface MapWrapperProps {
     precinctResults: PrecinctResult[];
@@ -17,6 +19,8 @@ interface MapWrapperProps {
 
 export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
+    const [debugOpen, setDebugOpen] = useState(false);
+    const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
 
     return (
         <div className="relative w-full h-full">
@@ -28,7 +32,39 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 raceResult={raceResult}
                 onReset={onReset}
                 overlayMode={overlayMode}
+                onWardHover={setDebugWardData}
             />
+
+            {/* Debug toggle button */}
+            <button
+                onClick={() => setDebugOpen(o => !o)}
+                style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    left: '12px',
+                    zIndex: 9997,
+                    background: debugOpen ? '#1e3a5f' : '#0f172a',
+                    border: `1px solid ${debugOpen ? '#3b82f6' : '#334155'}`,
+                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    color: debugOpen ? '#60a5fa' : '#64748b',
+                    fontSize: '11px',
+                    fontFamily: 'system-ui, sans-serif',
+                    letterSpacing: '0.06em',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                }}
+            >
+                <span style={{ fontSize: '12px' }}>⚙</span>
+                DEBUG
+            </button>
+
+            {debugOpen && (
+                <DebugPanel wardData={debugWardData} raceResult={raceResult} />
+            )}
         </div>
     );
 }

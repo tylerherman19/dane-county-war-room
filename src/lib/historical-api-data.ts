@@ -3,6 +3,7 @@
 // directly from the Dane County API. Zero hardcoded values; all data is real API data.
 
 import { RaceType } from './api';
+import { addLog } from './debug-log';
 
 export interface HistoricalRaceData {
     electionId: string;
@@ -37,12 +38,13 @@ export async function fetchHistoricalData(): Promise<Map<RaceType, HistoricalRac
     }
 
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    console.log('[Historical Data] Loading from static file...');
+    const t0 = Date.now();
+    addLog('info', 'Historical', '→ Loading historical-ward-data.json...');
 
     try {
         const response = await fetch(`${basePath}/historical-ward-data.json`);
         if (!response.ok) {
-            console.warn(`[Historical Data] Static file not found (${response.status}). Run: npm run build:historical`);
+            addLog('warn', 'Historical', `✗ File not found (${response.status}) — run: npm run build:historical`);
             return new Map();
         }
 
@@ -61,10 +63,11 @@ export async function fetchHistoricalData(): Promise<Map<RaceType, HistoricalRac
         cacheTimestamp = Date.now();
 
         const totalRaces = Array.from(result.values()).reduce((s, arr) => s + arr.length, 0);
-        console.log(`[Historical Data] Loaded ${totalRaces} historical races (generated: ${json.generatedAt})`);
+        const totalWards = Array.from(result.values()).flatMap(a => a).reduce((s, r) => s + r.wardResults.size, 0);
+        addLog('success', 'Historical', `✓ ${totalRaces} races, ${totalWards} ward entries (generated: ${json.generatedAt?.slice(0, 10)})`, undefined, Date.now() - t0);
         return result;
     } catch (error) {
-        console.error('[Historical Data] Error loading static file:', error);
+        addLog('error', 'Historical', `✗ Error loading: ${String(error)}`);
         return new Map();
     }
 }

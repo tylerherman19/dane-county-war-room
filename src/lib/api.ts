@@ -1,5 +1,6 @@
 // API client for Dane County Elections
 const BASE_PATH = 'https://api.danecounty.gov/api/v1/elections';
+import { addLog } from './debug-log';
 
 // --- Internal Interfaces (Used by App) ---
 
@@ -172,16 +173,19 @@ function expandWardRanges(precinctName: string): number[] {
 
 async function fetchAPI<T>(path: string): Promise<T> {
     const url = `${BASE_PATH}${path}`;
-    console.log(`[API] Fetching: ${url}`);
+    const t0 = Date.now();
+    addLog('info', 'API', `→ ${path}`);
     try {
         const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
-            console.error(`[API] Error ${response.status} fetching ${url}: ${response.statusText}`);
+            addLog('error', 'API', `✗ ${path} (${response.status} ${response.statusText})`);
             throw new Error(`API error: ${response.status} ${response.statusText}`);
         }
-        return response.json();
+        const data = await response.json();
+        addLog('success', 'API', `✓ ${path}`, undefined, Date.now() - t0);
+        return data;
     } catch (error) {
-        console.error(`[API] Failed to fetch ${url}:`, error);
+        addLog('error', 'API', `✗ ${path}: ${String(error)}`);
         throw error;
     }
 }
@@ -242,7 +246,7 @@ export async function getRaceResults(electionId: string, raceId: string): Promis
     });
 
     const type = detectRaceType(data.RaceName);
-    console.log(`[API] Detected race type: ${type} for "${data.RaceName}"`);
+    addLog('info', 'API', `Race type: ${type} for "${data.RaceName}"`);
 
     return {
         id: data.RaceNumber,

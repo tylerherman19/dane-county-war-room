@@ -21,6 +21,18 @@ interface MapProps {
     raceResult: RaceResult | undefined;
     onReset: () => void;
     overlayMode: OverlayMode;
+    onWardHover?: (ward: HoveredWard | null) => void;
+}
+
+export interface HoveredWard {
+    municipality: string;
+    wardNum: string;
+    results: Array<{ candidateName: string; votes: number; pct: number }>;
+    total: number;
+    x: number;
+    y: number;
+    analysis: WardAnalysis | null;
+    fillColor: string;
 }
 
 function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null; onReset?: () => void }) {
@@ -107,10 +119,10 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
 // Orange: 20, 90%, 50% (Deep Orange)
 // Teal: 180, 70%, 40% (Deep Teal)
 
-interface HSL { h: number; s: number; l: number; }
+export interface HSL { h: number; s: number; l: number; }
 
 // Helper to assign colors to candidates dynamically
-function assignCandidateColors(candidates: { candidateName: string; party?: string }[]): Record<string, HSL> {
+export function assignCandidateColors(candidates: { candidateName: string; party?: string }[]): Record<string, HSL> {
     const colors: Record<string, HSL> = {};
 
     // Standard party colors
@@ -152,9 +164,10 @@ function assignCandidateColors(candidates: { candidateName: string; party?: stri
     return colors;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
+    const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
     const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
 
     // Start loading historical data when race changes
@@ -389,181 +402,162 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         const municipality = feature.properties.NAME;
         const wardNum = parseInt(feature.properties.WardNumber).toString();
 
-        // OPTIMIZED LOOKUP
         const potentialMatches = resultsMap[wardNum] || [];
         const relevantResults = potentialMatches.filter((r: PrecinctResult) =>
             r.precinctName.toLowerCase().includes(municipality.toLowerCase()) ||
             municipality.toLowerCase().includes(r.precinctName.toLowerCase())
         );
 
-        if (relevantResults.length > 0) {
-            const total = relevantResults[0].ballotscast;
-            const sorted = relevantResults.sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
+        const hasData = relevantResults.length > 0;
+        const defaultBorderColor = hasData ? '#334155' : '#1e293b';
+        const defaultBorderOpacity = hasData ? 1 : 0.5;
 
-            // Get Analysis Data
-            const analysis = getWardAnalysis(wardNum, municipality);
+        layer.on({
+            mouseover: (e: any) => {
+                e.target.setStyle({ weight: 2, color: '#ffffff', opacity: 1 });
+                e.target.bringToFront();
 
-            let popupContent = `<div class="p-2 font-sans text-sm">
-                <div class="text-xs text-slate-400 mb-1 uppercase tracking-wider">${raceResult?.raceName || 'Election Results'}</div>
-                <h3 class="font-bold border-b pb-1 mb-2">${municipality} Ward ${wardNum}</h3>`;
+                if (hasData) {
+                    const total = relevantResults[0].ballotscast;
+                    const sorted = [...relevantResults].sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
+                    const analysis = getWardAnalysis(wardNum, municipality);
 
-            // --- DYNAMIC CONTENT BASED ON OVERLAY ---
-            if (overlayMode === 'PRESIDENTIAL') {
-                const winner = sorted[0];
-                // Calculate current margin (simplified for demo)
-                const runnerUp = sorted[1];
-                const winnerColor = candidateColors[winner.candidateName.trim()];
-                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260);
+                    // Compute fill color for debug (mirrors style() logic)
+                    const winner = sorted[0];
+                    const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
+                    const runnerUp = sorted[1];
+                    const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                    const lightness = 65 - (Math.min(margin, 0.5) * 30);
+                    const fillColor = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
 
-                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                if (!isBlue) currentMargin = -currentMargin; // Convert to Dem margin perspective
-
-                // Only show comparison if historical data exists
-                if (analysis.historicalRaceName) {
-                    const diff = currentMargin - analysis.historicalMargin;
-                    const diffPct = (diff * 100).toFixed(1);
-                    const sign = diff > 0 ? '+' : '';
-                    const colorClass = diff > 0 ? 'text-blue-400' : 'text-red-400';
-                    const historicalYear = analysis.historicalDate ? new Date(analysis.historicalDate).getFullYear() : '';
-
-                    popupContent += `
-                        <div class="mb-2">
-                            <div class="text-xs text-slate-400">Vs. ${historicalYear || 'Previous'}</div>
-                            <div class="text-lg font-bold ${colorClass}">${sign}${diffPct}%</div>
-                            <div class="text-xs text-slate-500 mt-1">
-                                Current Margin: ${(currentMargin * 100).toFixed(1)}%<br>
-                                ${historicalYear} Margin: ${(analysis.historicalMargin * 100).toFixed(1)}%
-                            </div>
-                        </div>
-                    `;
+                    const ward: HoveredWard = {
+                        municipality,
+                        wardNum,
+                        results: sorted.map((r: PrecinctResult) => ({
+                            candidateName: r.candidateName,
+                            votes: r.votes,
+                            pct: total > 0 ? (r.votes / total) * 100 : 0,
+                        })),
+                        total,
+                        x: e.originalEvent.clientX,
+                        y: e.originalEvent.clientY,
+                        analysis,
+                        fillColor,
+                    };
+                    setHoveredWard(ward);
+                    onWardHover?.(ward);
                 }
-            }
-            else if (overlayMode === 'TURNOUT') {
-                const currentVotes = total;
-                const avgVotes = analysis.historicalVotes || 0; // Historical vote volume
-
-                // Calculate % difference
-                // If avg is 1000 and current is 1100, diff is +10%
-                let diffPct = 0;
-                if (avgVotes > 0) {
-                    diffPct = ((currentVotes - avgVotes) / avgVotes) * 100;
+            },
+            mousemove: (e: any) => {
+                if (hasData) {
+                    setHoveredWard(prev => prev ? { ...prev, x: e.originalEvent.clientX, y: e.originalEvent.clientY } : null);
                 }
-
-                const sign = diffPct > 0 ? '+' : '';
-                const colorClass = diffPct > 0 ? 'text-green-400' : 'text-slate-400';
-
-                popupContent += `
-                    <div class="mb-2">
-                        <div class="text-xs text-slate-400">Vote Volume</div>
-                        <div class="text-lg font-bold text-white">${currentVotes.toLocaleString()} Votes</div>
-                        <div class="text-sm font-medium ${colorClass} mt-1">
-                            ${sign}${diffPct.toFixed(1)}% vs Avg
-                        </div>
-                        <div class="text-xs text-slate-500 mt-1">
-                            Avg Volume: ${Math.round(avgVotes).toLocaleString()}
-                        </div>
-                    </div>
-                `;
-            }
-            else if (overlayMode === 'SWING') {
-                const winner = sorted[0];
-                const runnerUp = sorted[1];
-                const winnerColor = candidateColors[winner.candidateName.trim()];
-                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260);
-
-                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                if (!isBlue) currentMargin = -currentMargin;
-
-                // Only show swing if we have historical data
-                if (analysis.historicalRaceName && analysis.historicalMargin !== 0) {
-                    const swing = currentMargin - analysis.historicalMargin;
-                    const swingPct = (swing * 100).toFixed(1);
-                    const direction = swing > 0 ? 'Dem' : 'Rep';
-                    const colorClass = swing > 0 ? 'text-blue-400' : 'text-red-400';
-                    const historicalYear = analysis.historicalDate ? new Date(analysis.historicalDate).getFullYear() : '';
-
-                    popupContent += `
-                        <div class="mb-2">
-                            <div class="text-xs text-slate-400">Swing vs ${historicalYear || 'Previous'}</div>
-                            <div class="text-lg font-bold ${colorClass}">${direction} +${Math.abs(parseFloat(swingPct))}%</div>
-                            <div class="text-xs text-slate-500 mt-1">
-                                Current: ${(currentMargin * 100).toFixed(1)}% | ${historicalYear}: ${(analysis.historicalMargin * 100).toFixed(1)}%
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    popupContent += `
-                        <div class="mb-2">
-                            <div class="text-xs text-slate-400">Current Margin</div>
-                            <div class="text-lg font-bold text-white">${(currentMargin * 100).toFixed(1)}%</div>
-                            <div class="text-xs text-slate-500 mt-1">No historical comparison available</div>
-                        </div>
-                    `;
-                }
-            }
-            else {
-                // --- STANDARD VIEW ---
-                popupContent += `<div class="space-y-1">`;
-                sorted.forEach((r: PrecinctResult) => {
-                    const pct = total > 0 ? ((r.votes / total) * 100).toFixed(1) : '0.0';
-                    popupContent += `<div class="flex justify-between gap-4">
-                        <span>${r.candidateName}</span>
-                        <span class="font-mono">${r.votes.toLocaleString()} (${pct}%)</span>
-                    </div>`;
-                });
-                popupContent += `<div class="mt-2 pt-1 border-t text-xs text-slate-500">
-                    ${total.toLocaleString()} ballots cast
-                </div></div>`;
-            }
-
-            // Close outer wrapper div for ALL overlay modes
-            popupContent += `</div>`;
-
-            layer.bindTooltip(popupContent, {
-                className: 'dark-popup',
-                sticky: true,
-                direction: 'top'
-            });
-
-            // Add hover effects (always, not just when no ward selected)
-            layer.on({
-                mouseover: (e) => {
-                    const layer = e.target;
-                    layer.setStyle({ weight: 2 });
-                    layer.bringToFront();
-                },
-                mouseout: (e) => {
-                    const layer = e.target;
-                    // Manually recalculate the original style with current selectedWard
-                    const originalStyle = style(feature, selectedWard);
-                    layer.setStyle(originalStyle);
-                }
-            });
-        }
-    }, [resultsMap, raceResult, selectedWard, style, overlayMode, candidateColors]); // Dependencies
+            },
+            mouseout: (e: any) => {
+                e.target.setStyle({ weight: 1, color: defaultBorderColor, opacity: defaultBorderOpacity });
+                setHoveredWard(null);
+                onWardHover?.(null);
+            },
+        });
+    }, [resultsMap, candidateColors, onWardHover]);
 
     return (
-        <MapContainer
-            center={[43.0731, -89.4012]}
-            zoom={10}
-            className="w-full h-full bg-slate-950"
-        >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-            {geoJsonData && (
-                <>
-                    <GeoJSON
-                        key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}`}
-                        data={geoJsonData}
-                        style={(feature) => style(feature, selectedWard)}
-                        onEachFeature={onEachFeature}
-                        ref={geoJsonLayerRef}
-                    />
-                    <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} />
-                </>
+        <>
+            <MapContainer
+                center={[43.0731, -89.4012]}
+                zoom={10}
+                className="w-full h-full bg-slate-950"
+            >
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                />
+                {geoJsonData && (
+                    <>
+                        <GeoJSON
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}`}
+                            data={geoJsonData}
+                            style={(feature) => style(feature, selectedWard)}
+                            onEachFeature={onEachFeature}
+                            ref={geoJsonLayerRef}
+                        />
+                        <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} />
+                    </>
+                )}
+            </MapContainer>
+
+            {hoveredWard && (
+                <div style={{
+                    position: 'fixed',
+                    left: hoveredWard.x + 16,
+                    top: hoveredWard.y - 8,
+                    transform: 'translateY(-100%)',
+                    zIndex: 9999,
+                    pointerEvents: 'none',
+                    minWidth: '230px',
+                    maxWidth: '290px',
+                }}>
+                    <div style={{
+                        background: '#0f172a',
+                        border: '1px solid #334155',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.65)',
+                        color: 'white',
+                        fontSize: '13px',
+                        fontFamily: 'system-ui, sans-serif',
+                    }}>
+                        {/* Header */}
+                        <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #1e293b' }}>
+                            <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
+                                {raceResult?.raceName || 'Election Results'}
+                            </div>
+                            <div style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>
+                                {hoveredWard.municipality} · Wd.&nbsp;{hoveredWard.wardNum}
+                            </div>
+                        </div>
+
+                        {/* Candidate rows */}
+                        <div style={{ padding: '10px 14px' }}>
+                            {hoveredWard.results.map((r, i) => {
+                                const hsl = candidateColors[r.candidateName.trim()];
+                                const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#64748b';
+                                const isWinner = i === 0;
+                                return (
+                                    <div key={i} style={{ marginBottom: i < hoveredWard.results.length - 1 ? '10px' : 0 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                                            <span style={{ color: isWinner ? '#f1f5f9' : '#94a3b8', fontWeight: isWinner ? 600 : 400 }}>
+                                                {isWinner ? '▲ ' : '\u00a0\u00a0 '}{r.candidateName}
+                                            </span>
+                                            <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#f1f5f9' : '#64748b', marginLeft: '12px' }}>
+                                                {r.pct.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                        <div style={{ height: '5px', background: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
+                                            <div style={{ height: '100%', width: `${r.pct}%`, background: barColor, borderRadius: '3px' }} />
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
+                                            {r.votes.toLocaleString()} votes
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Footer */}
+                        <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '11px', color: '#475569' }}>
+                                {hoveredWard.total.toLocaleString()} ballots cast
+                            </span>
+                            {hoveredWard.results.length >= 2 && (
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                    +{Math.abs(hoveredWard.results[0].pct - hoveredWard.results[1].pct).toFixed(1)}% margin
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
-        </MapContainer>
+        </>
     );
 }
