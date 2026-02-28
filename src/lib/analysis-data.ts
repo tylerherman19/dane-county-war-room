@@ -1,5 +1,5 @@
 // Ward Analysis using API data with progressive loading
-import { getHistoricalComparison } from './historical-api-data';
+import { fetchHistoricalData } from './historical-api-data';
 import { RaceType } from './api';
 
 export interface WardAnalysis {
@@ -9,42 +9,37 @@ export interface WardAnalysis {
     historicalDate: string | null;
 }
 
-// Cache for ward analysis data
+// Cache for ward analysis data — keyed by the same normalized ward key used in historical-api-data.ts
 const analysisCache = new Map<string, WardAnalysis>();
 let currentRaceType: RaceType | null = null;
 let isLoading = false;
 
-// Normalize ward name to match API format
+// Normalize ward name to match the key format produced by historical-api-data.ts
 function normalizeWardName(municipality: string, wardId: string): string {
     let s = municipality.toLowerCase();
     let type = '';
 
-    // Detect type
     if (s.includes('town')) type = 'town';
     else if (s.includes('village')) type = 'village';
     else if (s.includes('city')) type = 'city';
 
-    // Remove "of" and type keywords
     s = s.replace(/^(city|village|town) of\s+/, '');
     s = s.replace(/\s+(city|village|town)\b/g, '');
     s = s.trim().replace(/\s+/g, '-');
 
-    // Construct key: name-type-ward
     let key = s;
     if (type) key += `-${type}`;
     if (wardId && wardId !== '0') key += `-${wardId}`;
-
     return key;
 }
 
 /**
- * Start loading historical data in the background for a specific race type
- * This is called when the map component mounts or when the race changes
+ * Start loading historical data in the background for a specific race type.
+ * Pre-populates the analysisCache so ward data is ready before the first hover.
  */
 export function startLoadingHistoricalData(raceType: RaceType): void {
     if (currentRaceType === raceType && analysisCache.size > 0) {
-        // Already loaded for this race type
-        return;
+        return; // Already loaded for this race type
     }
 
     if (isLoading) {
@@ -57,116 +52,55 @@ export function startLoadingHistoricalData(raceType: RaceType): void {
 
     console.log(`[Analysis Data] Starting background load for ${raceType}...`);
 
-    // Load data asynchronously (fire and forget)
-    loadHistoricalDataForRaceType(raceType).then(() => {
-        isLoading = false;
-        console.log(`[Analysis Data] Loaded ${analysisCache.size} wards for ${raceType}`);
-    }).catch(error => {
-        isLoading = false;
-        console.error('[Analysis Data] Error loading historical data:', error);
-    });
+    fetchHistoricalData()
+        .then(allData => {
+            const races = allData.get(raceType);
+
+            if (!races || races.length === 0) {
+                console.log(`[Analysis Data] No historical data available for ${raceType}`);
+                isLoading = false;
+                return;
+            }
+
+            // Use the most recent race (already sorted desc by date in fetchHistoricalData)
+            const mostRecent = races[0];
+            console.log(`[Analysis Data] Pre-populating ${mostRecent.wardResults.size} wards from "${mostRecent.raceName}" (${mostRecent.electionDate})`);
+
+            mostRecent.wardResults.forEach((wardResult, wardKey) => {
+                analysisCache.set(wardKey, {
+                    historicalMargin: wardResult.margin,
+                    historicalVotes: wardResult.totalVotes,
+                    historicalRaceName: mostRecent.raceName,
+                    historicalDate: mostRecent.electionDate,
+                });
+            });
+
+            console.log(`[Analysis Data] Cache ready: ${analysisCache.size} wards for ${raceType}`);
+            isLoading = false;
+        })
+        .catch(error => {
+            isLoading = false;
+            console.error('[Analysis Data] Error loading historical data:', error);
+        });
 }
 
 /**
- * Internal function to load all historical data for a race type
+ * Get ward analysis synchronously from cache.
+ * Returns empty data if the cache hasn't been populated yet for this ward.
  */
-async function loadHistoricalDataForRaceType(raceType: RaceType): Promise<void> {
-    console.log(`[Analysis Data] Fetching historical data for ${raceType}...`);
-
-    try {
-        // Get the most recent historical race of this type
-        const comparison = await getHistoricalComparison('test-ward', raceType);
-
-        if (comparison && comparison.historicalRaceName) {
-            console.log(`[Analysis Data] Found historical race: ${comparison.historicalRaceName} (${comparison.historicalElectionDate})`);
-        } else {
-            console.log(`[Analysis Data] No historical data available for ${raceType}`);
-        }
-
-        // The actual ward data will be fetched on-demand via getHistoricalComparison
-        // when wards are clicked/hovered
-    } catch (error) {
-        console.error(`[Analysis Data] Error fetching historical data for ${raceType}:`, error);
-    }
-}
-
-/**
- * Get ward analysis synchronously (returns cached data or empty if not loaded yet)
- * This can be called from synchronous contexts like Leaflet callbacks
- * If data isn't cached, it will be fetched asynchronously in the background
- */
-export function getWardAnalysis(
-    wardId: string,
-    municipality: string
-): WardAnalysis {
+export function getWardAnalysis(wardId: string, municipality: string): WardAnalysis {
     const wardKey = normalizeWardName(municipality, wardId);
 
-    // Return cached data if available
     if (analysisCache.has(wardKey)) {
         return analysisCache.get(wardKey)!;
     }
 
-    // If we have a current race type, fetch data in background
-    if (currentRaceType) {
-        // Fetch asynchronously (fire and forget)
-        fetchWardAnalysis(wardId, municipality, currentRaceType).catch(error => {
-            console.error(`[Analysis Data] Error fetching ward ${wardKey}:`, error);
-        });
-    }
-
-    // Return empty data for now (will be populated when fetch completes)
     return {
         historicalMargin: 0,
         historicalVotes: 0,
         historicalRaceName: null,
-        historicalDate: null
+        historicalDate: null,
     };
-}
-
-/**
- * Fetch analysis data for a specific ward asynchronously
- * This is called on-demand when a ward is hovered/clicked
- */
-export async function fetchWardAnalysis(
-    wardId: string,
-    municipality: string,
-    raceType: RaceType
-): Promise<WardAnalysis> {
-    const wardKey = normalizeWardName(municipality, wardId);
-
-    console.log(`[Analysis Data] Fetching analysis for ${municipality} Ward ${wardId} (${raceType})...`);
-
-    // Check cache first
-    if (analysisCache.has(wardKey) && currentRaceType === raceType) {
-        console.log(`[Analysis Data] ✓ Using cached data for ${wardKey}`);
-        return analysisCache.get(wardKey)!;
-    }
-
-    // Fetch from API
-    const comparison = await getHistoricalComparison(wardKey, raceType);
-
-    const analysis: WardAnalysis = comparison && comparison.historical ? {
-        historicalMargin: comparison.historical.margin,
-        historicalVotes: comparison.historical.totalVotes,
-        historicalRaceName: comparison.historicalRaceName,
-        historicalDate: comparison.historicalElectionDate
-    } : {
-        historicalMargin: 0,
-        historicalVotes: 0,
-        historicalRaceName: null,
-        historicalDate: null
-    };
-
-    if (analysis.historicalRaceName) {
-        console.log(`[Analysis Data] ✓ Fetched historical data for ${wardKey}: ${analysis.historicalRaceName} (${(analysis.historicalMargin * 100).toFixed(1)}%)`);
-    } else {
-        console.log(`[Analysis Data] ✗ No historical data found for ${wardKey} (${raceType})`);
-    }
-
-    // Cache it
-    analysisCache.set(wardKey, analysis);
-
-    return analysis;
 }
 
 /**

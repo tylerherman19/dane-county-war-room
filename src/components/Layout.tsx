@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Election } from '@/lib/api';
 import ElectionSelector from './ElectionSelector';
@@ -15,9 +15,10 @@ interface LayoutProps {
     onSelectElection?: (id: string) => void;
     viewMode: 'LIVE' | 'ARCHIVE';
     onToggleViewMode: (mode: 'LIVE' | 'ARCHIVE') => void;
+    hasError?: boolean;
 }
 
-export default function Layout({ children, sidebar, lastUpdated, elections, selectedElectionId, onSelectElection, viewMode, onToggleViewMode }: LayoutProps) {
+export default function Layout({ children, sidebar, lastUpdated, elections, selectedElectionId, onSelectElection, viewMode, onToggleViewMode, hasError }: LayoutProps) {
     const [isDark, setIsDark] = useState(true);
 
     useEffect(() => {
@@ -89,6 +90,14 @@ export default function Layout({ children, sidebar, lastUpdated, elections, sele
                     </button>
                 </div>
             </header>
+
+            {/* Error Banner */}
+            {hasError && (
+                <div className="bg-amber-900/80 border-b border-amber-700 px-6 py-2 flex items-center gap-2 text-amber-200 text-sm z-[1999]">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Unable to reach the election results API. Data may be stale. Retrying automatically&hellip;</span>
+                </div>
+            )}
 
             {/* Main Content Grid */}
             <div className="flex-1 flex overflow-hidden relative">

@@ -502,24 +502,22 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 }
             }
             else {
-                // --- STANDARD VIEW (Existing Logic) ---
+                // --- STANDARD VIEW ---
                 popupContent += `<div class="space-y-1">`;
                 sorted.forEach((r: PrecinctResult) => {
-                    const pct = ((r.votes / total) * 100).toFixed(1);
+                    const pct = total > 0 ? ((r.votes / total) * 100).toFixed(1) : '0.0';
                     popupContent += `<div class="flex justify-between gap-4">
                         <span>${r.candidateName}</span>
-                        <span class="font-mono">${r.votes} (${pct}%)</span>
+                        <span class="font-mono">${r.votes.toLocaleString()} (${pct}%)</span>
                     </div>`;
                 });
                 popupContent += `<div class="mt-2 pt-1 border-t text-xs text-slate-500">
-                    Turnout: ${total} / ${relevantResults[0].registeredVoters}
+                    ${total.toLocaleString()} ballots cast
                 </div></div>`;
             }
 
-            // Close main div if not standard view (standard view closes it inside the else block)
-            if (overlayMode !== 'NONE') {
-                popupContent += `</div>`;
-            }
+            // Close outer wrapper div for ALL overlay modes
+            popupContent += `</div>`;
 
             layer.bindTooltip(popupContent, {
                 className: 'dark-popup',

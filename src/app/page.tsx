@@ -22,42 +22,48 @@ export default function Home() {
   const [selectedWard, setSelectedWard] = useState<{ name: string; num: string } | null>(null);
 
   // Data Hooks
-  const { elections } = useElections();
+  const { elections, isError: electionsError } = useElections();
 
-  // Auto-select first election
+  // Auto-select the most recent election.
+  // In LIVE mode, always lock to the latest election.
   useEffect(() => {
-    if (elections && elections.length > 0) {
-      // If in LIVE mode, always force the most recent election
-      if (viewMode === 'LIVE') {
-        if (selectedElectionId !== elections[0].electionId) {
-          setSelectedElectionId(elections[0].electionId);
-        }
-      }
-      // If in ARCHIVE mode, only select if nothing is selected
-      else if (!selectedElectionId) {
+    if (!elections || elections.length === 0) return;
+
+    if (viewMode === 'LIVE') {
+      if (selectedElectionId !== elections[0].electionId) {
         setSelectedElectionId(elections[0].electionId);
       }
+    } else if (!selectedElectionId) {
+      setSelectedElectionId(elections[0].electionId);
     }
-  }, [elections, selectedElectionId, viewMode]);
+  }, [elections, viewMode]); // intentionally omit selectedElectionId to avoid loop
+
+  // Clear race selection whenever the election changes so we always
+  // auto-select the correct first race for the new election.
+  useEffect(() => {
+    setSelectedRaceId(null);
+    setSelectedWard(null);
+  }, [selectedElectionId]);
 
   const { races } = useRaces(selectedElectionId);
 
-  // Auto-select first race
+  // Auto-select first race of the current election.
   useEffect(() => {
     if (races && races.length > 0 && !selectedRaceId) {
       setSelectedRaceId(races[0].id);
     }
   }, [races, selectedRaceId]);
 
-  const { results: raceResult, isLoading: isLoadingRace } = useRaceResults(selectedElectionId, selectedRaceId);
-  const { precinctResults, isLoading: isLoadingPrecincts } = usePrecinctResults(selectedElectionId, selectedRaceId);
+  const { results: raceResult, isLoading: isLoadingRace, isError: raceError } = useRaceResults(selectedElectionId, selectedRaceId);
+  const { precinctResults, isLoading: isLoadingPrecincts, isError: precinctError } = usePrecinctResults(selectedElectionId, selectedRaceId);
   const { lastPublished } = useLastPublished(selectedElectionId);
 
   // Calculate current total votes for turnout estimation
-  const currentTotalVotes = raceResult?.totalVotes || 0;
+  const currentTotalVotes = raceResult?.totalVotes ?? 0;
   const { turnoutData } = useHistoricalTurnout(selectedRaceId, currentTotalVotes, raceResult?.raceName);
 
   const isLoading = isLoadingRace || isLoadingPrecincts;
+  const hasError = !!electionsError || !!raceError || !!precinctError;
 
   return (
     <Layout
@@ -76,6 +82,7 @@ export default function Home() {
       onSelectElection={setSelectedElectionId}
       viewMode={viewMode}
       onToggleViewMode={setViewMode}
+      hasError={hasError}
     >
       <div className="relative w-full h-full">
         <RaceSelector
