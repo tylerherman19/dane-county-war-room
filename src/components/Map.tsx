@@ -529,11 +529,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             layer.on({
                 mouseover: (e) => {
                     const layer = e.target;
-                    layer.setStyle({
-                        weight: 3,
-                        color: '#60a5fa',
-                        fillOpacity: 0.9
-                    });
+                    layer.setStyle({ weight: 2 });
                     layer.bringToFront();
                 },
                 mouseout: (e) => {

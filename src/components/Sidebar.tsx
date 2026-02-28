@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { Search, ExternalLink, Download } from 'lucide-react';
 import { useState } from 'react';
 import TrendSparkline from './TrendSparkline';
-import { getWardAnalysis } from '@/lib/analysis-data';
+import { getWardAnalysis, getExpectedTotalVotes, isHistoricalDataLoaded } from '@/lib/analysis-data';
 
 interface SidebarProps {
     raceResult: RaceResult | undefined;
@@ -65,25 +65,40 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
                 {/* Outstanding Ballots Card */}
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                    <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">Estimated Outstanding</h3>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-white">
-                            {turnoutData?.outstandingEstimate.toLocaleString()}
-                        </span>
-                        <span className="text-slate-400 text-sm">ballots remaining</span>
-                    </div>
-                    <div className="mt-2 w-full bg-slate-700/50 h-2 rounded-full overflow-hidden">
-                        <div
-                            className="bg-blue-500 h-full transition-all duration-1000"
-                            style={{ width: `${(totalVotes / (turnoutData?.expectedBallots || 1)) * 100}%` }}
-                        ></div>
-                    </div>
-                    <div className="flex justify-between mt-2 text-xs text-slate-500">
-                        <span>Counted: {totalVotes.toLocaleString()}</span>
-                        <span>Expected: {turnoutData?.expectedBallots.toLocaleString()}</span>
-                    </div>
-                </div>
+                {(() => {
+                    const historicalLoaded = isHistoricalDataLoaded();
+                    const historicalExpected = getExpectedTotalVotes();
+                    const expectedBallots = historicalLoaded && historicalExpected > 0
+                        ? historicalExpected
+                        : (turnoutData?.expectedBallots ?? 0);
+                    const outstanding = Math.max(0, expectedBallots - totalVotes);
+                    const pct = expectedBallots > 0 ? Math.min(100, (totalVotes / expectedBallots) * 100) : 0;
+                    return (
+                        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
+                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">
+                                {historicalLoaded ? 'Outstanding Ballots' : 'Estimated Outstanding'}
+                            </h3>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-bold text-white">
+                                    {outstanding.toLocaleString()}
+                                </span>
+                                <span className="text-slate-400 text-sm">ballots remaining</span>
+                            </div>
+                            <div className="mt-2 w-full bg-slate-700/50 h-2 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-blue-500 h-full transition-all duration-1000"
+                                    style={{ width: `${pct}%` }}
+                                ></div>
+                            </div>
+                            <div className="flex justify-between mt-2 text-xs text-slate-500">
+                                <span>Counted: {totalVotes.toLocaleString()}</span>
+                                <span>
+                                    {historicalLoaded ? '' : 'Est. '}Expected: {expectedBallots.toLocaleString()}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* Race Summary Card */}
                 <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">

@@ -15,7 +15,7 @@ let currentRaceType: RaceType | null = null;
 let isLoading = false;
 
 // Normalize ward name to match the key format produced by historical-api-data.ts
-function normalizeWardName(municipality: string, wardId: string): string {
+export function normalizeWardName(municipality: string, wardId: string): string {
     let s = municipality.toLowerCase();
     let type = '';
 
@@ -109,4 +109,30 @@ export function getWardAnalysis(wardId: string, municipality: string): WardAnaly
 export function clearAnalysisCache(): void {
     analysisCache.clear();
     currentRaceType = null;
+}
+
+/**
+ * Sum of all historical votes across cached wards.
+ * Returns real API-derived expected total for the current race type.
+ * Returns 0 if cache not yet populated — callers should fall back to static estimate.
+ */
+export function getExpectedTotalVotes(): number {
+    let total = 0;
+    analysisCache.forEach(a => { total += a.historicalVotes; });
+    return total;
+}
+
+/**
+ * True once the cache has been populated with real historical ward data.
+ */
+export function isHistoricalDataLoaded(): boolean {
+    return analysisCache.size > 0 && !isLoading;
+}
+
+/**
+ * Returns a snapshot copy of the full analysis cache.
+ * Used by the projection engine.
+ */
+export function getAllCachedWards(): Map<string, WardAnalysis> {
+    return new Map(analysisCache);
 }

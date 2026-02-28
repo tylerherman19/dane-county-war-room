@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/build-historical-data.mjs",
     "build": "next build",
+    "build:historical": "node scripts/build-historical-data.mjs",
     "start": "next start",
     "lint": "eslint"
   },

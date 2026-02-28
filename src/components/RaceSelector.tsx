@@ -2,7 +2,7 @@
 
 import { Race } from '@/lib/api';
 import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface RaceSelectorProps {
     races: Race[] | undefined;
@@ -10,20 +10,39 @@ interface RaceSelectorProps {
     onSelectRace: (raceId: string) => void;
 }
 
-export default function RaceSelector({ races, selectedRaceId, onSelectRace }: RaceSelectorProps) {
-    const [category, setCategory] = useState<'All' | 'Federal' | 'State' | 'Local'>('All');
+// Race types that have historical baseline data in historical-ward-data.json
+const HISTORICAL_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', 'Congress']);
 
+function getCategoryForType(type: string): 'Federal' | 'State' | 'Local' | 'All' {
+    if (['Presidential', 'Senate', 'Congress'].includes(type)) return 'Federal';
+    if (['Governor', 'StateSenate', 'Assembly', 'Referendum'].includes(type)) return 'State';
+    if (['Mayor', 'Other'].includes(type)) return 'Local';
+    return 'All';
+}
+
+export default function RaceSelector({ races, selectedRaceId, onSelectRace }: RaceSelectorProps) {
     const [isOpen, setIsOpen] = useState(false);
 
-    if (!races) return null;
+    const selectedRace = races?.find(r => r.id === selectedRaceId);
 
-    const selectedRace = races.find(r => r.id === selectedRaceId);
+    // Default category tab to the one that contains the selected race
+    const defaultCategory = selectedRace ? getCategoryForType(selectedRace.type) : 'All';
+    const [category, setCategory] = useState<'All' | 'Federal' | 'State' | 'Local'>(defaultCategory);
+
+    // Keep category in sync when the selected race changes (e.g. auto-selection)
+    useEffect(() => {
+        if (selectedRace) {
+            setCategory(getCategoryForType(selectedRace.type));
+        }
+    }, [selectedRace?.type]);
+
+    if (!races) return null;
 
     const filteredRaces = races.filter(race => {
         if (category === 'All') return true;
         if (category === 'Federal') return ['Presidential', 'Senate', 'Congress'].includes(race.type);
-        if (category === 'State') return ['StateSenate', 'Assembly', 'Governor', 'Referendum'].includes(race.type);
-        if (category === 'Local') return ['Mayor', 'CountyExecutive', 'Aldermanic', 'SchoolBoard'].includes(race.type);
+        if (category === 'State') return ['Governor', 'StateSenate', 'Assembly', 'Referendum'].includes(race.type);
+        if (category === 'Local') return ['Mayor', 'Other'].includes(race.type);
         return true;
     });
 
@@ -77,12 +96,17 @@ export default function RaceSelector({ races, selectedRaceId, onSelectRace }: Ra
                                     className={`w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-0 ${selectedRaceId === race.id ? 'bg-slate-800/50 text-blue-400' : 'text-slate-300'
                                         }`}
                                 >
-                                    <div className="font-medium">{race.name}</div>
-                                    <div className="text-xs text-slate-500">{race.type}</div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="font-medium truncate">{race.name}</span>
+                                        {HISTORICAL_TYPES.has(race.type) && (
+                                            <span className="shrink-0 text-xs text-blue-400 font-medium">● Historical</span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-slate-500 mt-0.5">{race.type}</div>
                                 </button>
                             ))}
                             {filteredRaces.length === 0 && (
-                                <div className="p-4 text-center text-slate-500 text-sm">No races found</div>
+                                <div className="p-4 text-center text-slate-500 text-sm">No races in this category</div>
                             )}
                         </div>
                     </div>
