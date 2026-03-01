@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - claude/continue-previous-work-bKXAh
 
 permissions:
   contents: read
