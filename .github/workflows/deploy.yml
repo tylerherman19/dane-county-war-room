@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - claude/continue-previous-work-bKXAh
+      - claude/continue-election-dashboard-ULML9
 
 permissions:
   contents: read

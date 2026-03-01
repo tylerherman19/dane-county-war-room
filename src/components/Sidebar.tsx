@@ -169,8 +169,9 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
 
                 {/* ── Ballots Card ── */}
                 {isArchive ? (
-                    /* Archive: race is over — show final totals, not estimated outstanding */
-                    totalVotes > 0 && (
+                    /* Archive: race is over — show final totals only for contested races (2+ candidates).
+                       Uncontested races have no meaningful margin to report, so the card is omitted. */
+                    totalVotes > 0 && sortedCandidates.length >= 2 && (
                         <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
                             <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
                                 Final Results

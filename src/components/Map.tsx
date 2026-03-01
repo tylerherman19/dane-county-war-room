@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { PrecinctResult, RaceResult } from '@/lib/api';
-import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData, getAllCachedWards } from '@/lib/analysis-data';
+import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData, getCachedAvgVotes } from '@/lib/analysis-data';
 import { OverlayMode } from './MapOverlayControl';
 
 // Fix for default marker icon
@@ -241,56 +241,53 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
 
             // --- STANDARD VIEW ---
             if (overlayMode === 'NONE') {
-                // Determine Margin
                 const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 75, l: 50 };
 
-                // Determine Color
-                const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
-
-                // Calculate Lightness based on Margin - Traditional Election Map Style
-                const lightness = 65 - (Math.min(margin, 0.5) * 30);
-
-                const colorString = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
+                // Gradient: normalize margin 0–45% → t 0–1.
+                // Lightness: 82% (pale toss-up) → 42% (deep landslide) — 40pt range.
+                // Saturation: ramps from 25% up to the candidate's full saturation.
+                // This gives crisp color for safe seats and near-white for toss-ups.
+                const t = Math.min(margin / 0.45, 1.0);
+                const lightness = Math.round(82 - t * 40);
+                const saturation = Math.round(25 + t * Math.max(0, baseColor.s - 25));
 
                 baseStyle = {
-                    fillColor: colorString,
+                    fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
                     weight: 1,
                     opacity: 1,
                     color: '#334155',
-                    fillOpacity: 0.65
+                    fillOpacity: 0.75
                 };
             }
             // --- TURNOUT HEATMAP (VOTE VOLUME) ---
-            // Compares each ward's current ballots cast to the historical average ballots per ward
-            // for this race type. One aggregate average is used (not per-ward key matching),
-            // making it robust to ward boundary changes and key normalization mismatches.
-            // Red = below historical average, Green = above historical average.
+            // Compares each ward's current ballots cast to its own historical baseline.
+            // Per-ward comparison is preferred (accurate); falls back to the pre-computed
+            // county-wide average when the ward key doesn't match historical data.
+            // Both paths use O(1) lookups — no per-render iteration of the full cache.
+            // Red = below baseline, Green = above baseline.
             else if (overlayMode === 'TURNOUT') {
-                // Compute historical average votes per ward from the loaded cache.
-                // This reads the module-level singleton on each style call, always fresh.
-                const cached = getAllCachedWards();
-                let historicalAvgVotes = 0;
-                if (cached.size > 0) {
-                    let sum = 0;
-                    cached.forEach(w => { sum += w.historicalVotes; });
-                    historicalAvgVotes = sum / cached.size;
-                }
+                const wardAnalysis = getWardAnalysis(wardNum, municipality);
+                // Prefer the ward's own historical vote count; fall back to county avg.
+                const historicalRef = wardAnalysis.historicalVotes > 0
+                    ? wardAnalysis.historicalVotes
+                    : (getCachedAvgVotes() ?? 0);
 
-                if (historicalAvgVotes === 0 || total === 0) {
+                if (historicalRef === 0 || total === 0) {
                     // Historical data not yet loaded — neutral grey
                     baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
                 } else {
-                    const ratio = total / historicalAvgVotes;
+                    const ratio = total / historicalRef;
 
                     let h: number, s: number, l: number;
                     if (ratio < 1.0) {
-                        // Below historical average — red gradient
+                        // Below historical baseline — red gradient
                         h = 0;
                         const intensity = Math.min((1.0 - ratio) / 0.5, 1);
                         l = 90 - (intensity * 40);
                         s = intensity * 80;
                     } else {
-                        // Above historical average — green gradient
+                        // Above historical baseline — green gradient
                         h = 140;
                         const intensity = Math.min((ratio - 1.0) / 0.5, 1);
                         l = 50 - (intensity * 10);
@@ -513,17 +510,17 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             );
                         })()}
 
-                        {/* Footer */}
-                        <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '11px', color: '#475569' }}>
-                                {hoveredWard.total.toLocaleString()} ballots cast
-                            </span>
-                            {hoveredWard.results.length >= 2 && (
+                        {/* Footer — only shown for contested races (2+ candidates) */}
+                        {hoveredWard.results.length >= 2 && (
+                            <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '11px', color: '#475569' }}>
+                                    {hoveredWard.total.toLocaleString()} ballots cast
+                                </span>
                                 <span style={{ fontSize: '11px', color: '#64748b' }}>
                                     +{Math.abs(hoveredWard.results[0].pct - hoveredWard.results[1].pct).toFixed(1)}% margin
                                 </span>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
