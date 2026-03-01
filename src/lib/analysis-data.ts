@@ -14,6 +14,8 @@ export interface WardAnalysis {
 const analysisCache = new Map<string, WardAnalysis>();
 let currentRaceType: RaceType | null = null;
 let isLoading = false;
+// Pre-computed average historical votes per ward — computed once on load, not per-render.
+let cachedAvgVotes: number | null = null;
 
 // Normalize ward name to match the key format produced by historical-api-data.ts
 export function normalizeWardName(municipality: string, wardId: string): string {
@@ -74,6 +76,12 @@ export function startLoadingHistoricalData(raceType: RaceType): void {
                 });
             });
 
+            // Pre-compute and cache the county-wide average so TURNOUT overlay
+            // never needs to iterate the full cache on every map feature render.
+            let totalVoteSum = 0;
+            analysisCache.forEach(a => { totalVoteSum += a.historicalVotes; });
+            cachedAvgVotes = analysisCache.size > 0 ? totalVoteSum / analysisCache.size : null;
+
             addLog('success', 'Analysis', `✓ ${analysisCache.size} wards cached from "${mostRecent.raceName}" (${mostRecent.electionDate?.slice(0, 10)})`);
             isLoading = false;
         })
@@ -108,6 +116,7 @@ export function getWardAnalysis(wardId: string, municipality: string): WardAnaly
 export function clearAnalysisCache(): void {
     analysisCache.clear();
     currentRaceType = null;
+    cachedAvgVotes = null;
 }
 
 /**
@@ -139,6 +148,15 @@ export function getHistoricalRaceInfo(): { name: string; year: string } | null {
         ? new Date(first.historicalDate).getFullYear().toString()
         : '';
     return { name: first.historicalRaceName, year };
+}
+
+/**
+ * Returns the pre-computed county-wide average historical votes per ward.
+ * Computed once when data loads — O(1) for callers, not O(n) per render.
+ * Returns null if data has not been loaded yet.
+ */
+export function getCachedAvgVotes(): number | null {
+    return cachedAvgVotes;
 }
 
 /**
