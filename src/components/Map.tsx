@@ -198,6 +198,13 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
     }, [raceResult]);
 
+    // Party lookup for reliable Dem/GOP detection in overlay modes (replaces fragile hue check)
+    const candidateParties = useMemo(() => {
+        const m: Record<string, string> = {};
+        raceResult?.candidates.forEach(c => { m[c.candidateName.trim()] = c.party || ''; });
+        return m;
+    }, [raceResult]);
+
     useEffect(() => {
         fetch('dane_wards.geojson')
             .then(res => res.json())
@@ -259,120 +266,86 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 };
             }
             // --- PRESIDENTIAL BENCHMARK ---
+            // Shows over/underperformance vs. the most recent historical race of the same type.
+            // Red = underperforming baseline, Blue = overperforming baseline.
             else if (overlayMode === 'PRESIDENTIAL') {
-                // Calculate current Dem margin (assuming winner is Dem for simplicity, or finding Dem candidate)
-                // For robustness, let's find the "Democratic" or "Liberal" candidate or just the winner if they are blue.
-                // Simplified: Use winner's margin if they are Blue, else negative.
-                const winnerColor = candidateColors[winner.candidateName.trim()];
-                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260); // Roughly blue hue
-
-                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                if (!isBlue) currentMargin = -currentMargin; // If winner is Red, margin is negative (from Dem perspective)
-
-                // Compare to Biden 2020
-                const diff = currentMargin - analysis.historicalMargin;
-
-                // Color Scale: Red (Underperform) -> Grey -> Blue (Overperform)
-                // Range: -0.2 to +0.2
-                let h = 215; // Blue
-                let s = 80;
-                let l = 50;
-
-                if (diff < 0) {
-                    h = 0; // Red
-                    l = 90 - (Math.min(Math.abs(diff) * 3, 0.5) * 80); // Darker red as underperformance grows
-                    // Actually, let's do:
-                    // 0 -> Grey/White
-                    // -0.2 -> Dark Red
-                    const intensity = Math.min(Math.abs(diff) / 0.2, 1);
-                    l = 90 - (intensity * 40); // 90 -> 50
-                    s = intensity * 80;
+                // Guard: if this ward has no cached historical data yet, show neutral grey
+                if (!analysis.historicalRaceName) {
+                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
                 } else {
-                    h = 215; // Blue
-                    const intensity = Math.min(diff / 0.2, 1);
-                    l = 90 - (intensity * 40); // 90 -> 50
-                    s = intensity * 80;
-                }
+                    // Use party name for reliable Dem detection instead of hue range
+                    const isDem = (candidateParties[winner.candidateName.trim()] || '').toLowerCase().includes('democrat');
+                    let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                    if (!isDem) currentMargin = -currentMargin; // Express margin from Dem perspective
 
-                if (Math.abs(diff) < 0.01) {
-                    h = 0; s = 0; l = 80; // Neutral grey
-                }
+                    const diff = currentMargin - analysis.historicalMargin;
 
-                baseStyle = {
-                    fillColor: `hsl(${h}, ${s}%, ${l}%)`,
-                    weight: 1,
-                    opacity: 1,
-                    color: '#334155',
-                    fillOpacity: 0.75
-                };
+                    // Color scale: Red (underperform) → grey (on target) → Blue (overperform), range ±0.2
+                    let h = 215, s = 0, l = 80;
+                    if (Math.abs(diff) >= 0.01) {
+                        const intensity = Math.min(Math.abs(diff) / 0.2, 1);
+                        h = diff < 0 ? 0 : 215;
+                        l = 90 - (intensity * 40);
+                        s = intensity * 80;
+                    }
+
+                    baseStyle = {
+                        fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                        weight: 1,
+                        opacity: 1,
+                        color: '#334155',
+                        fillOpacity: 0.75
+                    };
+                }
             }
             // --- TURNOUT HEATMAP (VOTE VOLUME) ---
+            // Compares current vote volume to historical vote volume for the same race type.
+            // Red = below historical, Green = above historical.
             else if (overlayMode === 'TURNOUT') {
-                // We don't have registered voters for historical data, so we compare RAW VOTE VOLUME
-                const currentVotes = total;
-                const avgVotes = analysis.historicalVotes || 0; // Historical vote volume
-
-                // Avoid division by zero
-                const ratio = avgVotes > 0 ? currentVotes / avgVotes : 0;
-
-                // Scale: 0.5 (Low) -> 1.0 (Avg) -> 1.5 (High)
-                // Red -> Grey -> Green
-
-                let h = 120; // Green
-                let s = 80;
-                let l = 50;
-
-                if (ratio < 1.0) {
-                    h = 0; s = 0; l = 30 + (ratio * 40); // Dark grey to light grey
+                // Guard: if this ward has no cached historical data yet, show neutral grey
+                if (!analysis.historicalRaceName) {
+                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
                 } else {
-                    h = 140; // Green
-                    const intensity = Math.min((ratio - 1.0) / 0.5, 1);
-                    l = 50 - (intensity * 10); // Slightly darker green for intensity
-                    s = 50 + (intensity * 50); // More saturated
-                }
+                    const ratio = analysis.historicalVotes > 0 ? total / analysis.historicalVotes : 0;
 
-                baseStyle = {
-                    fillColor: `hsl(${h}, ${s}%, ${l}%)`,
-                    weight: 1,
-                    opacity: 1,
-                    color: '#334155',
-                    fillOpacity: 0.75
-                };
+                    let h: number, s: number, l: number;
+                    if (ratio < 1.0) {
+                        // Below historical — red gradient (pale at ~avg, deep red at 50% below)
+                        h = 0;
+                        const intensity = Math.min((1.0 - ratio) / 0.5, 1);
+                        l = 90 - (intensity * 40);
+                        s = intensity * 80;
+                    } else {
+                        // Above historical — green gradient
+                        h = 140;
+                        const intensity = Math.min((ratio - 1.0) / 0.5, 1);
+                        l = 50 - (intensity * 10);
+                        s = 50 + (intensity * 50);
+                    }
+
+                    baseStyle = {
+                        fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                        weight: 1,
+                        opacity: 1,
+                        color: '#334155',
+                        fillOpacity: 0.75
+                    };
+                }
             }
-            // --- SWING ANALYSIS ---
+            // --- MARGIN INTENSITY ---
+            // Shows how competitive each ward is right now: pale = toss-up, saturated = landslide.
+            // Useful for GOTV targeting. No historical data needed — works immediately.
             else if (overlayMode === 'SWING') {
-                // Similar to Presidential but vs Previous Margin
-                const winnerColor = candidateColors[winner.candidateName.trim()];
-                const isBlue = winnerColor && (winnerColor.h > 180 && winnerColor.h < 260);
-
-                let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                if (!isBlue) currentMargin = -currentMargin;
-
-                const diff = currentMargin - analysis.historicalMargin;
-
-                // Red Shift vs Blue Shift
-                let h = 215;
-                let s = 80;
-                let l = 50;
-
-                if (diff < 0) {
-                    h = 0; // Red Shift
-                    const intensity = Math.min(Math.abs(diff) / 0.15, 1);
-                    l = 90 - (intensity * 40);
-                    s = intensity * 80;
-                } else {
-                    h = 215; // Blue Shift
-                    const intensity = Math.min(diff / 0.15, 1);
-                    l = 90 - (intensity * 40);
-                    s = intensity * 80;
-                }
-
+                const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                const winnerColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 80, l: 50 };
+                // 0% margin → pale/white; 40%+ margin → fully saturated winner color
+                const intensity = Math.min(margin / 0.4, 1);
                 baseStyle = {
-                    fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                    fillColor: `hsl(${winnerColor.h}, ${Math.round(intensity * 85)}%, ${Math.round(90 - intensity * 40)}%)`,
                     weight: 1,
                     opacity: 1,
                     color: '#334155',
-                    fillOpacity: 0.75
+                    fillOpacity: 0.8
                 };
             }
         }
@@ -396,7 +369,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode]); // Re-create if overlay mode changes
+    }, [resultsMap, candidateColors, candidateParties, overlayMode]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;

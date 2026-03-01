@@ -1,5 +1,5 @@
 // API client for Dane County Elections
-const BASE_PATH = 'https://api.danecounty.gov/api/v1/elections';
+const BASE_PATH = '/api/elections';
 import { addLog } from './debug-log';
 
 // --- Internal Interfaces (Used by App) ---
