@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { PrecinctResult, RaceResult } from '@/lib/api';
-import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData } from '@/lib/analysis-data';
+import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData, getAllCachedWards } from '@/lib/analysis-data';
 import { OverlayMode } from './MapOverlayControl';
 
 // Fix for default marker icon
@@ -22,6 +22,7 @@ interface MapProps {
     onReset: () => void;
     overlayMode: OverlayMode;
     onWardHover?: (ward: HoveredWard | null) => void;
+    historicalLabel?: string | null;
 }
 
 export interface HoveredWard {
@@ -164,18 +165,19 @@ export function assignCandidateColors(candidates: { candidateName: string; party
     return colors;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
     const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
 
-    // Start loading historical data when race changes
+    // Start loading historical data when the race changes (keyed on id, not type,
+    // so 30-second vote updates don't trigger a redundant reload).
     useEffect(() => {
-        if (raceResult?.type) {
+        if (raceResult?.id && raceResult?.type) {
             startLoadingHistoricalData(raceResult.type);
         }
-    }, [raceResult?.type]);
+    }, [raceResult?.id]);
 
     // OPTIMIZATION: Create a fast lookup dictionary for results
     // Key: "Municipality Name-WardNumber" (normalized)
@@ -196,13 +198,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         if (raceResult?.candidates) {
             setCandidateColors(assignCandidateColors(raceResult.candidates));
         }
-    }, [raceResult]);
-
-    // Party lookup for reliable Dem/GOP detection in overlay modes (replaces fragile hue check)
-    const candidateParties = useMemo(() => {
-        const m: Record<string, string> = {};
-        raceResult?.candidates.forEach(c => { m[c.candidateName.trim()] = c.party || ''; });
-        return m;
     }, [raceResult]);
 
     useEffect(() => {
@@ -265,58 +260,37 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     fillOpacity: 0.65
                 };
             }
-            // --- PRESIDENTIAL BENCHMARK ---
-            // Shows over/underperformance vs. the most recent historical race of the same type.
-            // Red = underperforming baseline, Blue = overperforming baseline.
-            else if (overlayMode === 'PRESIDENTIAL') {
-                // Guard: if this ward has no cached historical data yet, show neutral grey
-                if (!analysis.historicalRaceName) {
-                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
-                } else {
-                    // Use party name for reliable Dem detection instead of hue range
-                    const isDem = (candidateParties[winner.candidateName.trim()] || '').toLowerCase().includes('democrat');
-                    let currentMargin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                    if (!isDem) currentMargin = -currentMargin; // Express margin from Dem perspective
-
-                    const diff = currentMargin - analysis.historicalMargin;
-
-                    // Color scale: Red (underperform) → grey (on target) → Blue (overperform), range ±0.2
-                    let h = 215, s = 0, l = 80;
-                    if (Math.abs(diff) >= 0.01) {
-                        const intensity = Math.min(Math.abs(diff) / 0.2, 1);
-                        h = diff < 0 ? 0 : 215;
-                        l = 90 - (intensity * 40);
-                        s = intensity * 80;
-                    }
-
-                    baseStyle = {
-                        fillColor: `hsl(${h}, ${s}%, ${l}%)`,
-                        weight: 1,
-                        opacity: 1,
-                        color: '#334155',
-                        fillOpacity: 0.75
-                    };
-                }
-            }
             // --- TURNOUT HEATMAP (VOTE VOLUME) ---
-            // Compares current vote volume to historical vote volume for the same race type.
-            // Red = below historical, Green = above historical.
+            // Compares each ward's current ballots cast to the historical average ballots per ward
+            // for this race type. One aggregate average is used (not per-ward key matching),
+            // making it robust to ward boundary changes and key normalization mismatches.
+            // Red = below historical average, Green = above historical average.
             else if (overlayMode === 'TURNOUT') {
-                // Guard: if this ward has no cached historical data yet, show neutral grey
-                if (!analysis.historicalRaceName) {
+                // Compute historical average votes per ward from the loaded cache.
+                // This reads the module-level singleton on each style call, always fresh.
+                const cached = getAllCachedWards();
+                let historicalAvgVotes = 0;
+                if (cached.size > 0) {
+                    let sum = 0;
+                    cached.forEach(w => { sum += w.historicalVotes; });
+                    historicalAvgVotes = sum / cached.size;
+                }
+
+                if (historicalAvgVotes === 0 || total === 0) {
+                    // Historical data not yet loaded — neutral grey
                     baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
                 } else {
-                    const ratio = analysis.historicalVotes > 0 ? total / analysis.historicalVotes : 0;
+                    const ratio = total / historicalAvgVotes;
 
                     let h: number, s: number, l: number;
                     if (ratio < 1.0) {
-                        // Below historical — red gradient (pale at ~avg, deep red at 50% below)
+                        // Below historical average — red gradient
                         h = 0;
                         const intensity = Math.min((1.0 - ratio) / 0.5, 1);
                         l = 90 - (intensity * 40);
                         s = intensity * 80;
                     } else {
-                        // Above historical — green gradient
+                        // Above historical average — green gradient
                         h = 140;
                         const intensity = Math.min((ratio - 1.0) / 0.5, 1);
                         l = 50 - (intensity * 10);
@@ -369,7 +343,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, candidateParties, overlayMode]);
+    }, [resultsMap, candidateColors, overlayMode]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -448,7 +422,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}
@@ -516,6 +490,28 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                                 );
                             })}
                         </div>
+
+                        {/* Historical comparison row — shown when overlay data is loaded */}
+                        {hoveredWard.analysis?.historicalRaceName && (() => {
+                            const histMarginPct = hoveredWard.analysis!.historicalMargin * 100;
+                            const currentMarginPct = hoveredWard.results.length >= 2
+                                ? hoveredWard.results[0].pct - hoveredWard.results[1].pct
+                                : 100;
+                            const diff = currentMarginPct - Math.abs(histMarginPct);
+                            const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' pts';
+                            const diffColor = diff >= 0 ? '#4ade80' : '#f87171';
+                            const year = hoveredWard.analysis!.historicalDate
+                                ? new Date(hoveredWard.analysis!.historicalDate).getFullYear()
+                                : '?';
+                            return (
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#475569' }}>
+                                        vs {year} {hoveredWard.analysis!.historicalRaceName.split(' ').slice(0, 2).join(' ')}
+                                    </span>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: diffColor }}>{diffStr}</span>
+                                </div>
+                            );
+                        })()}
 
                         {/* Footer */}
                         <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

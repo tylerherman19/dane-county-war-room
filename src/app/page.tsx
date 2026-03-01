@@ -82,6 +82,7 @@ export default function Home() {
           precinctResults={precinctResults}
           isLoading={isLoading}
           onSelectWard={setSelectedWard}
+          isArchive={viewMode === 'ARCHIVE'}
         />
       }
       lastUpdated={lastPublished?.lastPublished}

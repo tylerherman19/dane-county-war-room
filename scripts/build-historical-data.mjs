@@ -15,8 +15,24 @@ const RELEVANT_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', '
 
 // ── Helpers (mirrors logic in src/lib/) ──────────────────────────────────────
 
+/**
+ * Convert an API precinct name (e.g. "C Madison Wd 001") to a clean municipality
+ * name in the same format that the GeoJSON uses ("City of Madison"), so that
+ * normalizeWardName() produces keys that match what analysis-data.ts generates.
+ */
+function expandPrecinctName(precinctName) {
+    // Strip trailing ward designation: "Wd 001", "Wds 1-5", etc.
+    let name = precinctName.replace(/\s+Wds?\s+[\d\s,\-]+$/i, '').trim();
+    // Expand single-letter municipality type prefix used by the Dane County API
+    if (/^C\s+/i.test(name)) name = name.replace(/^C\s+/i, 'City of ');
+    else if (/^T\s+/i.test(name)) name = name.replace(/^T\s+/i, 'Town of ');
+    else if (/^V\s+/i.test(name)) name = name.replace(/^V\s+/i, 'Village of ');
+    return name;
+}
+
 function normalizeWardName(precinctName, wardNumber) {
-    let s = precinctName.toLowerCase();
+    // Convert API precinct name to GeoJSON-style municipality name first
+    let s = expandPrecinctName(precinctName).toLowerCase();
     let type = '';
     if (s.includes('town')) type = 'town';
     else if (s.includes('village')) type = 'village';
@@ -109,6 +125,16 @@ for (const election of recent) {
     for (const race of relevant) {
         const raceType = detectRaceType(race.RaceName);
 
+        // Fetch party info from race-level results so we can sign the historical margin
+        // (positive = Dem lead, negative = GOP lead) to match Map.tsx overlay logic.
+        let partyMap = {}; // candidateName → party string
+        try {
+            const raceResults = await fetchJSON(`${BASE}/electionresults/${election.ElectionId}/${race.RaceNumber}`);
+            if (raceResults?.Candidates) {
+                raceResults.Candidates.forEach(c => { partyMap[c.CandidateName] = c.Party || ''; });
+            }
+        } catch { /* ignore — margin will default to unsigned if party info unavailable */ }
+
         let precincts;
         try {
             precincts = await fetchJSON(`${BASE}/precinctresults/${election.ElectionId}/${race.RaceNumber}`);
@@ -137,7 +163,9 @@ for (const election of recent) {
             }
         }
 
-        // Compute margin per ward and build wardResults plain object
+        // Compute margin per ward and build wardResults plain object.
+        // Margin is SIGNED: positive = Dem lead, negative = GOP/other lead.
+        // This matches how Map.tsx PRESIDENTIAL overlay interprets historical margins.
         const wardResults = {};
         for (const [wardKey, { candidates, ballots }] of wardCandidates) {
             const sorted = Array.from(candidates.entries())
@@ -145,16 +173,21 @@ for (const election of recent) {
                 .sort((a, b) => b.votes - a.votes);
             const totalVotes = sorted.reduce((s, c) => s + c.votes, 0);
             if (totalVotes === 0) continue;
-            let margin = 0;
+            const topName = sorted[0]?.name ?? '';
+            const topParty = (partyMap[topName] || '').toLowerCase();
+            const isDem = topParty.includes('democrat');
+            let absMargin = 0;
             if (sorted.length >= 2) {
-                margin = (sorted[0].votes - sorted[1].votes) / totalVotes;
+                absMargin = (sorted[0].votes - sorted[1].votes) / totalVotes;
             } else if (sorted.length === 1) {
-                margin = 1.0;
+                absMargin = 1.0;
             }
+            // Sign: positive if Dem won, negative if GOP/other won
+            const margin = isDem ? absMargin : -absMargin;
             wardResults[wardKey] = {
                 candidates: sorted,
                 totalVotes,
-                topCandidate: sorted[0]?.name ?? '',
+                topCandidate: topName,
                 margin,
             };
         }
