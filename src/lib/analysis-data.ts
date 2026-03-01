@@ -129,6 +129,19 @@ export function isHistoricalDataLoaded(): boolean {
 }
 
 /**
+ * Returns the race name and year from the first cached ward entry.
+ * Used to display a dynamic label in the map overlay control.
+ */
+export function getHistoricalRaceInfo(): { name: string; year: string } | null {
+    const first = analysisCache.values().next().value as WardAnalysis | undefined;
+    if (!first?.historicalRaceName) return null;
+    const year = first.historicalDate
+        ? new Date(first.historicalDate).getFullYear().toString()
+        : '';
+    return { name: first.historicalRaceName, year };
+}
+
+/**
  * Returns a snapshot copy of the full analysis cache.
  * Used by the projection engine.
  */

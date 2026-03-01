@@ -1,10 +1,11 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
 import { HoveredWard } from './Map';
+import { isHistoricalDataLoaded, getHistoricalRaceInfo } from '@/lib/analysis-data';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
 const DebugPanel = dynamic(() => import('./DebugPanel'), { ssr: false });
@@ -21,10 +22,29 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
+    const [historicalLabel, setHistoricalLabel] = useState<string | null>(null);
+
+    // Reset overlay and label whenever the race changes
+    useEffect(() => {
+        setOverlayMode('NONE');
+        setHistoricalLabel(null);
+    }, [raceResult?.id]);
+
+    // Poll until historical data loads, then capture the race label (clears on race change above)
+    useEffect(() => {
+        const id = setInterval(() => {
+            if (isHistoricalDataLoaded()) {
+                const info = getHistoricalRaceInfo();
+                if (info) setHistoricalLabel(`${info.year} ${info.name}`);
+                clearInterval(id);
+            }
+        }, 500);
+        return () => clearInterval(id);
+    }, [raceResult?.id]);
 
     return (
         <div className="relative w-full h-full">
-            <MapOverlayControl currentMode={overlayMode} onChange={setOverlayMode} />
+            <MapOverlayControl currentMode={overlayMode} onChange={setOverlayMode} historicalLabel={historicalLabel} />
             <Map
                 precinctResults={precinctResults}
                 isLoading={isLoading}

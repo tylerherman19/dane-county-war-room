@@ -5,9 +5,10 @@ export type OverlayMode = 'NONE' | 'PRESIDENTIAL' | 'TURNOUT' | 'SWING';
 interface MapOverlayControlProps {
     currentMode: OverlayMode;
     onChange: (mode: OverlayMode) => void;
+    historicalLabel?: string | null;
 }
 
-export default function MapOverlayControl({ currentMode, onChange }: MapOverlayControlProps) {
+export default function MapOverlayControl({ currentMode, onChange, historicalLabel }: MapOverlayControlProps) {
     const options: { id: OverlayMode; label: string; icon: any; description: string }[] = [
         {
             id: 'NONE',
@@ -17,21 +18,21 @@ export default function MapOverlayControl({ currentMode, onChange }: MapOverlayC
         },
         {
             id: 'PRESIDENTIAL',
-            label: 'Vs. Presidential',
+            label: 'Vs. Historical',
             icon: Activity,
-            description: 'Compare to 2020 Baseline'
+            description: historicalLabel ? `Compare to ${historicalLabel}` : 'Loading baseline...'
         },
         {
             id: 'TURNOUT',
             label: 'Turnout Heatmap',
             icon: Users,
-            description: 'Relative to Average'
+            description: historicalLabel ? `vs. ${historicalLabel} volume` : 'Loading baseline...'
         },
         {
             id: 'SWING',
-            label: 'Swing Analysis',
+            label: 'Margin Intensity',
             icon: TrendingUp,
-            description: 'Shift from Previous'
+            description: 'Toss-up vs. Landslide'
         }
     ];
 
@@ -83,16 +84,16 @@ export default function MapOverlayControl({ currentMode, onChange }: MapOverlayC
                     )}
                     {currentMode === 'TURNOUT' && (
                         <div className="flex items-center justify-between text-[10px] text-slate-500">
-                            <span>Low</span>
-                            <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-red-900 via-slate-700 to-green-500"></div>
-                            <span>High</span>
+                            <span>Below avg</span>
+                            <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-red-500 via-slate-700 to-green-500"></div>
+                            <span>Above avg</span>
                         </div>
                     )}
                     {currentMode === 'SWING' && (
                         <div className="flex items-center justify-between text-[10px] text-slate-500">
-                            <span>Red Shift</span>
-                            <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-red-500 via-slate-700 to-blue-500"></div>
-                            <span>Blue Shift</span>
+                            <span>Toss-up</span>
+                            <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-slate-200 to-blue-600"></div>
+                            <span>Landslide</span>
                         </div>
                     )}
                 </div>
