@@ -488,8 +488,8 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             })}
                         </div>
 
-                        {/* Historical comparison row — shown when overlay data is loaded */}
-                        {hoveredWard.analysis?.historicalRaceName && (() => {
+                        {/* Margin comparison row — shown in NONE/SWING when real historical margin exists */}
+                        {overlayMode !== 'TURNOUT' && hoveredWard.analysis?.historicalRaceName && hoveredWard.analysis.historicalMargin !== 0 && (() => {
                             const histMarginPct = hoveredWard.analysis!.historicalMargin * 100;
                             const currentMarginPct = hoveredWard.results.length >= 2
                                 ? hoveredWard.results[0].pct - hoveredWard.results[1].pct
@@ -506,6 +506,26 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                                         vs {year} {hoveredWard.analysis!.historicalRaceName.split(' ').slice(0, 2).join(' ')}
                                     </span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: diffColor }}>{diffStr}</span>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Turnout delta row — shown only in TURNOUT overlay mode */}
+                        {overlayMode === 'TURNOUT' && hoveredWard.analysis && hoveredWard.analysis.historicalVotes > 0 && (() => {
+                            const ratio = hoveredWard.total / hoveredWard.analysis!.historicalVotes;
+                            const deltaPct = (ratio - 1) * 100;
+                            const isAbove = deltaPct >= 0;
+                            const arrow = isAbove ? '↑' : '↓';
+                            const deltaColor = isAbove ? '#4ade80' : '#f87171';
+                            const year = hoveredWard.analysis!.historicalDate
+                                ? new Date(hoveredWard.analysis!.historicalDate).getFullYear()
+                                : '?';
+                            return (
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#475569' }}>vs {year} baseline</span>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
+                                        {arrow} {Math.abs(deltaPct).toFixed(0)}% {isAbove ? 'above' : 'below'}
+                                    </span>
                                 </div>
                             );
                         })()}
