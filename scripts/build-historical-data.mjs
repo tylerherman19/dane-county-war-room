@@ -9,6 +9,7 @@
  */
 
 import { writeFileSync, mkdirSync } from 'fs';
+import { execSync } from 'child_process';
 
 const BASE = 'https://api.danecounty.gov/api/v1/elections';
 const RELEVANT_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', 'Congress']);
@@ -86,10 +87,16 @@ function expandWardRanges(precinctName) {
     return wards;
 }
 
-async function fetchJSON(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-    return res.json();
+// Use curl instead of Node's built-in fetch so that the https_proxy / HTTPS_PROXY
+// environment variable is honoured automatically in sandboxed build environments.
+// In CI (GitHub Actions) the proxy variable is unset and curl reaches the API directly.
+function fetchJSON(url) {
+    try {
+        const out = execSync(`curl -sf --max-time 60 "${url}"`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+        return JSON.parse(out);
+    } catch (err) {
+        throw new Error(`curl failed for ${url}: ${err.message}`);
+    }
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -98,7 +105,7 @@ async function main() {
 
 console.log('[build-historical-data] Starting...');
 
-const allElections = await fetchJSON(`${BASE}/list`);
+const allElections = fetchJSON(`${BASE}/list`);
 const cutoff = new Date();
 cutoff.setFullYear(cutoff.getFullYear() - 10);
 const recent = allElections.filter(e => new Date(e.ElectionDate) >= cutoff);
@@ -111,7 +118,7 @@ let totalWards = 0;
 for (const election of recent) {
     let races;
     try {
-        races = await fetchJSON(`${BASE}/races/${election.ElectionId}`);
+        races = fetchJSON(`${BASE}/races/${election.ElectionId}`);
     } catch (err) {
         console.warn(`  ⚠ Skipping election ${election.ElectionId} (${election.ElectionName}): ${err.message}`);
         continue;
@@ -129,17 +136,24 @@ for (const election of recent) {
         // (positive = Dem lead, negative = GOP lead) to match Map.tsx overlay logic.
         let partyMap = {}; // candidateName → party string
         try {
-            const raceResults = await fetchJSON(`${BASE}/electionresults/${election.ElectionId}/${race.RaceNumber}`);
+            const raceResults = fetchJSON(`${BASE}/electionresults/${election.ElectionId}/${race.RaceNumber}`);
             if (raceResults?.Candidates) {
-                raceResults.Candidates.forEach(c => { partyMap[c.CandidateName] = c.Party || ''; });
+                raceResults.Candidates.forEach(c => { partyMap[c.CandidateName] = c.PartyName || c.Party || ''; });
             }
         } catch { /* ignore — margin will default to unsigned if party info unavailable */ }
 
         let precincts;
         try {
-            precincts = await fetchJSON(`${BASE}/precinctresults/${election.ElectionId}/${race.RaceNumber}`);
+            const precinctData = fetchJSON(`${BASE}/precinctresults/${election.ElectionId}/${race.RaceNumber}`);
+            // API returns { ElectionRace, PrecinctVotes, Election } — iterate the votes array.
+            precincts = precinctData.PrecinctVotes ?? precinctData;
         } catch (err) {
             console.warn(`    ⚠ Skipping race ${race.RaceNumber} (${race.RaceName}): ${err.message}`);
+            continue;
+        }
+
+        if (!Array.isArray(precincts) || precincts.length === 0) {
+            console.warn(`    ⚠ No precinct data for race ${race.RaceNumber} (${race.RaceName})`);
             continue;
         }
 
