@@ -3,7 +3,7 @@
 import { RaceResult, HistoricalTurnout, PrecinctResult } from '@/lib/api';
 import { Search, Download, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
-import { getExpectedTotalVotes, isHistoricalDataLoaded } from '@/lib/analysis-data';
+import { getExpectedTotalVotes, isHistoricalDataLoaded, getWardAnalysis, getHistoricalRaceInfo } from '@/lib/analysis-data';
 
 interface SidebarProps {
     raceResult: RaceResult | undefined;
@@ -190,7 +190,7 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                         </div>
                     )
                 ) : (
-                    /* Live: show estimated outstanding ballots */
+                    /* Live: show estimated outstanding ballots + county-wide turnout chip */
                     expectedBallots > 0 && (
                         <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
                             <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
@@ -207,6 +207,22 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                                 <span>{pct.toFixed(0)}% counted</span>
                                 <span>{historicalLoaded ? '' : 'Est. '}Expected: {expectedBallots.toLocaleString()}</span>
                             </div>
+                            {/* County-wide turnout vs historical chip */}
+                            {historicalLoaded && historicalExpected > 0 && (() => {
+                                const deltaPct = ((totalVotes - historicalExpected) / historicalExpected) * 100;
+                                const isAbove = deltaPct >= 0;
+                                const raceInfo = getHistoricalRaceInfo();
+                                return (
+                                    <div className={`mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between`}>
+                                        <span className="text-xs text-slate-500">
+                                            vs {raceInfo?.year ?? 'prior'} baseline
+                                        </span>
+                                        <span className={`text-xs font-semibold ${isAbove ? 'text-green-400' : 'text-red-400'}`}>
+                                            {isAbove ? '↑' : '↓'} {Math.abs(deltaPct).toFixed(0)}% county-wide
+                                        </span>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     )
                 )}
@@ -232,6 +248,12 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                             const winnerPct = ward.total > 0 && ward.winner
                                 ? ((ward.winner.votes / ward.total) * 100).toFixed(0)
                                 : null;
+                            // Per-ward turnout badge vs historical baseline
+                            const wardHistory = historicalLoaded ? getWardAnalysis(ward.num, ward.name) : null;
+                            const turnoutBadge = wardHistory && wardHistory.historicalVotes > 0 && ward.total > 0
+                                ? (ward.total >= wardHistory.historicalVotes ? '↑' : '↓')
+                                : null;
+                            const turnoutBadgeColor = turnoutBadge === '↑' ? '#4ade80' : '#f87171';
                             return (
                                 <button
                                     key={`${ward.name}-${ward.num}`}
@@ -245,9 +267,14 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                                             <div className="text-xs text-slate-500 truncate">{ward.winner.candidateName}</div>
                                         )}
                                     </div>
-                                    {winnerPct && (
-                                        <span className="text-xs font-mono shrink-0" style={{ color: color.dot }}>{winnerPct}%</span>
-                                    )}
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        {turnoutBadge && (
+                                            <span className="text-xs font-bold leading-none" style={{ color: turnoutBadgeColor }}>{turnoutBadge}</span>
+                                        )}
+                                        {winnerPct && (
+                                            <span className="text-xs font-mono" style={{ color: color.dot }}>{winnerPct}%</span>
+                                        )}
+                                    </div>
                                 </button>
                             );
                         })}
