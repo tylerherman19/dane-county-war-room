@@ -61,11 +61,24 @@ export default function RaceSelector({ races, selectedRaceId, onSelectRace }: Ra
                     onClick={() => setIsOpen(!isOpen)}
                     className="w-full bg-slate-900/90 backdrop-blur border border-slate-700 text-white px-4 py-3 rounded-lg shadow-xl flex items-center justify-between hover:bg-slate-800 transition-colors text-left"
                 >
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Current Race</div>
                         <div className="font-bold truncate">{selectedRace?.name || 'Select a Race'}</div>
+                        {selectedRace && selectedRace.totalPrecincts > 0 && (
+                            <div className="flex items-center gap-2 mt-1">
+                                <div className="flex-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-500 rounded-full transition-all"
+                                        style={{ width: `${Math.round((selectedRace.precinctsReporting / selectedRace.totalPrecincts) * 100)}%` }}
+                                    />
+                                </div>
+                                <span className="text-xs text-slate-500 shrink-0">
+                                    {selectedRace.precinctsReporting}/{selectedRace.totalPrecincts}
+                                </span>
+                            </div>
+                        )}
                     </div>
-                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 ml-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isOpen && (

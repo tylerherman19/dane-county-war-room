@@ -1,6 +1,6 @@
-import { Layers, TrendingUp, Users, Activity } from 'lucide-react';
+import { Layers, TrendingUp, Users } from 'lucide-react';
 
-export type OverlayMode = 'NONE' | 'PRESIDENTIAL' | 'TURNOUT' | 'SWING';
+export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING';
 
 interface MapOverlayControlProps {
     currentMode: OverlayMode;
@@ -17,16 +17,10 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
             description: 'Winner & Margin'
         },
         {
-            id: 'PRESIDENTIAL',
-            label: 'Vs. Historical',
-            icon: Activity,
-            description: historicalLabel ? `Compare to ${historicalLabel}` : 'Loading baseline...'
-        },
-        {
             id: 'TURNOUT',
             label: 'Turnout Heatmap',
             icon: Users,
-            description: historicalLabel ? `vs. ${historicalLabel} volume` : 'Loading baseline...'
+            description: historicalLabel ? `vs. avg turnout from ${historicalLabel}` : 'Loading baseline...'
         },
         {
             id: 'SWING',
@@ -75,13 +69,6 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
             {currentMode !== 'NONE' && (
                 <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
                     <div className="text-xs font-medium text-slate-400 mb-2">Legend</div>
-                    {currentMode === 'PRESIDENTIAL' && (
-                        <div className="flex items-center justify-between text-[10px] text-slate-500">
-                            <span>Underperform</span>
-                            <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-red-500 via-slate-700 to-blue-500"></div>
-                            <span>Overperform</span>
-                        </div>
-                    )}
                     {currentMode === 'TURNOUT' && (
                         <div className="flex items-center justify-between text-[10px] text-slate-500">
                             <span>Below avg</span>
