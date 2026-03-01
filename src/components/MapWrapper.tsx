@@ -24,21 +24,18 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
     const [historicalLabel, setHistoricalLabel] = useState<string | null>(null);
 
-    // Reset overlay and label whenever the race changes
+    // Reset overlay + label on race change, then poll until historical data loads.
+    // Combined into one effect so reset always happens before polling begins.
     useEffect(() => {
         setOverlayMode('NONE');
         setHistoricalLabel(null);
-    }, [raceResult?.id]);
-
-    // Poll until historical data loads, then capture the race label (clears on race change above)
-    useEffect(() => {
         const id = setInterval(() => {
             if (isHistoricalDataLoaded()) {
                 const info = getHistoricalRaceInfo();
                 if (info) setHistoricalLabel(`${info.year} ${info.name}`);
                 clearInterval(id);
             }
-        }, 500);
+        }, 1000);
         return () => clearInterval(id);
     }, [raceResult?.id]);
 
@@ -53,6 +50,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 onReset={onReset}
                 overlayMode={overlayMode}
                 onWardHover={setDebugWardData}
+                historicalLabel={historicalLabel}
             />
 
             {/* Debug toggle button */}
