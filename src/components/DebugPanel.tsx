@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useDebugLog, clearLog, LogEntry } from '@/lib/debug-log';
-import { HoveredWard, HSL, assignCandidateColors } from './Map';
+import { HoveredWard, HSL } from './Map';
+import { assignCandidateColors } from '@/lib/candidate-colors';
 import { RaceResult } from '@/lib/api';
 import { normalizeWardName } from '@/lib/analysis-data';
 
