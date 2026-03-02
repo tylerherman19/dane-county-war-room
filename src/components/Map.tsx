@@ -23,6 +23,7 @@ interface MapProps {
     overlayMode: OverlayMode;
     onWardHover?: (ward: HoveredWard | null) => void;
     historicalLabel?: string | null;
+    focusedCandidate?: string | null;
 }
 
 export interface HoveredWard {
@@ -165,7 +166,7 @@ export function assignCandidateColors(candidates: { candidateName: string; party
     return colors;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
@@ -239,8 +240,33 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             // Get Analysis Data
             const analysis = getWardAnalysis(wardNum, municipality);
 
+            // --- CANDIDATE FOCUS VIEW ---
+            // When a candidate is selected in the sidebar, show their vote share per ward
+            // as a gradient: pale = few votes, saturated = dominant share.
+            if (focusedCandidate) {
+                const candidateResult = relevantResults.find(
+                    r => r.candidateName.trim() === focusedCandidate.trim()
+                );
+                if (candidateResult && total > 0) {
+                    const baseColor = candidateColors[focusedCandidate.trim()] || { h: 215, s: 80, l: 50 };
+                    const votePct = candidateResult.votes / total; // 0–1
+                    const t = Math.min(votePct / 0.7, 1.0); // normalize: 70%+ → full saturation
+                    const lightness = Math.round(88 - t * 52); // 88% (0 votes) → 36% (dominant)
+                    const saturation = Math.round(20 + t * Math.max(0, baseColor.s - 20));
+                    baseStyle = {
+                        fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
+                        weight: 1,
+                        opacity: 1,
+                        color: '#334155',
+                        fillOpacity: 0.85,
+                    };
+                } else {
+                    // Candidate has no votes here — very faint
+                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.3, color: '#1e293b', fillOpacity: 0.15 };
+                }
+            }
             // --- STANDARD VIEW ---
-            if (overlayMode === 'NONE') {
+            else if (overlayMode === 'NONE') {
                 const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
                 const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 75, l: 50 };
 
@@ -340,7 +366,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -419,7 +445,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}

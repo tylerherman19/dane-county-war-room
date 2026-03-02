@@ -20,6 +20,7 @@ interface LayoutProps {
 
 export default function Layout({ children, sidebar, lastUpdated, elections, selectedElectionId, onSelectElection, viewMode, onToggleViewMode, hasError }: LayoutProps) {
     const [isDark, setIsDark] = useState(true);
+    const [relativeTime, setRelativeTime] = useState<string | null>(null);
 
     useEffect(() => {
         if (isDark) {
@@ -28,6 +29,20 @@ export default function Layout({ children, sidebar, lastUpdated, elections, sele
             document.documentElement.classList.remove('dark');
         }
     }, [isDark]);
+
+    useEffect(() => {
+        if (!lastUpdated) { setRelativeTime(null); return; }
+        function compute() {
+            const diffMs = Date.now() - new Date(lastUpdated!).getTime();
+            const mins = Math.floor(diffMs / 60000);
+            if (mins < 1) setRelativeTime('just now');
+            else if (mins === 1) setRelativeTime('1 min ago');
+            else setRelativeTime(`${mins} mins ago`);
+        }
+        compute();
+        const id = setInterval(compute, 30000);
+        return () => clearInterval(id);
+    }, [lastUpdated]);
 
     return (
         <div className="flex flex-col h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
@@ -76,9 +91,9 @@ export default function Layout({ children, sidebar, lastUpdated, elections, sele
                         />
                     )}
 
-                    {lastUpdated && (
+                    {relativeTime && (
                         <div className="hidden md:block text-xs text-slate-500 font-mono">
-                            Last Updated: <span className="text-slate-400">{new Date(lastUpdated).toLocaleTimeString()}</span>
+                            Updated <span className="text-slate-400">{relativeTime}</span>
                         </div>
                     )}
 

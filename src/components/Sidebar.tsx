@@ -12,6 +12,8 @@ interface SidebarProps {
     isLoading: boolean;
     onSelectWard: (ward: { name: string; num: string }) => void;
     isArchive?: boolean;
+    focusedCandidate?: string | null;
+    onFocusCandidate?: (name: string | null) => void;
 }
 
 // Party → tailwind / hex color
@@ -24,7 +26,7 @@ function getPartyColor(party: string | undefined): { bg: string; text: string; d
     return { bg: '#475569', text: '#cbd5e1', dot: '#64748b' };
 }
 
-export default function Sidebar({ raceResult, turnoutData, precinctResults, isLoading, onSelectWard, isArchive }: SidebarProps) {
+export default function Sidebar({ raceResult, turnoutData, precinctResults, isLoading, onSelectWard, isArchive, focusedCandidate, onFocusCandidate }: SidebarProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
     if (isLoading) {
@@ -134,16 +136,45 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
 
                 {/* ── Candidate Breakdown ── */}
                 <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
-                    <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">All Candidates</h3>
-                    <div className="space-y-3">
-                        {sortedCandidates.map((candidate, idx) => {
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">All Candidates</h3>
+                        {focusedCandidate && (
+                            <button
+                                onClick={() => onFocusCandidate?.(null)}
+                                className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                            >
+                                ✕ Clear map filter
+                            </button>
+                        )}
+                    </div>
+                    {focusedCandidate && (
+                        <div className="mb-3 px-2 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg text-xs text-blue-400">
+                            Showing ward map for <span className="font-semibold">{focusedCandidate}</span>
+                        </div>
+                    )}
+                    <div className="space-y-1.5">
+                        {sortedCandidates.map((candidate) => {
                             const color = getPartyColor(candidate.party);
+                            const isFocused = focusedCandidate === candidate.candidateName;
                             return (
-                                <div key={candidate.candidateName}>
+                                <button
+                                    key={candidate.candidateName}
+                                    onClick={() => onFocusCandidate?.(isFocused ? null : candidate.candidateName)}
+                                    title={isFocused ? 'Click to clear map filter' : 'Click to highlight wards on map'}
+                                    className={`w-full text-left rounded-lg px-2 py-1.5 transition-all ${
+                                        isFocused
+                                            ? 'bg-slate-700/60 ring-1 ring-offset-0'
+                                            : 'hover:bg-slate-700/30'
+                                    }`}
+                                    style={isFocused ? { ringColor: color.dot } : undefined}
+                                >
                                     <div className="flex justify-between items-baseline mb-1">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color.dot }} />
-                                            <span className="text-sm font-medium text-slate-200 truncate">{candidate.candidateName}</span>
+                                            <span className={`text-sm font-medium truncate ${isFocused ? 'text-white' : 'text-slate-200'}`}>
+                                                {candidate.candidateName}
+                                            </span>
+                                            {isFocused && <span className="text-[9px] text-blue-400 shrink-0">MAP</span>}
                                         </div>
                                         <div className="flex items-baseline gap-2 shrink-0 ml-2">
                                             <span className="font-bold text-white text-sm">{candidate.percentage.toFixed(1)}%</span>
@@ -156,7 +187,7 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                                             style={{ width: `${candidate.percentage}%`, background: color.bg }}
                                         />
                                     </div>
-                                </div>
+                                </button>
                             );
                         })}
                     </div>

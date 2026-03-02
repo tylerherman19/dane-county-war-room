@@ -20,6 +20,7 @@ export default function Home() {
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
   const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null);
   const [selectedWard, setSelectedWard] = useState<{ name: string; num: string } | null>(null);
+  const [focusedCandidate, setFocusedCandidate] = useState<string | null>(null);
 
   // Data Hooks
   const { elections, isError: electionsError } = useElections();
@@ -43,7 +44,13 @@ export default function Home() {
   useEffect(() => {
     setSelectedRaceId(null);
     setSelectedWard(null);
+    setFocusedCandidate(null);
   }, [selectedElectionId]);
+
+  // Clear focused candidate when race changes
+  useEffect(() => {
+    setFocusedCandidate(null);
+  }, [selectedRaceId]);
 
   const { races } = useRaces(selectedElectionId);
 
@@ -83,6 +90,8 @@ export default function Home() {
           isLoading={isLoading}
           onSelectWard={setSelectedWard}
           isArchive={viewMode === 'ARCHIVE'}
+          focusedCandidate={focusedCandidate}
+          onFocusCandidate={setFocusedCandidate}
         />
       }
       lastUpdated={lastPublished?.lastPublished}
@@ -105,6 +114,8 @@ export default function Home() {
           selectedWard={selectedWard}
           raceResult={raceResult}
           onReset={() => setSelectedWard(null)}
+          focusedCandidate={focusedCandidate}
+          onCandidateReset={() => setFocusedCandidate(null)}
         />
       </div>
     </Layout>
