@@ -224,3 +224,32 @@ export function getCachedAvgVotes(): number | null {
 export function getAllCachedWards(): Map<string, WardAnalysis> {
     return new Map(analysisCache);
 }
+
+/**
+ * Load a specific historical race (by electionId + raceId) as the comparison baseline.
+ * Clears the current cache and repopulates from that race.
+ * Returns true if found, false if not found in the JSON.
+ */
+export async function loadHistoricalRaceById(electionId: string, raceId: string): Promise<boolean> {
+    const data = await fetchHistoricalData();
+    for (const races of data.values()) {
+        const race = races.find(r => r.electionId === electionId && r.raceId === raceId);
+        if (race) {
+            analysisCache.clear();
+            cachedAvgVotes = null;
+            currentRaceType = race.raceType;
+            race.wardResults.forEach((wardResult, wardKey) => {
+                analysisCache.set(wardKey, {
+                    historicalMargin: wardResult.margin,
+                    historicalVotes: wardResult.totalVotes,
+                    historicalRaceName: race.raceName,
+                    historicalDate: race.electionDate,
+                });
+            });
+            finalizeCache(race.raceName, race.electionDate);
+            return true;
+        }
+    }
+    addLog('warn', 'Analysis', `Race ${electionId}/${raceId} not found in historical data`);
+    return false;
+}

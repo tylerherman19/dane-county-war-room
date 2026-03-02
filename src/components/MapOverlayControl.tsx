@@ -1,4 +1,5 @@
 import { Layers, TrendingUp, Users } from 'lucide-react';
+import { HistoricalRaceSummary } from '@/lib/historical-api-data';
 
 export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING';
 
@@ -6,9 +7,13 @@ interface MapOverlayControlProps {
     currentMode: OverlayMode;
     onChange: (mode: OverlayMode) => void;
     historicalLabel?: string | null;
+    availableRaces?: HistoricalRaceSummary[];
+    selectedComparisonKey?: string | null;
+    onComparisonChange?: (key: string) => void;
+    isLoadingComparison?: boolean;
 }
 
-export default function MapOverlayControl({ currentMode, onChange, historicalLabel }: MapOverlayControlProps) {
+export default function MapOverlayControl({ currentMode, onChange, historicalLabel, availableRaces, selectedComparisonKey, onComparisonChange, isLoadingComparison }: MapOverlayControlProps) {
     const turnoutReady = !!historicalLabel;
 
     const options: { id: OverlayMode; label: string; icon: any; description: string; disabled?: boolean }[] = [
@@ -111,6 +116,35 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                             <span>Toss-up</span>
                             <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-slate-200 to-blue-600"></div>
                             <span>Landslide</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Comparison race picker — shown in TURNOUT mode once races are loaded */}
+            {currentMode === 'TURNOUT' && availableRaces && availableRaces.length > 0 && (
+                <div className="p-3 border-t border-slate-700/50">
+                    <div className="text-xs font-medium text-slate-400 mb-2">Compare to</div>
+                    <select
+                        className="w-full bg-slate-800 text-slate-300 text-xs rounded-md px-2 py-1.5 border border-slate-600 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        value={selectedComparisonKey || ''}
+                        onChange={e => onComparisonChange?.(e.target.value)}
+                        disabled={isLoadingComparison}
+                    >
+                        <option value="">Auto (best match)</option>
+                        {availableRaces.map(r => {
+                            const key = `${r.electionId}|${r.raceId}`;
+                            const year = r.electionDate.slice(0, 4);
+                            return (
+                                <option key={key} value={key}>
+                                    {year} — {r.raceName}
+                                </option>
+                            );
+                        })}
+                    </select>
+                    {isLoadingComparison && (
+                        <div className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
+                            <span className="animate-spin inline-block">⟳</span> Loading comparison…
                         </div>
                     )}
                 </div>

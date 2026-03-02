@@ -72,6 +72,40 @@ export async function fetchHistoricalData(): Promise<Map<RaceType, HistoricalRac
     }
 }
 
+export interface HistoricalRaceSummary {
+    electionId: string;
+    electionName: string;
+    electionDate: string;
+    raceId: string;
+    raceName: string;
+    raceType: RaceType;
+    wardCount: number;
+}
+
+/**
+ * Returns a flat list of all available historical races, sorted newest-first.
+ * Used to populate the comparison race picker in the TURNOUT overlay.
+ */
+export async function getAllAvailableRaces(): Promise<HistoricalRaceSummary[]> {
+    const data = await fetchHistoricalData();
+    const results: HistoricalRaceSummary[] = [];
+    for (const races of data.values()) {
+        for (const race of races) {
+            results.push({
+                electionId: race.electionId,
+                electionName: race.electionName,
+                electionDate: race.electionDate,
+                raceId: race.raceId,
+                raceName: race.raceName,
+                raceType: race.raceType,
+                wardCount: race.wardResults.size,
+            });
+        }
+    }
+    results.sort((a, b) => new Date(b.electionDate).getTime() - new Date(a.electionDate).getTime());
+    return results;
+}
+
 /**
  * Get the most recent historical race of a given type.
  * Races are already sorted newest-first in the JSON.
