@@ -14,6 +14,10 @@ export interface WardAnalysis {
 const analysisCache = new Map<string, WardAnalysis>();
 let currentRaceType: RaceType | null = null;
 let isLoading = false;
+// Generation counter — incremented each time a new load is requested.
+// Async callbacks compare their captured generation to this value and bail
+// if a newer load has since been requested (prevents stale-race data overwrite).
+let loadGeneration = 0;
 // Pre-computed average historical votes per ward — computed once on load, not per-render.
 let cachedAvgVotes: number | null = null;
 
@@ -55,18 +59,22 @@ function finalizeCache(raceName: string, electionDate: string): void {
  * Uses getPrecinctResults() which already returns normalized precinctName ("City of Madison")
  * and integer wardNumber ("1"), so normalizeWardName() keys match the GeoJSON.
  */
-async function loadFromAPIFallback(raceType: RaceType): Promise<void> {
+async function loadFromAPIFallback(raceType: RaceType, gen: number): Promise<void> {
     addLog('info', 'Analysis', `→ JSON empty — fetching live historical baseline for ${raceType}...`);
     try {
         const elections = await getElections();
+        if (gen !== loadGeneration) return; // preempted
 
         for (const election of elections) {
             const races = await getRaces(election.electionId);
+            if (gen !== loadGeneration) return; // preempted
+
             const match = races.find(r => r.type === raceType);
             if (!match) continue;
 
             // Found a matching race — fetch ward-level results.
             const precincts = await getPrecinctResults(election.electionId, match.id);
+            if (gen !== loadGeneration) return; // preempted
 
             // Group by ward key. For each ward every candidate row carries the same
             // ballotscast value; take the max to get one value per ward.
@@ -108,10 +116,9 @@ export function startLoadingHistoricalData(raceType: RaceType): void {
         return; // Already loaded for this race type
     }
 
-    if (isLoading) {
-        return; // Already loading
-    }
-
+    // Claim this generation — any in-flight load from a previous race will see
+    // that its generation no longer matches and will discard its results.
+    const gen = ++loadGeneration;
     isLoading = true;
     currentRaceType = raceType;
     analysisCache.clear();
@@ -121,12 +128,15 @@ export function startLoadingHistoricalData(raceType: RaceType): void {
 
     fetchHistoricalData()
         .then(async allData => {
+            // A newer race was requested while we were fetching — discard results.
+            if (gen !== loadGeneration) return;
+
             const races = allData.get(raceType);
 
             if (!races || races.length === 0) {
                 // Pre-built JSON is empty for this type — try the live API instead.
-                await loadFromAPIFallback(raceType);
-                isLoading = false;
+                await loadFromAPIFallback(raceType, gen);
+                if (gen === loadGeneration) isLoading = false;
                 return;
             }
 
@@ -144,7 +154,7 @@ export function startLoadingHistoricalData(raceType: RaceType): void {
             isLoading = false;
         })
         .catch(error => {
-            isLoading = false;
+            if (gen === loadGeneration) isLoading = false;
             addLog('error', 'Analysis', `✗ ${String(error)}`);
         });
 }

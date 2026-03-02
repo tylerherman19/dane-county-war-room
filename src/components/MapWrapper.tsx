@@ -1,12 +1,12 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
 import { HoveredWard } from './Map';
-import { isHistoricalDataLoaded, getHistoricalRaceInfo, loadHistoricalRaceById } from '@/lib/analysis-data';
-import { getAllAvailableRaces, HistoricalRaceSummary } from '@/lib/historical-api-data';
+import { isHistoricalDataLoaded, getHistoricalRaceInfo, loadHistoricalRaceById, normalizeWardName } from '@/lib/analysis-data';
+import { getAvailableRacesWithOverlap, HistoricalRaceSummary } from '@/lib/historical-api-data';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
 const DebugPanel = dynamic(() => import('./DebugPanel'), { ssr: false });
@@ -47,11 +47,24 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         return () => clearInterval(id);
     }, [raceResult?.id]);
 
-    // Once historical data loads, fetch the full race list for the comparison picker
+    // Deduplicated normalized ward keys for the current live race.
+    // Used to filter the comparison picker to geographically relevant races only.
+    const currentWardKeys = useMemo(() => {
+        const seen = new Set<string>();
+        const keys: string[] = [];
+        precinctResults.forEach(r => {
+            const k = normalizeWardName(r.precinctName, r.wardNumber);
+            if (!seen.has(k)) { seen.add(k); keys.push(k); }
+        });
+        return keys;
+    }, [precinctResults]);
+
+    // Once historical data loads, fetch the comparison race list filtered to
+    // races that share ward keys with the current race (same geography).
     useEffect(() => {
         if (!historicalLabel) return;
-        getAllAvailableRaces().then(setAvailableRaces).catch(() => {});
-    }, [historicalLabel]);
+        getAvailableRacesWithOverlap(currentWardKeys).then(setAvailableRaces).catch(() => {});
+    }, [historicalLabel, currentWardKeys]);
 
     const handleOverlayChange = useCallback((mode: OverlayMode) => {
         setOverlayMode(mode);

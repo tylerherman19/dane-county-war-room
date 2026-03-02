@@ -166,7 +166,7 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                                             ? 'bg-slate-700/60 ring-1 ring-offset-0'
                                             : 'hover:bg-slate-700/30'
                                     }`}
-                                    style={isFocused ? { ringColor: color.dot } : undefined}
+                                    style={isFocused ? { outlineColor: color.dot } : undefined}
                                 >
                                     <div className="flex justify-between items-baseline mb-1">
                                         <div className="flex items-center gap-2 min-w-0">

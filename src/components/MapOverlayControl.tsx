@@ -124,7 +124,10 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
             {/* Comparison race picker — shown in TURNOUT mode once races are loaded */}
             {currentMode === 'TURNOUT' && availableRaces && availableRaces.length > 0 && (
                 <div className="p-3 border-t border-slate-700/50">
-                    <div className="text-xs font-medium text-slate-400 mb-2">Compare to</div>
+                    <div className="mb-2">
+                        <div className="text-xs font-medium text-slate-400">Compare turnout to:</div>
+                        <div className="text-[10px] text-slate-600 mt-0.5">Races with overlapping wards</div>
+                    </div>
                     <select
                         className="w-full bg-slate-800 text-slate-300 text-xs rounded-md px-2 py-1.5 border border-slate-600 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         value={selectedComparisonKey || ''}

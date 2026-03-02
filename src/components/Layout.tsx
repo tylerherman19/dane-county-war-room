@@ -33,11 +33,18 @@ export default function Layout({ children, sidebar, lastUpdated, elections, sele
     useEffect(() => {
         if (!lastUpdated) { setRelativeTime(null); return; }
         function compute() {
-            const diffMs = Date.now() - new Date(lastUpdated!).getTime();
-            const mins = Math.floor(diffMs / 60000);
-            if (mins < 1) setRelativeTime('just now');
-            else if (mins === 1) setRelativeTime('1 min ago');
-            else setRelativeTime(`${mins} mins ago`);
+            try {
+                const diffMs = Date.now() - new Date(lastUpdated!).getTime();
+                if (isNaN(diffMs) || diffMs < 0) { setRelativeTime(null); return; }
+                const secs = Math.floor(diffMs / 1000);
+                const mins = Math.floor(secs / 60);
+                const hours = Math.floor(mins / 60);
+                const days = Math.floor(hours / 24);
+                if (secs < 60) setRelativeTime('just now');
+                else if (mins < 60) setRelativeTime(`${mins}m ago`);
+                else if (hours < 24) setRelativeTime(`${hours}h ago`);
+                else setRelativeTime(`${days}d ago`);
+            } catch { setRelativeTime(null); }
         }
         compute();
         const id = setInterval(compute, 30000);

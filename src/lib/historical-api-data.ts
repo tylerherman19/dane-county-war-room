@@ -107,6 +107,43 @@ export async function getAllAvailableRaces(): Promise<HistoricalRaceSummary[]> {
 }
 
 /**
+ * Like getAllAvailableRaces(), but filters to races that share at least one
+ * normalized ward key with the current live race. This prevents the comparison
+ * picker from showing geographically irrelevant races (e.g. a county-wide
+ * Presidential race as a comparison for a single aldermanic district race).
+ * Falls back to all races when no ward keys are provided.
+ */
+export async function getAvailableRacesWithOverlap(
+    currentWardKeys: string[]
+): Promise<HistoricalRaceSummary[]> {
+    const data = await fetchHistoricalData();
+    if (currentWardKeys.length === 0) return getAllAvailableRaces();
+
+    const keySet = new Set(currentWardKeys);
+    const results: HistoricalRaceSummary[] = [];
+
+    for (const races of data.values()) {
+        for (const race of races) {
+            const hasOverlap = Array.from(race.wardResults.keys()).some(k => keySet.has(k));
+            if (hasOverlap) {
+                results.push({
+                    electionId: race.electionId,
+                    electionName: race.electionName,
+                    electionDate: race.electionDate,
+                    raceId: race.raceId,
+                    raceName: race.raceName,
+                    raceType: race.raceType,
+                    wardCount: race.wardResults.size,
+                });
+            }
+        }
+    }
+
+    results.sort((a, b) => new Date(b.electionDate).getTime() - new Date(a.electionDate).getTime());
+    return results;
+}
+
+/**
  * Get the most recent historical race of a given type.
  * Races are already sorted newest-first in the JSON.
  */
