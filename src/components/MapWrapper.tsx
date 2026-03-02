@@ -59,19 +59,32 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
     }, [onCandidateReset]);
 
     const handleComparisonChange = useCallback(async (key: string) => {
+        let electionId: string;
+        let raceId: string;
+
         if (!key) {
-            // Reset to default — re-trigger the auto-load via polling
+            // Reset to auto: reload the most recent race matching the current race type
+            const autoRace = raceResult?.type
+                ? availableRaces.find(r => r.raceType === raceResult.type)
+                : null;
+            if (!autoRace) {
+                setSelectedComparisonKey(null);
+                return;
+            }
+            electionId = autoRace.electionId;
+            raceId = autoRace.raceId;
             setSelectedComparisonKey(null);
-            return;
+        } else {
+            [electionId, raceId] = key.split('|');
+            setSelectedComparisonKey(key);
         }
-        const [electionId, raceId] = key.split('|');
-        setSelectedComparisonKey(key);
+
         setIsLoadingComparison(true);
         await loadHistoricalRaceById(electionId, raceId);
         const info = getHistoricalRaceInfo();
         if (info) setHistoricalLabel(`${info.year} ${info.name}`);
         setIsLoadingComparison(false);
-    }, []);
+    }, [availableRaces, raceResult?.type]);
 
     return (
         <div className="relative w-full h-full">

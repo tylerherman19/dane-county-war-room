@@ -237,9 +237,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             const winner = sorted[0];
             const runnerUp = sorted[1];
 
-            // Get Analysis Data
-            const analysis = getWardAnalysis(wardNum, municipality);
-
             // --- CANDIDATE FOCUS VIEW ---
             // When a candidate is selected in the sidebar, show their vote share per ward
             // as a gradient: pale = few votes, saturated = dominant share.
