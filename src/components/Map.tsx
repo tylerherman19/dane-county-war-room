@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData, getCachedAvgVotes } from '@/lib/analysis-data';
 import { OverlayMode } from './MapOverlayControl';
+import { HSL, assignCandidateColors } from '@/lib/candidate-colors';
 
 // Fix for default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -111,60 +112,8 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
     return null;
 }
 
-// Color Palettes (HSL) - Traditional Election Map Style
-// Using deeper, more saturated colors for better visibility
-// Blue: 217, 91%, 50% (Deep Democratic Blue)
-// Red: 0, 85%, 50% (Deep Republican Red)
-// Gold: 45, 100%, 50% (Deep Gold instead of pale yellow)
-// Green: 120, 60%, 35% (Deep Forest Green)
-// Purple: 271, 80%, 55% (Deep Purple)
-// Orange: 20, 90%, 50% (Deep Orange)
-// Teal: 180, 70%, 40% (Deep Teal)
-
-export interface HSL { h: number; s: number; l: number; }
-
-// Helper to assign colors to candidates dynamically
-export function assignCandidateColors(candidates: { candidateName: string; party?: string }[]): Record<string, HSL> {
-    const colors: Record<string, HSL> = {};
-
-    // Standard party colors
-    const partyColors: Record<string, HSL> = {
-        'Democratic': { h: 215, s: 90, l: 50 }, // Blue
-        'Republican': { h: 0, s: 90, l: 50 },   // Red
-        'Green': { h: 140, s: 70, l: 45 },      // Green
-        'Libertarian': { h: 45, s: 90, l: 50 }, // Gold
-        'Independent': { h: 280, s: 60, l: 60 }, // Purple
-        'Nonpartisan': { h: 200, s: 10, l: 50 }  // Grey
-    };
-
-    // Fallback palette for non-partisan or multiple candidates of same party
-    const palette: HSL[] = [
-        { h: 215, s: 80, l: 55 }, // Blue
-        { h: 160, s: 70, l: 45 }, // Teal
-        { h: 280, s: 60, l: 60 }, // Purple
-        { h: 30, s: 90, l: 55 },  // Orange
-        { h: 330, s: 70, l: 55 }, // Pink
-    ];
-
-    let paletteIndex = 0;
-
-    candidates.forEach(c => {
-        const name = c.candidateName.trim();
-        // Check for specific known candidates (optional hardcoding for key figures)
-        if (name.includes('Biden') || name.includes('Harris') || name.includes('Evers')) {
-            colors[name] = { h: 215, s: 90, l: 50 };
-        } else if (name.includes('Trump') || name.includes('Michels')) {
-            colors[name] = { h: 0, s: 90, l: 50 };
-        } else if (c.party && partyColors[c.party]) {
-            colors[name] = partyColors[c.party];
-        } else {
-            colors[name] = palette[paletteIndex % palette.length];
-            paletteIndex++;
-        }
-    });
-
-    return colors;
-}
+// Re-export HSL so existing downstream imports of HSL from './Map' keep working
+export type { HSL };
 
 export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);

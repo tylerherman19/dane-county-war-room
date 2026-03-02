@@ -11,9 +11,10 @@ interface MapOverlayControlProps {
     selectedComparisonKey?: string | null;
     onComparisonChange?: (key: string) => void;
     isLoadingComparison?: boolean;
+    candidateLegend?: { name: string; h: number; s: number; l: number }[];
 }
 
-export default function MapOverlayControl({ currentMode, onChange, historicalLabel, availableRaces, selectedComparisonKey, onComparisonChange, isLoadingComparison }: MapOverlayControlProps) {
+export default function MapOverlayControl({ currentMode, onChange, historicalLabel, availableRaces, selectedComparisonKey, onComparisonChange, isLoadingComparison, candidateLegend }: MapOverlayControlProps) {
     const turnoutReady = !!historicalLabel;
 
     const options: { id: OverlayMode; label: string; icon: any; description: string; disabled?: boolean }[] = [
@@ -75,13 +76,13 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                             }`}>
                                 <option.icon className="w-4 h-4" />
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                                 <div className={`text-sm font-medium ${
                                     isDisabled ? 'text-slate-600' : isActive ? 'text-blue-400' : 'text-slate-200'
                                 }`}>
                                     {option.label}
                                 </div>
-                                <div className="text-xs text-slate-500">
+                                <div className="text-xs text-slate-500 truncate" title={option.description}>
                                     {option.description}
                                 </div>
                             </div>
@@ -90,31 +91,70 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                 })}
             </div>
 
-            {/* Legend / Key based on active mode */}
-            {currentMode !== 'NONE' && (
+            {/* NONE mode: candidate color legend */}
+            {currentMode === 'NONE' && candidateLegend && candidateLegend.length > 0 && (
+                <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
+                    <div className="text-xs font-medium text-slate-400 mb-1.5">Legend</div>
+                    <div className="space-y-1">
+                        {candidateLegend.map(c => (
+                            <div key={c.name} className="flex items-center gap-2">
+                                <div
+                                    className="w-3.5 h-3.5 rounded-sm flex-shrink-0"
+                                    style={{ background: `hsl(${c.h}, ${c.s}%, ${c.l}%)` }}
+                                />
+                                <span className="text-[10px] text-slate-400 truncate" title={c.name}>{c.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="text-[9px] text-slate-600 mt-1.5">Lighter shade = closer race</div>
+                </div>
+            )}
+
+            {/* TURNOUT mode: red-green gradient legend */}
+            {currentMode === 'TURNOUT' && (
                 <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
                     <div className="text-xs font-medium text-slate-400 mb-2">Legend</div>
-                    {currentMode === 'TURNOUT' && (
-                        <div>
-                            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                                <span>−50%</span>
-                                <span>Avg</span>
-                                <span>+50%</span>
-                            </div>
-                            <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-slate-700 to-green-500">
-                                {/* Center tick */}
-                                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
-                            </div>
-                            <div className="flex justify-between mt-1 text-[9px] text-slate-600">
-                                <span>Below baseline</span>
-                                <span>Above baseline</span>
+                    <div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                            <span>−50%</span>
+                            <span>Avg</span>
+                            <span>+50%</span>
+                        </div>
+                        <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-slate-700 to-green-500">
+                            {/* Center tick */}
+                            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
+                        </div>
+                        <div className="flex justify-between mt-1 text-[9px] text-slate-600">
+                            <span>Below baseline</span>
+                            <span>Above baseline</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* SWING mode: per-candidate gradient bars */}
+            {currentMode === 'SWING' && (
+                <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
+                    <div className="text-xs font-medium text-slate-400 mb-1.5">Legend</div>
+                    {candidateLegend && candidateLegend.length > 0 ? (
+                        <div className="space-y-1.5">
+                            {candidateLegend.map(c => (
+                                <div key={c.name} className="flex items-center gap-2">
+                                    <div
+                                        className="w-16 h-2 rounded-full flex-shrink-0"
+                                        style={{ background: `linear-gradient(to right, hsl(${c.h},15%,90%), hsl(${c.h},${c.s}%,${c.l}%))` }}
+                                    />
+                                    <span className="text-[9px] text-slate-400 truncate" title={c.name}>{c.name}</span>
+                                </div>
+                            ))}
+                            <div className="flex justify-between text-[8px] text-slate-600 mt-0.5">
+                                <span>Toss-up</span><span>Landslide</span>
                             </div>
                         </div>
-                    )}
-                    {currentMode === 'SWING' && (
+                    ) : (
                         <div className="flex items-center justify-between text-[10px] text-slate-500">
                             <span>Toss-up</span>
-                            <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-slate-200 to-blue-600"></div>
+                            <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-slate-200 to-blue-600" />
                             <span>Landslide</span>
                         </div>
                     )}
@@ -138,9 +178,10 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                         {availableRaces.map(r => {
                             const key = `${r.electionId}|${r.raceId}`;
                             const year = r.electionDate.slice(0, 4);
+                            const ballots = r.totalVotes.toLocaleString();
                             return (
-                                <option key={key} value={key}>
-                                    {year} — {r.raceName}
+                                <option key={key} value={key} title={`${r.raceName} — ${ballots} total ballots`}>
+                                    {year} — {r.raceName} · {ballots} ballots
                                 </option>
                             );
                         })}

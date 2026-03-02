@@ -80,6 +80,7 @@ export interface HistoricalRaceSummary {
     raceName: string;
     raceType: RaceType;
     wardCount: number;
+    totalVotes: number; // sum of all ward ballot counts — shown in comparison picker
 }
 
 /**
@@ -91,6 +92,8 @@ export async function getAllAvailableRaces(): Promise<HistoricalRaceSummary[]> {
     const results: HistoricalRaceSummary[] = [];
     for (const races of data.values()) {
         for (const race of races) {
+            const totalVotes = Array.from(race.wardResults.values())
+                .reduce((sum, w) => sum + w.totalVotes, 0);
             results.push({
                 electionId: race.electionId,
                 electionName: race.electionName,
@@ -99,6 +102,7 @@ export async function getAllAvailableRaces(): Promise<HistoricalRaceSummary[]> {
                 raceName: race.raceName,
                 raceType: race.raceType,
                 wardCount: race.wardResults.size,
+                totalVotes,
             });
         }
     }
@@ -126,6 +130,8 @@ export async function getAvailableRacesWithOverlap(
         for (const race of races) {
             const hasOverlap = Array.from(race.wardResults.keys()).some(k => keySet.has(k));
             if (hasOverlap) {
+                const totalVotes = Array.from(race.wardResults.values())
+                    .reduce((sum, w) => sum + w.totalVotes, 0);
                 results.push({
                     electionId: race.electionId,
                     electionName: race.electionName,
@@ -134,6 +140,7 @@ export async function getAvailableRacesWithOverlap(
                     raceName: race.raceName,
                     raceType: race.raceType,
                     wardCount: race.wardResults.size,
+                    totalVotes,
                 });
             }
         }

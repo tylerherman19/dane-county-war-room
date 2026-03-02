@@ -63,7 +63,7 @@ export default function RaceSelector({ races, selectedRaceId, onSelectRace }: Ra
                 >
                     <div className="min-w-0 flex-1">
                         <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Current Race</div>
-                        <div className="font-bold truncate">{selectedRace?.name || 'Select a Race'}</div>
+                        <div className="font-bold truncate" title={selectedRace?.name}>{selectedRace?.name || 'Select a Race'}</div>
                         {selectedRace && selectedRace.totalPrecincts > 0 && (
                             <div className="flex items-center gap-2 mt-1">
                                 <div className="flex-1 h-1 bg-slate-700 rounded-full overflow-hidden">
@@ -110,7 +110,7 @@ export default function RaceSelector({ races, selectedRaceId, onSelectRace }: Ra
                                         }`}
                                 >
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="font-medium truncate">{race.name}</span>
+                                        <span className="font-medium truncate" title={race.name}>{race.name}</span>
                                         {HISTORICAL_TYPES.has(race.type) && (
                                             <span className="shrink-0 text-xs text-blue-400 font-medium">● Historical</span>
                                         )}

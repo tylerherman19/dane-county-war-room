@@ -7,6 +7,7 @@ import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
 import { HoveredWard } from './Map';
 import { isHistoricalDataLoaded, getHistoricalRaceInfo, loadHistoricalRaceById, normalizeWardName } from '@/lib/analysis-data';
 import { getAvailableRacesWithOverlap, HistoricalRaceSummary } from '@/lib/historical-api-data';
+import { assignCandidateColors } from '@/lib/candidate-colors';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
 const DebugPanel = dynamic(() => import('./DebugPanel'), { ssr: false });
@@ -46,6 +47,18 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         }, 1000);
         return () => clearInterval(id);
     }, [raceResult?.id]);
+
+    // Candidate color legend — derived from raceResult, used by MapOverlayControl
+    // to render per-candidate swatches in the NONE and SWING mode legends.
+    const candidateLegend = useMemo(() => {
+        if (!raceResult?.candidates?.length) return [];
+        const colors = assignCandidateColors(raceResult.candidates);
+        return raceResult.candidates.map(c => {
+            const name = c.candidateName.trim();
+            const hsl = colors[name] ?? { h: 215, s: 80, l: 55 };
+            return { name, h: hsl.h, s: hsl.s, l: hsl.l };
+        });
+    }, [raceResult]);
 
     // Deduplicated normalized ward keys for the current live race.
     // Used to filter the comparison picker to geographically relevant races only.
@@ -96,6 +109,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 selectedComparisonKey={selectedComparisonKey}
                 onComparisonChange={handleComparisonChange}
                 isLoadingComparison={isLoadingComparison}
+                candidateLegend={candidateLegend}
             />
             <Map
                 precinctResults={precinctResults}
