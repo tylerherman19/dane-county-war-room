@@ -243,6 +243,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             // --- CANDIDATE FOCUS VIEW ---
             // When a candidate is selected in the sidebar, show their vote share per ward
             // as a gradient: pale = few votes, saturated = dominant share.
+            // Wards where the focused candidate WON get a glowing hue-colored border.
             if (focusedCandidate) {
                 const candidateResult = relevantResults.find(
                     r => r.candidateName.trim() === focusedCandidate.trim()
@@ -253,11 +254,12 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     const t = Math.min(votePct / 0.7, 1.0); // normalize: 70%+ → full saturation
                     const lightness = Math.round(88 - t * 52); // 88% (0 votes) → 36% (dominant)
                     const saturation = Math.round(20 + t * Math.max(0, baseColor.s - 20));
+                    const isWinner = winner.candidateName.trim() === focusedCandidate.trim();
                     baseStyle = {
                         fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
-                        weight: 1,
-                        opacity: 1,
-                        color: '#334155',
+                        weight: isWinner ? 2 : 1,
+                        opacity: isWinner ? 0.9 : 1,
+                        color: isWinner ? `hsl(${baseColor.h}, 80%, 70%)` : '#334155',
                         fillOpacity: 0.85,
                     };
                 } else {
