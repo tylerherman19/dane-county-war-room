@@ -59,28 +59,33 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
     }, [onCandidateReset]);
 
     const handleComparisonChange = useCallback(async (key: string) => {
-        let electionId: string;
-        let raceId: string;
+        let targetElectionId: string;
+        let targetRaceId: string;
 
         if (!key) {
-            // Reset to auto: reload the most recent race matching the current race type
-            const autoRace = raceResult?.type
-                ? availableRaces.find(r => r.raceType === raceResult.type)
+            // Reset to auto: reload the most recent race matching the current race type.
+            // Extract to const so TypeScript narrows it correctly inside the find callback.
+            const currentType = raceResult?.type;
+            const autoRace = currentType
+                ? availableRaces.find(r => r.raceType === currentType)
                 : null;
             if (!autoRace) {
                 setSelectedComparisonKey(null);
                 return;
             }
-            electionId = autoRace.electionId;
-            raceId = autoRace.raceId;
+            targetElectionId = autoRace.electionId;
+            targetRaceId = autoRace.raceId;
             setSelectedComparisonKey(null);
         } else {
-            [electionId, raceId] = key.split('|');
+            // Use explicit indexing + fallback to avoid string|undefined from split
+            const parts = key.split('|');
+            targetElectionId = parts[0] ?? '';
+            targetRaceId = parts[1] ?? '';
             setSelectedComparisonKey(key);
         }
 
         setIsLoadingComparison(true);
-        await loadHistoricalRaceById(electionId, raceId);
+        await loadHistoricalRaceById(targetElectionId, targetRaceId);
         const info = getHistoricalRaceInfo();
         if (info) setHistoricalLabel(`${info.year} ${info.name}`);
         setIsLoadingComparison(false);
