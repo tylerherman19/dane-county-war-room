@@ -11,11 +11,20 @@ interface MapOverlayControlProps {
     selectedComparisonKey?: string | null;
     onComparisonChange?: (key: string) => void;
     isLoadingComparison?: boolean;
+    historicalTotalVotes?: number | null;
     candidateLegend?: { name: string; h: number; s: number; l: number }[];
 }
 
-export default function MapOverlayControl({ currentMode, onChange, historicalLabel, availableRaces, selectedComparisonKey, onComparisonChange, isLoadingComparison, candidateLegend }: MapOverlayControlProps) {
+export default function MapOverlayControl({ currentMode, onChange, historicalLabel, availableRaces, selectedComparisonKey, onComparisonChange, isLoadingComparison, historicalTotalVotes, candidateLegend }: MapOverlayControlProps) {
     const turnoutReady = !!historicalLabel;
+
+    const selectedRace = availableRaces?.find(
+        r => `${r.electionId}|${r.raceId}` === selectedComparisonKey
+    ) ?? null;
+    const baselineBallots = selectedRace?.totalVotes ?? historicalTotalVotes ?? null;
+    const selectTitle = selectedRace
+        ? `${selectedRace.raceName} (${selectedRace.electionDate.slice(0, 4)}) — ${selectedRace.totalVotes.toLocaleString()} ballots`
+        : 'Auto (best match)';
 
     const options: { id: OverlayMode; label: string; icon: any; description: string; disabled?: boolean }[] = [
         {
@@ -128,6 +137,11 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                             <span>Below baseline</span>
                             <span>Above baseline</span>
                         </div>
+                        {historicalTotalVotes != null && (
+                            <div className="text-[9px] text-slate-500 mt-1.5 text-center">
+                                Baseline: {historicalTotalVotes.toLocaleString()} ballots
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -173,6 +187,7 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                         value={selectedComparisonKey || ''}
                         onChange={e => onComparisonChange?.(e.target.value)}
                         disabled={isLoadingComparison}
+                        title={selectTitle}
                     >
                         <option value="">Auto (best match)</option>
                         {availableRaces.map(r => {
@@ -189,6 +204,11 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                     {isLoadingComparison && (
                         <div className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
                             <span className="animate-spin inline-block">⟳</span> Loading comparison…
+                        </div>
+                    )}
+                    {baselineBallots != null && !isLoadingComparison && (
+                        <div className="text-[10px] text-slate-500 mt-1.5">
+                            Baseline: <span className="text-slate-400">{baselineBallots.toLocaleString()}</span> total ballots
                         </div>
                     )}
                 </div>

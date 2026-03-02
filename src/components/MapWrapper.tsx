@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
 import { HoveredWard } from './Map';
-import { isHistoricalDataLoaded, getHistoricalRaceInfo, loadHistoricalRaceById, normalizeWardName } from '@/lib/analysis-data';
+import { isHistoricalDataLoaded, getHistoricalRaceInfo, getExpectedTotalVotes, loadHistoricalRaceById, normalizeWardName } from '@/lib/analysis-data';
 import { getAvailableRacesWithOverlap, HistoricalRaceSummary } from '@/lib/historical-api-data';
 import { assignCandidateColors } from '@/lib/candidate-colors';
 
@@ -30,18 +30,22 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
     const [availableRaces, setAvailableRaces] = useState<HistoricalRaceSummary[]>([]);
     const [selectedComparisonKey, setSelectedComparisonKey] = useState<string | null>(null);
     const [isLoadingComparison, setIsLoadingComparison] = useState(false);
+    const [historicalTotalVotes, setHistoricalTotalVotes] = useState<number | null>(null);
 
     // Reset overlay + label on race change, then poll until historical data loads.
     // Combined into one effect so reset always happens before polling begins.
     useEffect(() => {
         setOverlayMode('NONE');
         setHistoricalLabel(null);
+        setHistoricalTotalVotes(null);
         setAvailableRaces([]);
         setSelectedComparisonKey(null);
         const id = setInterval(() => {
             if (isHistoricalDataLoaded()) {
                 const info = getHistoricalRaceInfo();
                 if (info) setHistoricalLabel(`${info.year} ${info.name}`);
+                const total = getExpectedTotalVotes();
+                setHistoricalTotalVotes(total > 0 ? total : null);
                 clearInterval(id);
             }
         }, 1000);
@@ -96,6 +100,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         await loadHistoricalRaceById(electionId, raceId);
         const info = getHistoricalRaceInfo();
         if (info) setHistoricalLabel(`${info.year} ${info.name}`);
+        const total = getExpectedTotalVotes();
+        setHistoricalTotalVotes(total > 0 ? total : null);
         setIsLoadingComparison(false);
     }, []);
 
@@ -109,6 +115,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 selectedComparisonKey={selectedComparisonKey}
                 onComparisonChange={handleComparisonChange}
                 isLoadingComparison={isLoadingComparison}
+                historicalTotalVotes={historicalTotalVotes}
                 candidateLegend={candidateLegend}
             />
             <Map
