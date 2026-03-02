@@ -49,6 +49,9 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
     }
 
     const sortedCandidates = [...raceResult.candidates].sort((a, b) => b.votes - a.votes);
+    const displayCandidates = raceResult.type === 'Presidential'
+        ? sortedCandidates.filter(c => c.party === 'Democratic' || c.party === 'Republican')
+        : sortedCandidates;
     const leader = sortedCandidates[0];
     const runnerUp = sortedCandidates[1];
     const totalVotes = raceResult.totalVotes;
@@ -153,7 +156,7 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                         </div>
                     )}
                     <div className="space-y-1.5">
-                        {sortedCandidates.map((candidate) => {
+                        {displayCandidates.map((candidate) => {
                             const color = getPartyColor(candidate.party);
                             const isFocused = focusedCandidate === candidate.candidateName;
                             return (
