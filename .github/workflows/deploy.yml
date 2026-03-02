@@ -6,6 +6,7 @@ on:
       - main
       - claude/continue-previous-work-bKXAh
       - claude/continue-election-dashboard-ULML9
+      - claude/election-results-dashboard-M9CUJ
 
 permissions:
   contents: read
