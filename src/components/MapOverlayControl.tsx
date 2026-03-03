@@ -1,5 +1,6 @@
 import { Layers, TrendingUp, Users } from 'lucide-react';
 import { HistoricalRaceSummary } from '@/lib/historical-api-data';
+import { RaceType } from '@/lib/api';
 
 export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING';
 
@@ -13,9 +14,10 @@ interface MapOverlayControlProps {
     isLoadingComparison?: boolean;
     historicalTotalVotes?: number | null;
     candidateLegend?: { name: string; h: number; s: number; l: number }[];
+    currentRaceType?: RaceType;
 }
 
-export default function MapOverlayControl({ currentMode, onChange, historicalLabel, availableRaces, selectedComparisonKey, onComparisonChange, isLoadingComparison, historicalTotalVotes, candidateLegend }: MapOverlayControlProps) {
+export default function MapOverlayControl({ currentMode, onChange, historicalLabel, availableRaces, selectedComparisonKey, onComparisonChange, isLoadingComparison, historicalTotalVotes, candidateLegend, currentRaceType }: MapOverlayControlProps) {
     const turnoutReady = !!historicalLabel;
 
     const selectedRace = availableRaces?.find(
@@ -129,7 +131,7 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                             <span>Avg</span>
                             <span>+50%</span>
                         </div>
-                        <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-slate-700 to-green-500">
+                        <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-white to-green-500">
                             {/* Center tick */}
                             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
                         </div>
@@ -190,16 +192,34 @@ export default function MapOverlayControl({ currentMode, onChange, historicalLab
                         title={selectTitle}
                     >
                         <option value="">Auto (best match)</option>
-                        {availableRaces.map(r => {
-                            const key = `${r.electionId}|${r.raceId}`;
-                            const year = r.electionDate.slice(0, 4);
-                            const ballots = r.totalVotes.toLocaleString();
+                        {(() => {
+                            const sameType = currentRaceType ? availableRaces.filter(r => r.raceType === currentRaceType) : [];
+                            const otherTypes = currentRaceType ? availableRaces.filter(r => r.raceType !== currentRaceType) : availableRaces;
+                            const renderOption = (r: HistoricalRaceSummary) => {
+                                const key = `${r.electionId}|${r.raceId}`;
+                                const year = r.electionDate.slice(0, 4);
+                                const ballots = r.totalVotes.toLocaleString();
+                                return (
+                                    <option key={key} value={key} title={`${r.raceName} — ${ballots} total ballots`}>
+                                        {year} — {r.raceName} · {ballots} ballots
+                                    </option>
+                                );
+                            };
                             return (
-                                <option key={key} value={key} title={`${r.raceName} — ${ballots} total ballots`}>
-                                    {year} — {r.raceName} · {ballots} ballots
-                                </option>
+                                <>
+                                    {sameType.length > 0 && (
+                                        <optgroup label="Same race type">
+                                            {sameType.map(renderOption)}
+                                        </optgroup>
+                                    )}
+                                    {otherTypes.length > 0 && (
+                                        <optgroup label={sameType.length > 0 ? 'Other races' : 'Available races'}>
+                                            {otherTypes.map(renderOption)}
+                                        </optgroup>
+                                    )}
+                                </>
                             );
-                        })}
+                        })()}
                     </select>
                     {isLoadingComparison && (
                         <div className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
