@@ -265,10 +265,11 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                         s = intensity * 80;
                     } else {
                         // Above historical baseline — green gradient
+                        // Starts near-white at baseline (matching red branch) and ramps to deep green.
                         h = 140;
                         const intensity = Math.min((ratio - 1.0) / 0.5, 1);
-                        l = 50 - (intensity * 10);
-                        s = 50 + (intensity * 50);
+                        l = 90 - (intensity * 50);
+                        s = intensity * 100;
                     }
 
                     baseStyle = {
@@ -430,7 +431,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     }}>
                         {/* Header */}
                         <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #1e293b' }}>
-                            <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
+                            <div
+                                title={raceResult?.raceName || 'Election Results'}
+                                style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            >
                                 {raceResult?.raceName || 'Election Results'}
                             </div>
                             <div style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>
@@ -440,29 +444,45 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
 
                         {/* Candidate rows */}
                         <div style={{ padding: '10px 14px' }}>
-                            {hoveredWard.results.map((r, i) => {
-                                const hsl = candidateColors[r.candidateName.trim()];
-                                const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#64748b';
-                                const isWinner = i === 0;
-                                return (
-                                    <div key={i} style={{ marginBottom: i < hoveredWard.results.length - 1 ? '10px' : 0 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                                            <span style={{ color: isWinner ? '#f1f5f9' : '#94a3b8', fontWeight: isWinner ? 600 : 400 }}>
-                                                {isWinner ? '▲ ' : '\u00a0\u00a0 '}{r.candidateName}
-                                            </span>
-                                            <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#f1f5f9' : '#64748b', marginLeft: '12px' }}>
-                                                {r.pct.toFixed(1)}%
-                                            </span>
-                                        </div>
-                                        <div style={{ height: '5px', background: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
-                                            <div style={{ height: '100%', width: `${r.pct}%`, background: barColor, borderRadius: '3px' }} />
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
-                                            {r.votes.toLocaleString()} votes
-                                        </div>
-                                    </div>
+                            {(() => {
+                                // For Presidential races, only show D and R candidates in the tooltip.
+                                const isPresidential = raceResult?.type === 'Presidential';
+                                const partyMap: Record<string, string | undefined> = Object.fromEntries(
+                                    (raceResult?.candidates ?? []).map(c => [c.candidateName.trim(), c.party])
                                 );
-                            })}
+                                const visibleResults = isPresidential
+                                    ? hoveredWard.results.filter(r => {
+                                        const party = partyMap[r.candidateName.trim()];
+                                        const name = r.candidateName;
+                                        return party === 'Democratic' || party === 'Republican'
+                                            || name.includes('Biden') || name.includes('Harris')
+                                            || name.includes('Trump');
+                                    })
+                                    : hoveredWard.results;
+                                return visibleResults.map((r, i) => {
+                                    const hsl = candidateColors[r.candidateName.trim()];
+                                    const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#64748b';
+                                    const isWinner = i === 0;
+                                    return (
+                                        <div key={i} style={{ marginBottom: i < visibleResults.length - 1 ? '10px' : 0 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                                                <span title={r.candidateName} style={{ color: isWinner ? '#f1f5f9' : '#94a3b8', fontWeight: isWinner ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
+                                                    {isWinner ? '▲ ' : '\u00a0\u00a0 '}{r.candidateName}
+                                                </span>
+                                                <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#f1f5f9' : '#64748b', marginLeft: '12px' }}>
+                                                    {r.pct.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                            <div style={{ height: '5px', background: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
+                                                <div style={{ height: '100%', width: `${r.pct}%`, background: barColor, borderRadius: '3px' }} />
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
+                                                {r.votes.toLocaleString()} votes
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
                         </div>
 
                         {/* Margin comparison row — shown in NONE/SWING when real historical margin exists */}
@@ -497,9 +517,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             const year = hoveredWard.analysis!.historicalDate
                                 ? new Date(hoveredWard.analysis!.historicalDate).getFullYear()
                                 : '?';
+                            const prevVotes = hoveredWard.analysis!.historicalVotes.toLocaleString();
                             return (
                                 <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '10px', color: '#475569' }}>vs {year} baseline</span>
+                                    <span style={{ fontSize: '10px', color: '#475569' }}>vs {year} baseline · {prevVotes} ballots</span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
                                         {arrow} {Math.abs(deltaPct).toFixed(0)}% {isAbove ? 'above' : 'below'}
                                     </span>

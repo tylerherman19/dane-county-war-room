@@ -54,14 +54,23 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
 
     // Candidate color legend — derived from raceResult, used by MapOverlayControl
     // to render per-candidate swatches in the NONE and SWING mode legends.
+    // For Presidential races, only D and R candidates are shown.
     const candidateLegend = useMemo(() => {
         if (!raceResult?.candidates?.length) return [];
+        const isPresidential = raceResult.type === 'Presidential';
         const colors = assignCandidateColors(raceResult.candidates);
-        return raceResult.candidates.map(c => {
-            const name = c.candidateName.trim();
-            const hsl = colors[name] ?? { h: 215, s: 80, l: 55 };
-            return { name, h: hsl.h, s: hsl.s, l: hsl.l };
-        });
+        return raceResult.candidates
+            .filter(c => {
+                if (!isPresidential) return true;
+                const name = c.candidateName.trim();
+                return c.party === 'Democratic' || c.party === 'Republican'
+                    || name.includes('Biden') || name.includes('Harris') || name.includes('Trump');
+            })
+            .map(c => {
+                const name = c.candidateName.trim();
+                const hsl = colors[name] ?? { h: 215, s: 80, l: 55 };
+                return { name, h: hsl.h, s: hsl.s, l: hsl.l };
+            });
     }, [raceResult]);
 
     // Deduplicated normalized ward keys for the current live race.
@@ -117,6 +126,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 isLoadingComparison={isLoadingComparison}
                 historicalTotalVotes={historicalTotalVotes}
                 candidateLegend={candidateLegend}
+                currentRaceType={raceResult?.type}
             />
             <Map
                 precinctResults={precinctResults}
