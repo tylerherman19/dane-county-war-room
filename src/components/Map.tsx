@@ -519,11 +519,13 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                                 ? new Date(hoveredWard.analysis!.historicalDate).getFullYear()
                                 : '?';
                             const prevVotes = hoveredWard.analysis!.historicalVotes.toLocaleString();
+                            const ballotDiff = hoveredWard.total - hoveredWard.analysis!.historicalVotes;
+                            const diffStr = (isAbove ? '+' : '') + ballotDiff.toLocaleString();
                             return (
                                 <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '10px', color: '#475569' }}>vs {year} baseline · {prevVotes} ballots</span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
-                                        {arrow} {Math.abs(deltaPct).toFixed(0)}% {isAbove ? 'above' : 'below'}
+                                        {arrow} {Math.abs(deltaPct).toFixed(0)}% &middot; {diffStr} ballots
                                     </span>
                                 </div>
                             );
