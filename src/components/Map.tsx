@@ -112,7 +112,8 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
     return null;
 }
 
-// Re-export HSL so existing downstream imports of HSL from './Map' keep working
+// Re-export so existing downstream imports from './Map' keep working
+export { assignCandidateColors };
 export type { HSL };
 
 export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate }: MapProps) {
