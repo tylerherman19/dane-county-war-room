@@ -33,6 +33,9 @@ export default function Home() {
     highlightedWardKeys: new Set(),
     whatIfPrecinctResults: null,
     whatIfMode: false,
+    simulateLayerMode: 'PROJECTION',
+    dormantPoolData: {},
+    dropoffData: {},
   });
   const [simClickedWard, setSimClickedWard] = useState<{ name: string; num: string } | null>(null);
 
@@ -157,6 +160,9 @@ export default function Home() {
           simulateMode={viewMode === 'SIMULATE'}
           projectionData={viewMode === 'SIMULATE' ? simUpdate.projectionData : undefined}
           onWardClick={viewMode === 'SIMULATE' ? setSimClickedWard : undefined}
+          simulateLayerMode={viewMode === 'SIMULATE' ? simUpdate.simulateLayerMode : undefined}
+          dormantPoolData={viewMode === 'SIMULATE' ? simUpdate.dormantPoolData : undefined}
+          dropoffData={viewMode === 'SIMULATE' ? simUpdate.dropoffData : undefined}
         />
       </div>
     </Layout>

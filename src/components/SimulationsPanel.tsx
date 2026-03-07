@@ -1,18 +1,23 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical } from 'lucide-react';
+import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical, Target, TrendingDown, Layers } from 'lucide-react';
 import {
     DistrictProjection,
     SimProjectionUpdate,
+    SimulateLayerMode,
+    DormantPoolEntry,
+    DropoffEntry,
     computeWinNumber,
     applyMultipliers,
     computeProjectionData,
     computeWhatIfProjectionData,
+    computeDormantPool,
+    computePrimaryDropoff,
     toPrecinctResults,
     loadDistrictProjections,
 } from '@/lib/projections-data';
-import { HistoricalRaceData } from '@/lib/historical-api-data';
+import { HistoricalRaceData, fetchHistoricalData } from '@/lib/historical-api-data';
 
 interface SimulationsPanelProps {
     // Ward clicked on map in What If mode (lifted from page.tsx)
@@ -31,17 +36,52 @@ function getPartyColor(party: string | undefined): string {
     return '#64748b';
 }
 
+// Priority badge thresholds for top 15 wards (rank 1-5 HIGH, 6-10 MED, 11-15 LOW)
+function getPriorityBadge(rank: number): { label: string; bg: string; text: string } {
+    if (rank <= 5) return { label: 'HIGH', bg: '#78350f', text: '#fbbf24' };
+    if (rank <= 10) return { label: 'MED', bg: '#1e3a5f', text: '#60a5fa' };
+    return { label: 'LOW', bg: '#1e293b', text: '#94a3b8' };
+}
+
+// Friendly display name from a ward key like "madison-city-45"
+function wardKeyToDisplay(wardKey: string): string {
+    const typePatterns = [
+        { suffix: '-city-', label: 'City of' },
+        { suffix: '-town-', label: 'Town of' },
+        { suffix: '-village-', label: 'Village of' },
+    ];
+    for (const { suffix, label } of typePatterns) {
+        const idx = wardKey.lastIndexOf(suffix);
+        if (idx !== -1) {
+            const name = wardKey.slice(0, idx).replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const wardNum = wardKey.slice(idx + suffix.length);
+            return `${label} ${name} Wd. ${wardNum}`;
+        }
+    }
+    return wardKey;
+}
+
 export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClickedWard, onProjectionUpdate }: SimulationsPanelProps) {
     // ── District data (loaded once from historical JSON) ──────────────────
     const [mayorProjection, setMayorProjection] = useState<DistrictProjection | null>(null);
     const [alderDistricts, setAlderDistricts] = useState<DistrictProjection[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // ── Dormant pool & dropoff data ────────────────────────────────────────
+    const [dormantPoolData, setDormantPoolData] = useState<Record<string, DormantPoolEntry>>({});
+    const [dropoffData, setDropoffData] = useState<Record<string, DropoffEntry>>({});
+
     // ── Core simulation inputs ─────────────────────────────────────────────
     const [turnoutPct, setTurnoutPct] = useState(100);      // 50–200
     const [numCandidates, setNumCandidates] = useState(2);  // 2–5
     const [regDelta, setRegDelta] = useState(0);            // -20 to +50
     const [selectedKey, setSelectedKey] = useState<string>('Mayor'); // 'Mayor' | 'Alder-N'
+
+    // ── Map layer mode ─────────────────────────────────────────────────────
+    const [simulateLayerMode, setSimulateLayerMode] = useState<SimulateLayerMode>('PROJECTION');
+
+    // ── Canvass priority panel ─────────────────────────────────────────────
+    const [canvassPanelOpen, setCanvassPanelOpen] = useState(false);
 
     // ── What If state ──────────────────────────────────────────────────────
     const [whatIfOpen, setWhatIfOpen] = useState(false);
@@ -51,9 +91,14 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
     // Load historical data on mount
     useEffect(() => {
-        loadDistrictProjections().then(({ mayor, alderDistricts }) => {
+        Promise.all([
+            loadDistrictProjections(),
+            fetchHistoricalData(),
+        ]).then(([{ mayor, alderDistricts }, histData]) => {
             setMayorProjection(mayor);
             setAlderDistricts(alderDistricts);
+            setDormantPoolData(computeDormantPool(histData as any));
+            setDropoffData(computePrimaryDropoff(histData as any));
             setIsLoading(false);
         });
     }, []);
@@ -75,14 +120,13 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
         if (!whatIfClickedWard || !whatIfOpen || !whatIfRace) return;
         onClearWhatIfClickedWard();
 
-        // Build a normalized ward key from the clicked ward to find it in the race
         const clickedLabel = `${whatIfClickedWard.name} Ward ${whatIfClickedWard.num}`;
         const wardKey = findWardKeyForClicked(whatIfRace.wardResults, whatIfClickedWard);
         if (!wardKey) return;
 
         type WardEntry = { wardKey: string; label: string; multiplier: number };
         setWardList((prev: WardEntry[]) => {
-            if (prev.some((w: WardEntry) => w.wardKey === wardKey)) return prev; // already in list
+            if (prev.some((w: WardEntry) => w.wardKey === wardKey)) return prev;
             return [...prev, { wardKey, label: clickedLabel, multiplier: globalWhatIfMult }];
         });
     }, [whatIfClickedWard]);
@@ -91,11 +135,39 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
     const baseline = selectedDistrict?.historicalAvg ?? 0;
     const expectedTotal = applyMultipliers(baseline, turnoutPct, regDelta);
     const winResult = computeWinNumber(expectedTotal, numCandidates);
+    const gap = expectedTotal - winResult.winNumber;
+    const isAnyNonDefault = turnoutPct !== 100 || regDelta !== 0 || numCandidates !== 2;
+
+    // Reset all simulation inputs
+    const handleResetAll = useCallback(() => {
+        setTurnoutPct(100);
+        setRegDelta(0);
+        setNumCandidates(2);
+        setWhatIfOpen(false);
+        setWhatIfRaceKey('');
+        setGlobalWhatIfMult(100);
+        setWardList([]);
+    }, []);
+
+    // ── Compute top 15 wards by dormant pool size ──────────────────────────
+    const top15Wards: Array<{ wardKey: string; entry: DormantPoolEntry; rank: number }> = Object.entries(dormantPoolData)
+        .filter(([_, e]) => e.dormant > 0)
+        .sort(([, a], [, b]) => b.dormant - a.dormant)
+        .slice(0, 15)
+        .map(([wardKey, entry], i) => ({ wardKey, entry, rank: i + 1 }));
 
     // Compute map projection update (emitted via callback)
     const buildUpdate = useCallback((): SimProjectionUpdate => {
         if (!selectedDistrict) {
-            return { projectionData: {}, highlightedWardKeys: new Set(), whatIfPrecinctResults: null, whatIfMode: false };
+            return {
+                projectionData: {},
+                highlightedWardKeys: new Set(),
+                whatIfPrecinctResults: null,
+                whatIfMode: false,
+                simulateLayerMode,
+                dormantPoolData,
+                dropoffData,
+            };
         }
 
         const highlightedWardKeys = new Set(selectedDistrict.wardKeys);
@@ -106,12 +178,12 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
             const projectionData = computeWhatIfProjectionData(whatIfRace.wardResults, globalWhatIfMult, perWardOverrides);
             const whatIfPrecinctResults = toPrecinctResults(whatIfRace.wardResults, globalWhatIfMult, perWardOverrides);
-            return { projectionData, highlightedWardKeys, whatIfPrecinctResults, whatIfMode: true };
+            return { projectionData, highlightedWardKeys, whatIfPrecinctResults, whatIfMode: true, simulateLayerMode, dormantPoolData, dropoffData };
         }
 
         const projectionData = computeProjectionData(selectedDistrict);
-        return { projectionData, highlightedWardKeys, whatIfPrecinctResults: null, whatIfMode: false };
-    }, [selectedDistrict, whatIfOpen, whatIfRace, globalWhatIfMult, wardList]);
+        return { projectionData, highlightedWardKeys, whatIfPrecinctResults: null, whatIfMode: false, simulateLayerMode, dormantPoolData, dropoffData };
+    }, [selectedDistrict, whatIfOpen, whatIfRace, globalWhatIfMult, wardList, simulateLayerMode, dormantPoolData, dropoffData]);
 
     // Push update to parent whenever relevant state changes
     useEffect(() => {
@@ -146,6 +218,11 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
         whatIfCandidateTotals.sort((a, b) => b.adjusted - a.adjusted);
     }
 
+    // Pre-compute What If total county votes (for margin impact calculation)
+    const whatIfTotalCountyVotes = whatIfRace
+        ? Array.from(whatIfRace.wardResults.values()).reduce((s, w) => s + w.totalVotes, 0)
+        : 0;
+
     if (isLoading) {
         return (
             <div className="h-full bg-slate-900 border-l border-slate-800 p-5 space-y-4 animate-pulse">
@@ -162,6 +239,57 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
     return (
         <div className="h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-hidden">
+
+            {/* ── Sticky Win Number Header Bar ── */}
+            {selectedDistrict && (
+                <div className="shrink-0 px-4 pt-3 pb-3 border-b border-slate-700/50 bg-slate-900">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                            <Target className="w-3.5 h-3.5 text-violet-400" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">
+                                Win Number {winResult.isEstimate ? '(est.)' : ''}
+                            </span>
+                        </div>
+                        {isAnyNonDefault && (
+                            <button
+                                onClick={handleResetAll}
+                                className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-red-400 transition-colors"
+                                title="Reset all simulation inputs"
+                            >
+                                <RotateCcw className="w-2.5 h-2.5" />
+                                Reset
+                            </button>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                            <div className="text-xl font-black text-white">{winResult.winNumber.toLocaleString()}</div>
+                            <div className="text-[9px] text-slate-500 uppercase tracking-wide">Win Target</div>
+                        </div>
+                        <div>
+                            <div className="text-xl font-black text-slate-300">{expectedTotal.toLocaleString()}</div>
+                            <div className="text-[9px] text-slate-500 uppercase tracking-wide">Projected</div>
+                        </div>
+                        <div>
+                            <div className={`text-xl font-black ${gap >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {gap >= 0 ? '+' : ''}{gap.toLocaleString()}
+                            </div>
+                            <div className="text-[9px] text-slate-500 uppercase tracking-wide">Gap</div>
+                        </div>
+                    </div>
+                    {gap < 0 && (
+                        <div className="mt-1.5 text-[9px] text-red-400/70 text-center">
+                            Need {Math.abs(gap).toLocaleString()} more votes to win
+                        </div>
+                    )}
+                    {gap >= 0 && (
+                        <div className="mt-1.5 text-[9px] text-green-400/70 text-center">
+                            {gap.toLocaleString()} votes ahead of win number
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
                 {/* ── Header ── */}
@@ -206,6 +334,87 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                         </div>
                     )}
                 </div>
+
+                {/* ── Map Layer Selector ── */}
+                <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
+                    <div className="flex items-center gap-1.5 mb-2">
+                        <Layers className="w-3 h-3 text-slate-400" />
+                        <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Map Layer</div>
+                    </div>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => setSimulateLayerMode('PROJECTION')}
+                            className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all text-center ${simulateLayerMode === 'PROJECTION' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                        >
+                            Turnout
+                        </button>
+                        <button
+                            onClick={() => { setSimulateLayerMode('CANVASS_PRIORITY'); setCanvassPanelOpen(true); }}
+                            className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all text-center ${simulateLayerMode === 'CANVASS_PRIORITY' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                            title="Avg general election turnout minus avg primary turnout per ward"
+                        >
+                            Canvass
+                        </button>
+                        <button
+                            onClick={() => setSimulateLayerMode('PRIMARY_DROPOFF')}
+                            className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all text-center ${simulateLayerMode === 'PRIMARY_DROPOFF' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                            title="Most recent spring general minus most recent spring primary turnout"
+                        >
+                            Dropoff
+                        </button>
+                    </div>
+                    <div className="mt-1.5 text-[9px] text-slate-600">
+                        {simulateLayerMode === 'PROJECTION' && 'Historical turnout within selected district (green = high, red = low)'}
+                        {simulateLayerMode === 'CANVASS_PRIORITY' && 'Avg spring general − avg spring primary. Darker purple = more dormant voters.'}
+                        {simulateLayerMode === 'PRIMARY_DROPOFF' && 'Most recent spring general − spring primary. Darker blue = larger dropoff.'}
+                    </div>
+                </div>
+
+                {/* ── Canvass Priority Panel ── */}
+                {simulateLayerMode === 'CANVASS_PRIORITY' && top15Wards.length > 0 && (
+                    <div className="bg-slate-800/40 rounded-xl border border-violet-800/30 overflow-hidden">
+                        <button
+                            onClick={() => setCanvassPanelOpen(o => !o)}
+                            className="w-full p-3 flex items-center justify-between hover:bg-slate-700/20 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <TrendingDown className="w-3.5 h-3.5 text-violet-400" />
+                                <span className="text-xs font-semibold text-white">Top Canvass Wards</span>
+                                <span className="text-[9px] text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded-full">TOP 15</span>
+                            </div>
+                            {canvassPanelOpen ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+                        </button>
+                        {canvassPanelOpen && (
+                            <div className="border-t border-slate-700/40">
+                                <div className="px-3 pb-1 pt-2 text-[9px] text-slate-500">
+                                    Ranked by dormant voter pool size (avg spring general − avg spring primary)
+                                </div>
+                                <div className="divide-y divide-slate-700/30 max-h-64 overflow-y-auto">
+                                    {top15Wards.map(({ wardKey, entry, rank }) => {
+                                        const badge = getPriorityBadge(rank);
+                                        return (
+                                            <div key={wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                <span className="text-[9px] text-slate-600 w-4 shrink-0">{rank}.</span>
+                                                <span
+                                                    className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                                                    style={{ background: badge.bg, color: badge.text }}
+                                                >
+                                                    {badge.label}
+                                                </span>
+                                                <span className="text-[10px] text-slate-300 flex-1 truncate" title={wardKeyToDisplay(wardKey)}>
+                                                    {wardKeyToDisplay(wardKey)}
+                                                </span>
+                                                <span className="text-[10px] font-semibold text-violet-400 shrink-0">
+                                                    ~{entry.dormant.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {selectedDistrict && (
                     <>
@@ -302,7 +511,7 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                             </div>
                         </div>
 
-                        {/* ── Win Number Card ── */}
+                        {/* ── Win Number Card (detailed) ── */}
                         <div
                             className="rounded-xl p-4 border"
                             style={{ background: 'linear-gradient(135deg, #4c1d9522 0%, #0f172a 100%)', borderColor: '#7c3aed44' }}
@@ -333,23 +542,63 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                         {/* ── Map Legend ── */}
                         <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
                             <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Map Legend</div>
-                            <div className="space-y-1.5 text-xs text-slate-400">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-green-500" />
-                                    High-turnout wards (historically)
+                            {simulateLayerMode === 'PROJECTION' && (
+                                <div className="space-y-1.5 text-xs text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-green-500" />
+                                        High-turnout wards (historically)
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
+                                        Low-turnout wards (historically)
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-slate-800 border border-slate-700" />
+                                        Outside selected district
+                                    </div>
+                                    <div className="mt-2 text-[10px] text-slate-600">
+                                        Shows relative turnout within the district across {selectedDistrict.electionsCount} past election{selectedDistrict.electionsCount !== 1 ? 's' : ''}.
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
-                                    Low-turnout wards (historically)
+                            )}
+                            {simulateLayerMode === 'CANVASS_PRIORITY' && (
+                                <div className="space-y-1.5 text-xs text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(270, 95%, 30%)' }} />
+                                        Large dormant voter pool (high priority)
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(270, 60%, 65%)' }} />
+                                        Moderate dormant pool
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-slate-800 border border-slate-700" />
+                                        Minimal or no dormant pool data
+                                    </div>
+                                    <div className="mt-1 text-[10px] text-slate-600">
+                                        Darker = avg spring general turnout − avg spring primary turnout is larger
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-slate-800 border border-slate-700" />
-                                    Outside selected district
+                            )}
+                            {simulateLayerMode === 'PRIMARY_DROPOFF' && (
+                                <div className="space-y-1.5 text-xs text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(220, 100%, 38%)' }} />
+                                        High primary dropoff (priority canvass)
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(220, 60%, 72%)' }} />
+                                        Moderate dropoff
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-slate-800 border border-slate-700" />
+                                        No data / minimal dropoff
+                                    </div>
+                                    <div className="mt-1 text-[10px] text-slate-600">
+                                        Most recent spring general − most recent spring primary
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="mt-2 text-[10px] text-slate-600">
-                                Shows relative turnout within the district across {selectedDistrict.electionsCount} past election{selectedDistrict.electionsCount !== 1 ? 's' : ''}. Green = resource efficiency, Red = opportunity.
-                            </div>
+                            )}
                         </div>
 
                         {/* ── What If Scenario ── */}
@@ -443,31 +692,45 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-2">
-                                                        {wardList.map((ward, i) => (
-                                                            <div key={ward.wardKey} className="bg-slate-900/60 rounded-lg p-2.5">
-                                                                <div className="flex items-center justify-between mb-1.5">
-                                                                    <span className="text-xs text-slate-300 truncate flex-1">{ward.label}</span>
-                                                                    <div className="flex items-center gap-1.5 ml-2 shrink-0">
-                                                                        <span className="text-xs font-bold text-amber-400">{ward.multiplier}%</span>
-                                                                        <button
-                                                                            onClick={() => setWardList(prev => prev.filter((_, idx) => idx !== i))}
-                                                                            className="text-slate-600 hover:text-red-400 transition-colors"
-                                                                        >
-                                                                            <X className="w-3 h-3" />
-                                                                        </button>
+                                                        {wardList.map((ward, i) => {
+                                                            const origVotes = whatIfRace.wardResults.get(ward.wardKey)?.totalVotes ?? 0;
+                                                            const delta = Math.round(origVotes * (ward.multiplier / 100 - 1));
+                                                            const marginImpactPts = whatIfTotalCountyVotes > 0
+                                                                ? ((Math.abs(delta) / whatIfTotalCountyVotes) * 100).toFixed(1)
+                                                                : '0.0';
+                                                            const showImpact = ward.multiplier !== 100 && origVotes > 0;
+                                                            return (
+                                                                <div key={ward.wardKey} className="bg-slate-900/60 rounded-lg p-2.5">
+                                                                    <div className="flex items-center justify-between mb-1.5">
+                                                                        <span className="text-xs text-slate-300 truncate flex-1">{ward.label}</span>
+                                                                        <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                                                                            <span className="text-xs font-bold text-amber-400">{ward.multiplier}%</span>
+                                                                            <button
+                                                                                onClick={() => setWardList(prev => prev.filter((_, idx) => idx !== i))}
+                                                                                className="text-slate-600 hover:text-red-400 transition-colors"
+                                                                            >
+                                                                                <X className="w-3 h-3" />
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
+                                                                    <input
+                                                                        type="range" min={0} max={200} step={5}
+                                                                        value={ward.multiplier}
+                                                                        onChange={e => setWardList(prev => prev.map((w, idx) =>
+                                                                            idx === i ? { ...w, multiplier: Number(e.target.value) } : w
+                                                                        ))}
+                                                                        className="w-full h-1 rounded-full appearance-none cursor-pointer"
+                                                                        style={{ accentColor: '#f59e0b' }}
+                                                                    />
+                                                                    {/* Turnout surge margin impact label */}
+                                                                    {showImpact && (
+                                                                        <div className={`mt-1.5 text-[10px] font-medium ${delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                                            {delta > 0 ? '+' : ''}{delta.toLocaleString()} votes · {delta > 0 ? '+' : '−'}{marginImpactPts} pt margin impact
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                                <input
-                                                                    type="range" min={0} max={200} step={5}
-                                                                    value={ward.multiplier}
-                                                                    onChange={e => setWardList(prev => prev.map((w, idx) =>
-                                                                        idx === i ? { ...w, multiplier: Number(e.target.value) } : w
-                                                                    ))}
-                                                                    className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                                                                    style={{ accentColor: '#f59e0b' }}
-                                                                />
-                                                            </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>

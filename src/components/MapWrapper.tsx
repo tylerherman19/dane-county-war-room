@@ -8,6 +8,7 @@ import { HoveredWard } from './Map';
 import { isHistoricalDataLoaded, getHistoricalRaceInfo, getExpectedTotalVotes, loadHistoricalRaceById, normalizeWardName } from '@/lib/analysis-data';
 import { getAvailableRacesWithOverlap, HistoricalRaceSummary } from '@/lib/historical-api-data';
 import { assignCandidateColors } from '@/lib/candidate-colors';
+import { SimulateLayerMode, DormantPoolEntry, DropoffEntry } from '@/lib/projections-data';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
 const DebugPanel = dynamic(() => import('./DebugPanel'), { ssr: false });
@@ -24,9 +25,12 @@ interface MapWrapperProps {
     simulateMode?: boolean;
     projectionData?: Record<string, number>;
     onWardClick?: (ward: { name: string; num: string }) => void;
+    simulateLayerMode?: SimulateLayerMode;
+    dormantPoolData?: Record<string, DormantPoolEntry>;
+    dropoffData?: Record<string, DropoffEntry>;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, onWardClick }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, onWardClick, simulateLayerMode, dormantPoolData, dropoffData }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -118,8 +122,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         setIsLoadingComparison(false);
     }, []);
 
-    // In SIMULATE mode force PROJECTION overlay, hide normal overlay control
-    const effectiveOverlayMode = simulateMode ? 'PROJECTION' : overlayMode;
+    // In SIMULATE mode use simulateLayerMode (defaults to PROJECTION), hide normal overlay control
+    const effectiveOverlayMode = simulateMode ? (simulateLayerMode || 'PROJECTION') : overlayMode;
 
     return (
         <div className="relative w-full h-full">
@@ -149,6 +153,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 focusedCandidate={focusedCandidate}
                 projectionData={simulateMode ? projectionData : undefined}
                 onWardClick={simulateMode ? onWardClick : undefined}
+                dormantPoolData={simulateMode ? dormantPoolData : undefined}
+                dropoffData={simulateMode ? dropoffData : undefined}
             />
 
             {/* Debug toggle button */}

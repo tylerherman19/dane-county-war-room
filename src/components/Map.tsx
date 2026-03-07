@@ -6,6 +6,7 @@ import { PrecinctResult, RaceResult } from '@/lib/api';
 import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData, getCachedAvgVotes } from '@/lib/analysis-data';
 import { OverlayMode } from './MapOverlayControl';
 import { HSL, assignCandidateColors } from '@/lib/candidate-colors';
+import { DormantPoolEntry, DropoffEntry } from '@/lib/projections-data';
 
 // Fix for default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -28,6 +29,8 @@ interface MapProps {
     // SIMULATE mode
     projectionData?: Record<string, number>; // wardKey → ratio vs district mean (1.0 = avg)
     onWardClick?: (ward: { name: string; num: string }) => void;
+    dormantPoolData?: Record<string, DormantPoolEntry>;
+    dropoffData?: Record<string, DropoffEntry>;
 }
 
 export interface HoveredWard {
@@ -141,7 +144,7 @@ function buildProjectionKey(municipality: string, wardNum: string): string {
     return key;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick, dormantPoolData, dropoffData }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
@@ -346,6 +349,62 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     }
                 }
             }
+            // --- CANVASS PRIORITY (dormant voter pool) ---
+            // Shows avg(spring general) - avg(spring primary) turnout per ward.
+            // Darker purple = larger dormant voter pool = higher canvass priority.
+            else if (overlayMode === 'CANVASS_PRIORITY') {
+                if (!dormantPoolData) {
+                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.1 };
+                } else {
+                    const normalizedKey = buildProjectionKey(municipality, wardNum);
+                    const entry = dormantPoolData[normalizedKey];
+                    if (!entry || entry.dormant === 0) {
+                        baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.3, color: '#1e293b', fillOpacity: 0.15 };
+                    } else {
+                        const maxPool = Math.max(...Object.values(dormantPoolData).map(e => e.dormant));
+                        const intensity = maxPool > 0 ? Math.min(entry.dormant / maxPool, 1) : 0;
+                        // Purple gradient: light lavender (low) → deep violet (high)
+                        const h = 270;
+                        const s = Math.round(30 + intensity * 65);
+                        const l = Math.round(85 - intensity * 55);
+                        baseStyle = {
+                            fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                            weight: 1,
+                            opacity: 1,
+                            color: '#334155',
+                            fillOpacity: 0.85,
+                        };
+                    }
+                }
+            }
+            // --- PRIMARY vs GENERAL DROPOFF ---
+            // Shows most recent spring general - most recent spring primary per ward.
+            // Darker blue = more voters skip the primary = higher mobilization opportunity.
+            else if (overlayMode === 'PRIMARY_DROPOFF') {
+                if (!dropoffData) {
+                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.1 };
+                } else {
+                    const normalizedKey = buildProjectionKey(municipality, wardNum);
+                    const entry = dropoffData[normalizedKey];
+                    if (!entry || entry.dropoff === 0) {
+                        baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.3, color: '#1e293b', fillOpacity: 0.15 };
+                    } else {
+                        const maxDropoff = Math.max(...Object.values(dropoffData).map(e => e.dropoff));
+                        const intensity = maxDropoff > 0 ? Math.min(entry.dropoff / maxDropoff, 1) : 0;
+                        // Blue gradient: pale (low dropoff) → deep blue (high dropoff)
+                        const h = 220;
+                        const s = Math.round(20 + intensity * 80);
+                        const l = Math.round(90 - intensity * 52);
+                        baseStyle = {
+                            fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                            weight: 1,
+                            opacity: 1,
+                            color: '#334155',
+                            fillOpacity: 0.85,
+                        };
+                    }
+                }
+            }
             // --- MARGIN INTENSITY ---
             // Shows how competitive each ward is right now: pale = toss-up, saturated = landslide.
             // Useful for GOTV targeting. No historical data needed — works immediately.
@@ -383,7 +442,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode, focusedCandidate]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, dormantPoolData, dropoffData]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -475,7 +534,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? Object.keys(dormantPoolData).length : 0}-${dropoffData ? Object.keys(dropoffData).length : 0}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}
@@ -603,6 +662,41 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                                     <span style={{ fontSize: '10px', color: '#475569' }}>vs {year} baseline · {prevVotes} ballots</span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
                                         {arrow} {Math.abs(deltaPct).toFixed(0)}% &middot; {diffStr} ballots
+                                    </span>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Dropoff row — shown in PRIMARY_DROPOFF overlay mode */}
+                        {overlayMode === 'PRIMARY_DROPOFF' && (() => {
+                            const normalizedKey = buildProjectionKey(hoveredWard.municipality, hoveredWard.wardNum);
+                            const entry = dropoffData?.[normalizedKey];
+                            if (!entry) return null;
+                            const dropoffPct = entry.general > 0 ? ((entry.dropoff / entry.general) * 100).toFixed(1) : '0.0';
+                            return (
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#475569' }}>
+                                        General: {entry.general.toLocaleString()} · Primary: {entry.primary.toLocaleString()}
+                                    </span>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#60a5fa' }}>
+                                        −{entry.dropoff.toLocaleString()} ({dropoffPct}%)
+                                    </span>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Canvass priority row — shown in CANVASS_PRIORITY overlay mode */}
+                        {overlayMode === 'CANVASS_PRIORITY' && (() => {
+                            const normalizedKey = buildProjectionKey(hoveredWard.municipality, hoveredWard.wardNum);
+                            const entry = dormantPoolData?.[normalizedKey];
+                            if (!entry) return null;
+                            return (
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#475569' }}>
+                                        Avg general: {entry.general.toLocaleString()} · Avg primary: {entry.primary.toLocaleString()}
+                                    </span>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#a78bfa' }}>
+                                        ~{entry.dormant.toLocaleString()} dormant
                                     </span>
                                 </div>
                             );

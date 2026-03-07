@@ -23,11 +23,29 @@ export interface WinNumberResult {
     explanation: string;   // human-readable formula step
 }
 
+export type SimulateLayerMode = 'PROJECTION' | 'CANVASS_PRIORITY' | 'PRIMARY_DROPOFF';
+
+export interface DormantPoolEntry {
+    general: number;  // avg spring-general turnout per ward
+    primary: number;  // avg spring-primary turnout per ward
+    dormant: number;  // general - primary
+}
+
+export interface DropoffEntry {
+    general: number;   // most recent spring-general turnout
+    primary: number;   // most recent spring-primary turnout
+    dropoff: number;   // general - primary
+}
+
 export interface SimProjectionUpdate {
     projectionData: Record<string, number>;  // wardKey → ratio vs district mean (for map heatmap)
     highlightedWardKeys: Set<string>;         // wards in selected district (others dimmed)
     whatIfPrecinctResults: PrecinctResult[] | null; // null = not in What If mode
     whatIfMode: boolean;
+    // New SIMULATE layer mode fields
+    simulateLayerMode: SimulateLayerMode;
+    dormantPoolData: Record<string, DormantPoolEntry>;  // wardKey → dormant pool entry
+    dropoffData: Record<string, DropoffEntry>;           // wardKey → dropoff entry
 }
 
 // ── Win Number Math ────────────────────────────────────────────────────────
@@ -238,6 +256,149 @@ function computeMayorProjection(races: HistoricalRaceData[]): DistrictProjection
         wardAvgVotes,
         elections: races,
     };
+}
+
+// ── Dormant Voter Pool Computation ────────────────────────────────────────
+
+/**
+ * Identify local spring primary races (Feb/Mar, month <= 3) from Mayor + Alder types.
+ * Excludes races that have no Madison city wards.
+ */
+function getLocalPrimaryRaces(data: Map<string, HistoricalRaceData[]>): HistoricalRaceData[] {
+    const result: HistoricalRaceData[] = [];
+    for (const raceType of ['Mayor', 'Alder'] as const) {
+        const races = data.get(raceType) || [];
+        for (const race of races) {
+            const month = new Date(race.electionDate).getMonth() + 1;
+            if (month > 3) continue; // skip spring generals and fall elections
+            // Only keep races with at least one Madison ward
+            const hasMadison = Array.from(race.wardResults.keys()).some(k => k.includes('madison'));
+            if (hasMadison) result.push(race);
+        }
+    }
+    return result;
+}
+
+/**
+ * Identify local spring general races (April+, month >= 4 && <= 6) from Mayor + Alder types.
+ * Excludes fall elections (Presidential, Governor) and races with no Madison city wards.
+ */
+function getLocalGeneralRaces(data: Map<string, HistoricalRaceData[]>): HistoricalRaceData[] {
+    const result: HistoricalRaceData[] = [];
+    for (const raceType of ['Mayor', 'Alder'] as const) {
+        const races = data.get(raceType) || [];
+        for (const race of races) {
+            const month = new Date(race.electionDate).getMonth() + 1;
+            if (month < 4 || month > 6) continue; // only April-June spring generals
+            const hasMadison = Array.from(race.wardResults.keys()).some(k => k.includes('madison'));
+            if (hasMadison) result.push(race);
+        }
+    }
+    return result;
+}
+
+/**
+ * Compute dormant voter pool per ward.
+ * dormant = avg spring-general turnout − avg spring-primary turnout
+ *
+ * Only wards that appear in BOTH general and primary races are included.
+ * This reveals how many voters show up for the April local general but skip the February primary.
+ */
+export function computeDormantPool(
+    data: Map<string, HistoricalRaceData[]>
+): Record<string, DormantPoolEntry> {
+    const primaries = getLocalPrimaryRaces(data);
+    const generals = getLocalGeneralRaces(data);
+
+    // Per ward: accumulate total votes and count across primary races
+    const primaryTotals = new Map<string, { sum: number; count: number }>();
+    for (const race of primaries) {
+        for (const [wardKey, wr] of race.wardResults.entries()) {
+            if (!primaryTotals.has(wardKey)) primaryTotals.set(wardKey, { sum: 0, count: 0 });
+            const entry = primaryTotals.get(wardKey)!;
+            entry.sum += wr.totalVotes;
+            entry.count += 1;
+        }
+    }
+
+    // Per ward: accumulate total votes and count across general races
+    const generalTotals = new Map<string, { sum: number; count: number }>();
+    for (const race of generals) {
+        for (const [wardKey, wr] of race.wardResults.entries()) {
+            if (!generalTotals.has(wardKey)) generalTotals.set(wardKey, { sum: 0, count: 0 });
+            const entry = generalTotals.get(wardKey)!;
+            entry.sum += wr.totalVotes;
+            entry.count += 1;
+        }
+    }
+
+    const result: Record<string, DormantPoolEntry> = {};
+    for (const [wardKey, gEntry] of generalTotals.entries()) {
+        const pEntry = primaryTotals.get(wardKey);
+        if (!pEntry || pEntry.count === 0 || gEntry.count === 0) continue;
+        const avgGeneral = Math.round(gEntry.sum / gEntry.count);
+        const avgPrimary = Math.round(pEntry.sum / pEntry.count);
+        result[wardKey] = {
+            general: avgGeneral,
+            primary: avgPrimary,
+            dormant: Math.max(0, avgGeneral - avgPrimary),
+        };
+    }
+    return result;
+}
+
+/**
+ * Compute primary-vs-general dropoff per ward using the most recent cycle.
+ * Uses the single most recent spring general and most recent spring primary
+ * (not necessarily from the same year — takes the newest of each independently).
+ */
+export function computePrimaryDropoff(
+    data: Map<string, HistoricalRaceData[]>
+): Record<string, DropoffEntry> {
+    const primaries = getLocalPrimaryRaces(data);
+    const generals = getLocalGeneralRaces(data);
+
+    if (primaries.length === 0 || generals.length === 0) return {};
+
+    // Sort newest-first (already sorted by build script, but enforce it here)
+    const sortedPrimaries = [...primaries].sort(
+        (a, b) => new Date(b.electionDate).getTime() - new Date(a.electionDate).getTime()
+    );
+    const sortedGenerals = [...generals].sort(
+        (a, b) => new Date(b.electionDate).getTime() - new Date(a.electionDate).getTime()
+    );
+
+    // Build per-ward maps from the most recent primary and general
+    // A ward's most recent data may come from different elections
+    const primaryByWard = new Map<string, number>();
+    for (const race of sortedPrimaries) {
+        for (const [wardKey, wr] of race.wardResults.entries()) {
+            if (!primaryByWard.has(wardKey)) {
+                primaryByWard.set(wardKey, wr.totalVotes);
+            }
+        }
+    }
+
+    const generalByWard = new Map<string, number>();
+    for (const race of sortedGenerals) {
+        for (const [wardKey, wr] of race.wardResults.entries()) {
+            if (!generalByWard.has(wardKey)) {
+                generalByWard.set(wardKey, wr.totalVotes);
+            }
+        }
+    }
+
+    const result: Record<string, DropoffEntry> = {};
+    for (const [wardKey, generalVotes] of generalByWard.entries()) {
+        const primaryVotes = primaryByWard.get(wardKey);
+        if (primaryVotes === undefined) continue;
+        result[wardKey] = {
+            general: generalVotes,
+            primary: primaryVotes,
+            dropoff: Math.max(0, generalVotes - primaryVotes),
+        };
+    }
+    return result;
 }
 
 function computeAlderProjections(
