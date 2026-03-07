@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical, Layers, Users, TrendingDown } from 'lucide-react';
 import {
     DistrictProjection,
     SimProjectionUpdate,
@@ -13,49 +13,55 @@ import {
     loadDistrictProjections,
 } from '@/lib/projections-data';
 import { HistoricalRaceData } from '@/lib/historical-api-data';
+import { OverlayMode } from './MapOverlayControl';
+import { getDormantPoolByWard, rankCanvassWards, CanvassWard } from '@/lib/dormant-voter-data';
 
 interface SimulationsPanelProps {
-    // Ward clicked on map in What If mode (lifted from page.tsx)
     whatIfClickedWard: { name: string; num: string } | null;
     onClearWhatIfClickedWard: () => void;
-    // Callback to push rendering data up to MapWrapper via page.tsx
     onProjectionUpdate: (update: SimProjectionUpdate) => void;
+    simulateOverlayMode: OverlayMode;
+    onSimulateOverlayModeChange: (mode: OverlayMode) => void;
 }
 
-function getPartyColor(party: string | undefined): string {
-    const p = (party || '').toLowerCase();
-    if (p.includes('democrat')) return '#3b82f6';
-    if (p.includes('republican')) return '#ef4444';
-    if (p.includes('green')) return '#22c55e';
-    if (p.includes('libertarian')) return '#eab308';
-    return '#64748b';
-}
-
-export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClickedWard, onProjectionUpdate }: SimulationsPanelProps) {
-    // ── District data (loaded once from historical JSON) ──────────────────
+export default function SimulationsPanel({
+    whatIfClickedWard,
+    onClearWhatIfClickedWard,
+    onProjectionUpdate,
+    simulateOverlayMode,
+    onSimulateOverlayModeChange,
+}: SimulationsPanelProps) {
+    // ── District data ──────────────────────────────────────────────────────
     const [mayorProjection, setMayorProjection] = useState<DistrictProjection | null>(null);
     const [alderDistricts, setAlderDistricts] = useState<DistrictProjection[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // ── Dormant pool data (for Canvass Priority) ───────────────────────────
+    const [dormantPoolData, setDormantPoolData] = useState<Record<string, number> | null>(null);
+
     // ── Core simulation inputs ─────────────────────────────────────────────
-    const [turnoutPct, setTurnoutPct] = useState(100);      // 50–200
-    const [numCandidates, setNumCandidates] = useState(2);  // 2–5
-    const [regDelta, setRegDelta] = useState(0);            // -20 to +50
-    const [selectedKey, setSelectedKey] = useState<string>('Mayor'); // 'Mayor' | 'Alder-N'
+    const [turnoutPct, setTurnoutPct] = useState(100);
+    const [numCandidates, setNumCandidates] = useState(2);
+    const [regDelta, setRegDelta] = useState(0);
+    const [selectedKey, setSelectedKey] = useState<string>('Mayor');
 
     // ── What If state ──────────────────────────────────────────────────────
     const [whatIfOpen, setWhatIfOpen] = useState(false);
     const [whatIfRaceKey, setWhatIfRaceKey] = useState<string>('');
-    const [globalWhatIfMult, setGlobalWhatIfMult] = useState(100); // %
+    const [globalWhatIfMult, setGlobalWhatIfMult] = useState(100);
     const [wardList, setWardList] = useState<Array<{ wardKey: string; label: string; multiplier: number }>>([]);
 
-    // Load historical data on mount
+    // ── Feature 3: Candidate selection for margin impact ───────────────────
+    const [yourCandidate, setYourCandidate] = useState<string>('');
+
+    // Load data on mount
     useEffect(() => {
         loadDistrictProjections().then(({ mayor, alderDistricts }) => {
             setMayorProjection(mayor);
             setAlderDistricts(alderDistricts);
             setIsLoading(false);
         });
+        getDormantPoolByWard().then(setDormantPoolData).catch(() => {});
     }, []);
 
     // ── Resolve selected district ──────────────────────────────────────────
@@ -70,19 +76,18 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
         e => `${e.electionId}|${e.raceId}` === whatIfRaceKey
     ) ?? null;
 
-    // ── Handle map ward clicks (add to What If ward list) ─────────────────
+    // ── Handle map ward clicks ─────────────────────────────────────────────
     useEffect(() => {
         if (!whatIfClickedWard || !whatIfOpen || !whatIfRace) return;
         onClearWhatIfClickedWard();
 
-        // Build a normalized ward key from the clicked ward to find it in the race
         const clickedLabel = `${whatIfClickedWard.name} Ward ${whatIfClickedWard.num}`;
         const wardKey = findWardKeyForClicked(whatIfRace.wardResults, whatIfClickedWard);
         if (!wardKey) return;
 
         type WardEntry = { wardKey: string; label: string; multiplier: number };
         setWardList((prev: WardEntry[]) => {
-            if (prev.some((w: WardEntry) => w.wardKey === wardKey)) return prev; // already in list
+            if (prev.some((w: WardEntry) => w.wardKey === wardKey)) return prev;
             return [...prev, { wardKey, label: clickedLabel, multiplier: globalWhatIfMult }];
         });
     }, [whatIfClickedWard]);
@@ -92,44 +97,11 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
     const expectedTotal = applyMultipliers(baseline, turnoutPct, regDelta);
     const winResult = computeWinNumber(expectedTotal, numCandidates);
 
-    // Compute map projection update (emitted via callback)
-    const buildUpdate = useCallback((): SimProjectionUpdate => {
-        if (!selectedDistrict) {
-            return { projectionData: {}, highlightedWardKeys: new Set(), whatIfPrecinctResults: null, whatIfMode: false };
-        }
-
-        const highlightedWardKeys = new Set(selectedDistrict.wardKeys);
-
-        if (whatIfOpen && whatIfRace) {
-            const perWardOverrides: Record<string, number> = {};
-            wardList.forEach((w: { wardKey: string; label: string; multiplier: number }) => { perWardOverrides[w.wardKey] = w.multiplier; });
-
-            const projectionData = computeWhatIfProjectionData(whatIfRace.wardResults, globalWhatIfMult, perWardOverrides);
-            const whatIfPrecinctResults = toPrecinctResults(whatIfRace.wardResults, globalWhatIfMult, perWardOverrides);
-            return { projectionData, highlightedWardKeys, whatIfPrecinctResults, whatIfMode: true };
-        }
-
-        const projectionData = computeProjectionData(selectedDistrict);
-        return { projectionData, highlightedWardKeys, whatIfPrecinctResults: null, whatIfMode: false };
-    }, [selectedDistrict, whatIfOpen, whatIfRace, globalWhatIfMult, wardList]);
-
-    // Push update to parent whenever relevant state changes
-    useEffect(() => {
-        onProjectionUpdate(buildUpdate());
-    }, [buildUpdate]);
-
-    // Reset What If ward list when race changes
-    useEffect(() => {
-        setWardList([]);
-        setWhatIfRaceKey('');
-        setGlobalWhatIfMult(100);
-    }, [selectedKey]);
-
-    // ── What If adjusted results (for display) ────────────────────────────
-    const whatIfCandidateTotals: { name: string; original: number; adjusted: number }[] = [];
-    if (whatIfOpen && whatIfRace) {
+    // ── What If candidate totals ───────────────────────────────────────────
+    const whatIfCandidateTotals: { name: string; original: number; adjusted: number }[] = useMemo(() => {
+        if (!whatIfOpen || !whatIfRace) return [];
         const perWardOverrides: Record<string, number> = {};
-        wardList.forEach((w: { wardKey: string; label: string; multiplier: number }) => { perWardOverrides[w.wardKey] = w.multiplier; });
+        wardList.forEach(w => { perWardOverrides[w.wardKey] = w.multiplier; });
 
         const candidateTotals: Record<string, { original: number; adjusted: number }> = {};
         for (const [wardKey, wr] of whatIfRace.wardResults.entries()) {
@@ -140,11 +112,106 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                 candidateTotals[c.name].adjusted += Math.round(c.votes * m);
             }
         }
-        for (const [name, totals] of Object.entries(candidateTotals)) {
-            whatIfCandidateTotals.push({ name, ...totals });
+        return Object.entries(candidateTotals)
+            .map(([name, totals]) => ({ name, ...totals }))
+            .sort((a, b) => b.adjusted - a.adjusted);
+    }, [whatIfOpen, whatIfRace, wardList, globalWhatIfMult]);
+
+    // ── Projected total (for Win Number header) ────────────────────────────
+    // In What If mode: sum of all adjusted ward totals from the selected race.
+    // Otherwise: expectedTotal (global sim sliders).
+    const projectedTotal = useMemo(() => {
+        if (whatIfOpen && whatIfRace) {
+            const perWardOverrides: Record<string, number> = {};
+            wardList.forEach(w => { perWardOverrides[w.wardKey] = w.multiplier; });
+            let total = 0;
+            for (const [wardKey, wr] of whatIfRace.wardResults.entries()) {
+                const m = (perWardOverrides[wardKey] ?? globalWhatIfMult) / 100;
+                total += Math.round(wr.totalVotes * m);
+            }
+            return total;
         }
-        whatIfCandidateTotals.sort((a, b) => b.adjusted - a.adjusted);
-    }
+        return expectedTotal;
+    }, [whatIfOpen, whatIfRace, wardList, globalWhatIfMult, expectedTotal]);
+
+    // ── Your share: candidate total to compare against win number ─────────
+    const yourShareTotal = useMemo(() => {
+        if (whatIfOpen && whatIfRace && whatIfCandidateTotals.length > 0) {
+            if (yourCandidate) {
+                const cand = whatIfCandidateTotals.find(c => c.name.trim() === yourCandidate);
+                return cand?.adjusted ?? 0;
+            }
+            return whatIfCandidateTotals[0]?.adjusted ?? 0;
+        }
+        // Base sim: assume even split
+        return numCandidates > 0 ? Math.round(expectedTotal / numCandidates) : expectedTotal;
+    }, [whatIfOpen, whatIfRace, whatIfCandidateTotals, yourCandidate, expectedTotal, numCandidates]);
+
+    const gap = yourShareTotal - winResult.winNumber;
+
+    // ── Candidate names for "Your Candidate" picker ────────────────────────
+    const whatIfCandidateNames = useMemo(() => {
+        if (!whatIfRace) return [];
+        const names = new Set<string>();
+        for (const wr of whatIfRace.wardResults.values()) {
+            for (const c of wr.candidates) {
+                const n = c.name.trim();
+                if (n && !n.toLowerCase().includes('write')) names.add(n);
+            }
+        }
+        return Array.from(names);
+    }, [whatIfRace]);
+
+    // ── Top 15 canvass wards ───────────────────────────────────────────────
+    const topCanvassWards = useMemo((): CanvassWard[] => {
+        if (!dormantPoolData) return [];
+        return rankCanvassWards(dormantPoolData, 15);
+    }, [dormantPoolData]);
+
+    // ── Map projection update ──────────────────────────────────────────────
+    const buildUpdate = useCallback((): SimProjectionUpdate => {
+        if (!selectedDistrict) {
+            return { projectionData: {}, highlightedWardKeys: new Set(), whatIfPrecinctResults: null, whatIfMode: false };
+        }
+
+        const highlightedWardKeys = new Set(selectedDistrict.wardKeys);
+
+        if (whatIfOpen && whatIfRace) {
+            const perWardOverrides: Record<string, number> = {};
+            wardList.forEach((w) => { perWardOverrides[w.wardKey] = w.multiplier; });
+
+            const projectionData = computeWhatIfProjectionData(whatIfRace.wardResults, globalWhatIfMult, perWardOverrides);
+            const whatIfPrecinctResults = toPrecinctResults(whatIfRace.wardResults, globalWhatIfMult, perWardOverrides);
+            return { projectionData, highlightedWardKeys, whatIfPrecinctResults, whatIfMode: true };
+        }
+
+        const projectionData = computeProjectionData(selectedDistrict);
+        return { projectionData, highlightedWardKeys, whatIfPrecinctResults: null, whatIfMode: false };
+    }, [selectedDistrict, whatIfOpen, whatIfRace, globalWhatIfMult, wardList]);
+
+    useEffect(() => {
+        onProjectionUpdate(buildUpdate());
+    }, [buildUpdate]);
+
+    // Reset What If when race changes
+    useEffect(() => {
+        setWardList([]);
+        setWhatIfRaceKey('');
+        setGlobalWhatIfMult(100);
+        setYourCandidate('');
+    }, [selectedKey]);
+
+    // ── Full simulation reset ──────────────────────────────────────────────
+    const handleReset = useCallback(() => {
+        setTurnoutPct(100);
+        setRegDelta(0);
+        setNumCandidates(2);
+        setWhatIfOpen(false);
+        setWardList([]);
+        setGlobalWhatIfMult(100);
+        setYourCandidate('');
+        onSimulateOverlayModeChange('PROJECTION');
+    }, [onSimulateOverlayModeChange]);
 
     if (isLoading) {
         return (
@@ -162,6 +229,62 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
     return (
         <div className="h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-hidden">
+
+            {/* ── WIN NUMBER STICKY HEADER ── */}
+            {selectedDistrict && (
+                <div className="flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-3">
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                        {/* Win Number */}
+                        <div className="text-center">
+                            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Win Number</div>
+                            <div className="text-xl font-black text-violet-400 tabular-nums">
+                                {winResult.winNumber.toLocaleString()}
+                            </div>
+                        </div>
+                        {/* Your Share / Projected */}
+                        <div className="text-center">
+                            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">
+                                {whatIfOpen && whatIfRace ? 'Your Share' : 'Projected'}
+                            </div>
+                            <div className="text-xl font-black text-white tabular-nums">
+                                {yourShareTotal.toLocaleString()}
+                            </div>
+                        </div>
+                        {/* Gap */}
+                        <div className="text-center">
+                            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Gap</div>
+                            <div className={`text-xl font-black tabular-nums ${gap >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {gap >= 0 ? '+' : ''}{gap.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                    {/* Progress bar: your share toward win number */}
+                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-2">
+                        <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                                width: `${winResult.winNumber > 0 ? Math.min((yourShareTotal / winResult.winNumber) * 100, 100) : 0}%`,
+                                background: gap >= 0 ? '#4ade80' : '#7c3aed',
+                            }}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-600">
+                            {gap >= 0 ? '▲ On track to win' : `▼ Need ${Math.abs(gap).toLocaleString()} more votes`}
+                        </span>
+                        <button
+                            onClick={handleReset}
+                            className="flex items-center gap-1 text-[10px] text-slate-600 hover:text-slate-300 transition-colors"
+                            title="Reset all simulation inputs"
+                        >
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── SCROLLABLE BODY ── */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
                 {/* ── Header ── */}
@@ -196,7 +319,7 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                         ))}
                         {!hasMayorData && !hasAlderData && (
                             <div className="text-xs text-amber-400 py-1">
-                                No historical data found. Run <code className="font-mono bg-slate-800 px-1 rounded">npm run build:historical</code> to fetch data.
+                                No historical data. Run <code className="font-mono bg-slate-800 px-1 rounded">npm run build:historical</code>.
                             </div>
                         )}
                     </div>
@@ -209,6 +332,118 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
                 {selectedDistrict && (
                     <>
+                        {/* ── Map Layer Selector ── */}
+                        <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
+                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <Layers className="w-3 h-3" />
+                                Map Layer
+                            </div>
+                            <div className="space-y-1">
+                                {[
+                                    {
+                                        id: 'PROJECTION' as OverlayMode,
+                                        label: 'Turnout Projection',
+                                        desc: 'Historical ward turnout heat map',
+                                        icon: '📊',
+                                    },
+                                    {
+                                        id: 'CANVASS_PRIORITY' as OverlayMode,
+                                        label: 'Canvass Priority',
+                                        desc: 'Dormant voter pool by ward',
+                                        icon: '🚪',
+                                    },
+                                    {
+                                        id: 'PRIMARY_DROPOFF' as OverlayMode,
+                                        label: 'Primary Dropoff',
+                                        desc: 'General → Primary turnout gap',
+                                        icon: '📉',
+                                    },
+                                ].map(opt => {
+                                    const isActive = simulateOverlayMode === opt.id;
+                                    return (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => onSimulateOverlayModeChange(opt.id)}
+                                            className={`w-full text-left px-2.5 py-2 rounded-lg transition-all flex items-center gap-2.5 ${
+                                                isActive
+                                                    ? 'bg-violet-600/20 border border-violet-500/40 text-violet-300'
+                                                    : 'hover:bg-slate-700/50 border border-transparent text-slate-400'
+                                            }`}
+                                        >
+                                            <span className="text-base leading-none">{opt.icon}</span>
+                                            <div className="min-w-0">
+                                                <div className={`text-xs font-semibold ${isActive ? 'text-violet-300' : 'text-slate-300'}`}>
+                                                    {opt.label}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 truncate">{opt.desc}</div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* ── Canvass Priority Sidebar List ── */}
+                        {simulateOverlayMode === 'CANVASS_PRIORITY' && (
+                            <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
+                                <div className="px-3 py-2.5 border-b border-slate-700/40 flex items-center gap-1.5">
+                                    <Users className="w-3 h-3 text-indigo-400" />
+                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Canvass Wards</span>
+                                </div>
+                                {topCanvassWards.length === 0 ? (
+                                    <div className="p-3 text-xs text-slate-600 text-center">Loading dormant voter data…</div>
+                                ) : (
+                                    <div className="divide-y divide-slate-800/60">
+                                        {topCanvassWards.map((ward, i) => (
+                                            <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
+                                                    <div className="text-[10px] text-slate-500">
+                                                        ~{ward.dormantPool.toLocaleString()} dormant voters
+                                                    </div>
+                                                </div>
+                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                                                    ward.priority === 'HIGH'
+                                                        ? 'bg-red-500/20 text-red-400'
+                                                        : ward.priority === 'MEDIUM'
+                                                        ? 'bg-amber-500/20 text-amber-400'
+                                                        : 'bg-slate-700 text-slate-400'
+                                                }`}>
+                                                    {ward.priority}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ── Primary Dropoff Info ── */}
+                        {simulateOverlayMode === 'PRIMARY_DROPOFF' && (
+                            <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <TrendingDown className="w-3 h-3 text-amber-400" />
+                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Primary Dropoff</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 leading-relaxed">
+                                    Darker orange = more voters who show up in April Spring Elections but skip February primaries.
+                                    Hover any ward for exact numbers. These are your highest-leverage canvassing targets.
+                                </p>
+                                <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-600">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-3 h-3 rounded-sm" style={{ background: 'hsl(28, 15%, 90%)' }} />
+                                        Low dropoff
+                                    </div>
+                                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-700 to-amber-500 opacity-60" />
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-3 h-3 rounded-sm" style={{ background: 'hsl(28, 95%, 38%)' }} />
+                                        High dropoff
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* ── Turnout Slider ── */}
                         <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40 space-y-3">
                             <div className="flex items-center justify-between">
@@ -321,7 +556,6 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                             {winResult.isEstimate && (
                                 <div className="mt-2 text-[10px] text-slate-500 leading-relaxed">
                                     In a {numCandidates}-way plurality race, actual win threshold varies.
-                                    Opponents could split unevenly — you may win with fewer, or need more.
                                 </div>
                             )}
                             <div className="mt-3 pt-3 border-t border-slate-700/50 flex justify-between text-xs text-slate-500">
@@ -330,27 +564,29 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                             </div>
                         </div>
 
-                        {/* ── Map Legend ── */}
-                        <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Map Legend</div>
-                            <div className="space-y-1.5 text-xs text-slate-400">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-green-500" />
-                                    High-turnout wards (historically)
+                        {/* ── Map Legend (for PROJECTION mode) ── */}
+                        {simulateOverlayMode === 'PROJECTION' && (
+                            <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Map Legend</div>
+                                <div className="space-y-1.5 text-xs text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-green-500" />
+                                        High-turnout wards (historically)
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
+                                        Low-turnout wards (historically)
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-slate-800 border border-slate-700" />
+                                        Outside selected district
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
-                                    Low-turnout wards (historically)
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-slate-800 border border-slate-700" />
-                                    Outside selected district
+                                <div className="mt-2 text-[10px] text-slate-600">
+                                    Relative turnout within the district across {selectedDistrict.electionsCount} past election{selectedDistrict.electionsCount !== 1 ? 's' : ''}.
                                 </div>
                             </div>
-                            <div className="mt-2 text-[10px] text-slate-600">
-                                Shows relative turnout within the district across {selectedDistrict.electionsCount} past election{selectedDistrict.electionsCount !== 1 ? 's' : ''}. Green = resource efficiency, Red = opportunity.
-                            </div>
-                        </div>
+                        )}
 
                         {/* ── What If Scenario ── */}
                         <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
@@ -380,7 +616,7 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                                         <select
                                             className="w-full bg-slate-800 text-slate-300 text-xs rounded-md px-2 py-2 border border-slate-600 focus:outline-none focus:border-violet-500"
                                             value={whatIfRaceKey}
-                                            onChange={e => { setWhatIfRaceKey(e.target.value); setWardList([]); }}
+                                            onChange={e => { setWhatIfRaceKey(e.target.value); setWardList([]); setYourCandidate(''); }}
                                         >
                                             <option value="">Select an election…</option>
                                             {allElections.map(e => {
@@ -398,6 +634,24 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
                                     {whatIfRace && (
                                         <>
+                                            {/* ── Feature 3: Your Candidate picker ── */}
+                                            <div>
+                                                <div className="text-xs text-slate-400 font-medium mb-1">Your candidate</div>
+                                                <select
+                                                    className="w-full bg-slate-800 text-slate-300 text-xs rounded-md px-2 py-2 border border-slate-600 focus:outline-none focus:border-violet-500"
+                                                    value={yourCandidate}
+                                                    onChange={e => setYourCandidate(e.target.value)}
+                                                >
+                                                    <option value="">Auto — top candidate (by vote share)</option>
+                                                    {whatIfCandidateNames.map(name => (
+                                                        <option key={name} value={name}>{name}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="text-[10px] text-slate-600 mt-1">
+                                                    Used for margin impact labels on ward sliders below.
+                                                </div>
+                                            </div>
+
                                             {/* Global multiplier */}
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
@@ -423,7 +677,7 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                                                 </div>
                                             </div>
 
-                                            {/* Per-ward list */}
+                                            {/* Per-ward overrides */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-2">
                                                     <span className="text-xs text-slate-400 font-medium">Ward overrides</span>
@@ -443,46 +697,85 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-2">
-                                                        {wardList.map((ward, i) => (
-                                                            <div key={ward.wardKey} className="bg-slate-900/60 rounded-lg p-2.5">
-                                                                <div className="flex items-center justify-between mb-1.5">
-                                                                    <span className="text-xs text-slate-300 truncate flex-1">{ward.label}</span>
-                                                                    <div className="flex items-center gap-1.5 ml-2 shrink-0">
-                                                                        <span className="text-xs font-bold text-amber-400">{ward.multiplier}%</span>
-                                                                        <button
-                                                                            onClick={() => setWardList(prev => prev.filter((_, idx) => idx !== i))}
-                                                                            className="text-slate-600 hover:text-red-400 transition-colors"
-                                                                        >
-                                                                            <X className="w-3 h-3" />
-                                                                        </button>
+                                                        {wardList.map((ward, i) => {
+                                                            // ── Feature 3: Margin impact label ──
+                                                            const wardResult = whatIfRace.wardResults.get(ward.wardKey);
+                                                            let marginLabel: { votes: number; pts: number } | null = null;
+                                                            if (wardResult && ward.multiplier !== 100 && projectedTotal > 0 && wardResult.totalVotes > 0) {
+                                                                const deltaVotes = Math.round(wardResult.totalVotes * (ward.multiplier - 100) / 100);
+                                                                const sorted = [...wardResult.candidates].sort((a, b) => b.votes - a.votes);
+                                                                let marginFactor = 0;
+                                                                if (yourCandidate) {
+                                                                    const yourResult = wardResult.candidates.find(c => c.name.trim() === yourCandidate);
+                                                                    const topOpponent = wardResult.candidates
+                                                                        .filter(c => c.name.trim() !== yourCandidate)
+                                                                        .sort((a, b) => b.votes - a.votes)[0];
+                                                                    const yourShare = yourResult ? yourResult.votes / wardResult.totalVotes : 0;
+                                                                    const oppShare = topOpponent ? topOpponent.votes / wardResult.totalVotes : 0;
+                                                                    marginFactor = yourShare - oppShare;
+                                                                } else if (sorted.length >= 2) {
+                                                                    marginFactor = (sorted[0].votes - sorted[1].votes) / wardResult.totalVotes;
+                                                                }
+                                                                const marginVoteDelta = Math.round(deltaVotes * marginFactor);
+                                                                const marginPts = marginVoteDelta / projectedTotal * 100;
+                                                                marginLabel = { votes: deltaVotes, pts: marginPts };
+                                                            }
+
+                                                            return (
+                                                                <div key={ward.wardKey} className="bg-slate-900/60 rounded-lg p-2.5">
+                                                                    <div className="flex items-center justify-between mb-1.5">
+                                                                        <span className="text-xs text-slate-300 truncate flex-1">{ward.label}</span>
+                                                                        <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                                                                            <span className="text-xs font-bold text-amber-400">{ward.multiplier}%</span>
+                                                                            <button
+                                                                                onClick={() => setWardList(prev => prev.filter((_, idx) => idx !== i))}
+                                                                                className="text-slate-600 hover:text-red-400 transition-colors"
+                                                                            >
+                                                                                <X className="w-3 h-3" />
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
+                                                                    <input
+                                                                        type="range" min={0} max={200} step={5}
+                                                                        value={ward.multiplier}
+                                                                        onChange={e => setWardList(prev => prev.map((w, idx) =>
+                                                                            idx === i ? { ...w, multiplier: Number(e.target.value) } : w
+                                                                        ))}
+                                                                        className="w-full h-1 rounded-full appearance-none cursor-pointer"
+                                                                        style={{ accentColor: '#f59e0b' }}
+                                                                    />
+                                                                    {/* ── Feature 3: Margin impact display ── */}
+                                                                    {marginLabel !== null && (
+                                                                        <div className={`mt-1.5 text-[10px] font-mono px-1.5 py-1 rounded ${
+                                                                            marginLabel.votes >= 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
+                                                                        }`}>
+                                                                            {marginLabel.votes >= 0 ? '+' : ''}{marginLabel.votes.toLocaleString()} votes
+                                                                            {' · '}margin {marginLabel.pts >= 0 ? '+' : ''}{marginLabel.pts.toFixed(1)} pts
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                                <input
-                                                                    type="range" min={0} max={200} step={5}
-                                                                    value={ward.multiplier}
-                                                                    onChange={e => setWardList(prev => prev.map((w, idx) =>
-                                                                        idx === i ? { ...w, multiplier: Number(e.target.value) } : w
-                                                                    ))}
-                                                                    className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                                                                    style={{ accentColor: '#f59e0b' }}
-                                                                />
-                                                            </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Adjusted results */}
+                                            {/* Adjusted results summary */}
                                             {whatIfCandidateTotals.length > 0 && (
                                                 <div className="bg-slate-900/60 rounded-lg p-3 space-y-2">
                                                     <div className="text-xs text-slate-400 font-medium mb-2">Adjusted Result</div>
                                                     {whatIfCandidateTotals.map((c, i) => {
                                                         const diff = c.adjusted - c.original;
                                                         const isWinner = i === 0;
+                                                        const isYours = yourCandidate && c.name.trim() === yourCandidate;
                                                         return (
                                                             <div key={c.name} className={`${isWinner ? 'text-white' : 'text-slate-400'}`}>
                                                                 <div className="flex justify-between items-baseline text-xs mb-1">
-                                                                    <span className="font-medium truncate flex-1">{isWinner ? '▲ ' : '\u00a0\u00a0'}{c.name}</span>
+                                                                    <span className="font-medium truncate flex-1">
+                                                                        {isWinner ? '▲ ' : '\u00a0\u00a0'}
+                                                                        {c.name}
+                                                                        {isYours && <span className="ml-1 text-[9px] text-violet-400 bg-violet-400/10 px-1 py-0.5 rounded">YOU</span>}
+                                                                    </span>
                                                                     <div className="ml-2 shrink-0 flex items-baseline gap-1.5">
                                                                         <span className="font-bold">{c.adjusted.toLocaleString()}</span>
                                                                         <span className={`text-[10px] ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-slate-600'}`}>
@@ -495,7 +788,7 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                                                                         className="h-full rounded-full transition-all duration-300"
                                                                         style={{
                                                                             width: `${whatIfCandidateTotals[0].adjusted > 0 ? (c.adjusted / whatIfCandidateTotals[0].adjusted) * 100 : 0}%`,
-                                                                            background: isWinner ? '#7c3aed' : '#475569',
+                                                                            background: isYours ? '#7c3aed' : isWinner ? '#4ade80' : '#475569',
                                                                         }}
                                                                     />
                                                                 </div>
@@ -504,7 +797,7 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                                                     })}
                                                     {whatIfCandidateTotals.length >= 2 && (
                                                         <div className="pt-2 border-t border-slate-800 text-xs text-slate-500 flex justify-between">
-                                                            <span>Margin</span>
+                                                            <span>Margin (1st vs 2nd)</span>
                                                             <span className={`font-semibold ${whatIfCandidateTotals[0].adjusted > whatIfCandidateTotals[1].adjusted ? 'text-green-400' : 'text-red-400'}`}>
                                                                 {(whatIfCandidateTotals[0].adjusted - whatIfCandidateTotals[1].adjusted) > 0 ? '+' : ''}
                                                                 {(whatIfCandidateTotals[0].adjusted - whatIfCandidateTotals[1].adjusted).toLocaleString()} votes
@@ -527,11 +820,6 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Try to find a matching ward key in the race's wardResults for a clicked ward.
- * The clicked ward comes from GeoJSON properties (municipality name + ward number),
- * while wardResults keys are normalized (e.g. "madison-city-45").
- */
 function findWardKeyForClicked(
     wardResults: Map<string, { candidates: { name: string; votes: number }[]; totalVotes: number; topCandidate: string; margin: number }>,
     clicked: { name: string; num: string },
@@ -540,9 +828,7 @@ function findWardKeyForClicked(
     const nameLower = clicked.name.toLowerCase();
 
     for (const key of wardResults.keys()) {
-        // Key ends with the ward number
         if (!key.endsWith(`-${num}`)) continue;
-        // Key contains a fragment of the municipality name
         const keyCore = key.replace(/-\d+$/, '').replace(/-city|-town|-village/, '').replace(/-/g, ' ');
         if (nameLower.includes(keyCore) || keyCore.split(' ').some(w => nameLower.includes(w))) {
             return key;

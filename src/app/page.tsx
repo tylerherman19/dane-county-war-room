@@ -16,6 +16,7 @@ import {
 } from '@/hooks/useElectionData';
 import { SimProjectionUpdate } from '@/lib/projections-data';
 import { PrecinctResult } from '@/lib/api';
+import { OverlayMode } from '@/components/MapOverlayControl';
 
 export default function Home() {
   // ── Top-level mode ───────────────────────────────────────────────────────
@@ -35,12 +36,17 @@ export default function Home() {
     whatIfMode: false,
   });
   const [simClickedWard, setSimClickedWard] = useState<{ name: string; num: string } | null>(null);
+  // Which overlay layer is active in SIMULATE mode (controlled from SimulationsPanel)
+  const [simulateOverlayMode, setSimulateOverlayMode] = useState<OverlayMode>('PROJECTION');
+
+  // Reset simulateOverlayMode when leaving SIMULATE mode
+  useEffect(() => {
+    if (viewMode !== 'SIMULATE') setSimulateOverlayMode('PROJECTION');
+  }, [viewMode]);
 
   // ── Data Hooks (disabled in SIMULATE mode) ───────────────────────────────
   const { elections, isError: electionsError } = useElections();
 
-  // Auto-select election: always lock to latest in LIVE, free in ARCHIVE.
-  // No-op in SIMULATE mode (no live data needed).
   useEffect(() => {
     if (viewMode === 'SIMULATE') return;
     if (!elections || elections.length === 0) return;
@@ -53,21 +59,18 @@ export default function Home() {
     }
   }, [elections, viewMode]); // intentionally omit selectedElectionId to avoid loop
 
-  // Clear race + map selection on election change
   useEffect(() => {
     setSelectedRaceId(null);
     setSelectedWard(null);
     setFocusedCandidate(null);
   }, [selectedElectionId]);
 
-  // Clear focused candidate on race change
   useEffect(() => {
     setFocusedCandidate(null);
   }, [selectedRaceId]);
 
   const { races } = useRaces(viewMode !== 'SIMULATE' ? selectedElectionId : null);
 
-  // Auto-select highest-priority race
   const RACE_PRIORITY: Record<string, number> = {
     Presidential: 0, Governor: 1, Senate: 2, Congress: 3,
     Mayor: 4, StateSenate: 5, Assembly: 6, Referendum: 7, Other: 8,
@@ -116,6 +119,8 @@ export default function Home() {
             whatIfClickedWard={simClickedWard}
             onClearWhatIfClickedWard={() => setSimClickedWard(null)}
             onProjectionUpdate={setSimUpdate}
+            simulateOverlayMode={simulateOverlayMode}
+            onSimulateOverlayModeChange={setSimulateOverlayMode}
           />
         ) : (
           <Sidebar
@@ -157,6 +162,7 @@ export default function Home() {
           simulateMode={viewMode === 'SIMULATE'}
           projectionData={viewMode === 'SIMULATE' ? simUpdate.projectionData : undefined}
           onWardClick={viewMode === 'SIMULATE' ? setSimClickedWard : undefined}
+          simulateOverlayMode={viewMode === 'SIMULATE' ? simulateOverlayMode : undefined}
         />
       </div>
     </Layout>

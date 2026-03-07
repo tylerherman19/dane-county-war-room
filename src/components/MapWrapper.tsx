@@ -8,6 +8,7 @@ import { HoveredWard } from './Map';
 import { isHistoricalDataLoaded, getHistoricalRaceInfo, getExpectedTotalVotes, loadHistoricalRaceById, normalizeWardName } from '@/lib/analysis-data';
 import { getAvailableRacesWithOverlap, HistoricalRaceSummary } from '@/lib/historical-api-data';
 import { assignCandidateColors } from '@/lib/candidate-colors';
+import { getDormantPoolByWard, getDropoffByWard, DropoffInfo } from '@/lib/dormant-voter-data';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
 const DebugPanel = dynamic(() => import('./DebugPanel'), { ssr: false });
@@ -24,9 +25,10 @@ interface MapWrapperProps {
     simulateMode?: boolean;
     projectionData?: Record<string, number>;
     onWardClick?: (ward: { name: string; num: string }) => void;
+    simulateOverlayMode?: OverlayMode;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, onWardClick }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, onWardClick, simulateOverlayMode }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -36,8 +38,17 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
     const [isLoadingComparison, setIsLoadingComparison] = useState(false);
     const [historicalTotalVotes, setHistoricalTotalVotes] = useState<number | null>(null);
 
+    // SIMULATE overlay data (loaded once when simulateMode is first true)
+    const [dormantPoolData, setDormantPoolData] = useState<Record<string, number> | undefined>(undefined);
+    const [dropoffData, setDropoffData] = useState<Record<string, DropoffInfo> | undefined>(undefined);
+
+    useEffect(() => {
+        if (!simulateMode) return;
+        getDormantPoolByWard().then(setDormantPoolData).catch(() => {});
+        getDropoffByWard().then(setDropoffData).catch(() => {});
+    }, [simulateMode]);
+
     // Reset overlay + label on race change, then poll until historical data loads.
-    // Combined into one effect so reset always happens before polling begins.
     useEffect(() => {
         setOverlayMode('NONE');
         setHistoricalLabel(null);
@@ -56,9 +67,6 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         return () => clearInterval(id);
     }, [raceResult?.id]);
 
-    // Candidate color legend — derived from raceResult, used by MapOverlayControl
-    // to render per-candidate swatches in the NONE and SWING mode legends.
-    // For Presidential races, only D and R candidates are shown.
     const candidateLegend = useMemo(() => {
         if (!raceResult?.candidates?.length) return [];
         const isPresidential = raceResult.type === 'Presidential';
@@ -77,8 +85,6 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
             });
     }, [raceResult]);
 
-    // Deduplicated normalized ward keys for the current live race.
-    // Used to filter the comparison picker to geographically relevant races only.
     const currentWardKeys = useMemo(() => {
         const seen = new Set<string>();
         const keys: string[] = [];
@@ -89,8 +95,6 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         return keys;
     }, [precinctResults]);
 
-    // Once historical data loads, fetch the comparison race list filtered to
-    // races that share ward keys with the current race (same geography).
     useEffect(() => {
         if (!historicalLabel) return;
         getAvailableRacesWithOverlap(currentWardKeys).then(setAvailableRaces).catch(() => {});
@@ -98,12 +102,11 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
 
     const handleOverlayChange = useCallback((mode: OverlayMode) => {
         setOverlayMode(mode);
-        onCandidateReset(); // switching overlays clears the candidate focus view
+        onCandidateReset();
     }, [onCandidateReset]);
 
     const handleComparisonChange = useCallback(async (key: string) => {
         if (!key) {
-            // Reset to default — re-trigger the auto-load via polling
             setSelectedComparisonKey(null);
             return;
         }
@@ -118,8 +121,10 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         setIsLoadingComparison(false);
     }, []);
 
-    // In SIMULATE mode force PROJECTION overlay, hide normal overlay control
-    const effectiveOverlayMode = simulateMode ? 'PROJECTION' : overlayMode;
+    // In SIMULATE mode use the simulateOverlayMode prop; otherwise use local overlayMode
+    const effectiveOverlayMode: OverlayMode = simulateMode
+        ? (simulateOverlayMode ?? 'PROJECTION')
+        : overlayMode;
 
     return (
         <div className="relative w-full h-full">
@@ -149,6 +154,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 focusedCandidate={focusedCandidate}
                 projectionData={simulateMode ? projectionData : undefined}
                 onWardClick={simulateMode ? onWardClick : undefined}
+                dormantPoolData={simulateMode ? dormantPoolData : undefined}
+                dropoffData={simulateMode ? dropoffData : undefined}
             />
 
             {/* Debug toggle button */}
