@@ -6,6 +6,7 @@ import { PrecinctResult, RaceResult } from '@/lib/api';
 import { getWardAnalysis, WardAnalysis, startLoadingHistoricalData, getCachedAvgVotes } from '@/lib/analysis-data';
 import { OverlayMode } from './MapOverlayControl';
 import { HSL, assignCandidateColors } from '@/lib/candidate-colors';
+import { DropoffInfo } from '@/lib/dormant-voter-data';
 
 // Fix for default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -28,6 +29,9 @@ interface MapProps {
     // SIMULATE mode
     projectionData?: Record<string, number>; // wardKey → ratio vs district mean (1.0 = avg)
     onWardClick?: (ward: { name: string; num: string }) => void;
+    // SIMULATE overlay data
+    dormantPoolData?: Record<string, number>;           // wardKey → dormant voter pool size
+    dropoffData?: Record<string, DropoffInfo>;          // wardKey → dropoff info
 }
 
 export interface HoveredWard {
@@ -39,6 +43,9 @@ export interface HoveredWard {
     y: number;
     analysis: WardAnalysis | null;
     fillColor: string;
+    // SIMULATE overlay fields
+    dormantPool?: number;
+    dropoffInfo?: DropoffInfo;
 }
 
 function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null; onReset?: () => void }) {
@@ -66,16 +73,8 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
             });
 
             if (layer.getLayers().length > 0) {
-                // Initial Zoom
                 map.fitBounds(layer.getBounds(), { maxZoom: 14, animate: true });
 
-                // Sequence:
-                // 0s: Zoomed in, Pulse starts
-                // 2s: Pulse ends, Zoom resets to county view
-                // 2s-5s: Ward stays highlighted (pulsing or static high vis)
-                // 5s: Highlight removed
-
-                // Apply Pulse
                 map.eachLayer((l: any) => {
                     if (l.feature && l.feature.properties) {
                         const wardNum = parseInt(l.feature.properties.WardNumber);
@@ -89,15 +88,12 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
                                 if (l.getElement) {
                                     const el = l.getElement();
                                     if (el) {
-                                        // Start Pulse
                                         el.classList.add('ward-pulse');
 
-                                        // After 2s: Reset Zoom but keep highlight
                                         setTimeout(() => {
                                             map.flyTo([43.0731, -89.4012], 10, { duration: 1.5 });
                                         }, 2000);
 
-                                        // After 5s: Remove Pulse/Highlight AND Reset Selection
                                         setTimeout(() => {
                                             el.classList.remove('ward-pulse');
                                             if (onReset) onReset();
@@ -141,28 +137,38 @@ function buildProjectionKey(municipality: string, wardNum: string): string {
     return key;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick, dormantPoolData, dropoffData }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
     const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
 
-    // Start loading historical data when the race changes (keyed on id, not type,
-    // so 30-second vote updates don't trigger a redundant reload).
+    // Start loading historical data when the race changes
     useEffect(() => {
         if (raceResult?.id && raceResult?.type) {
             startLoadingHistoricalData(raceResult.type);
         }
     }, [raceResult?.id]);
 
+    // Precompute max values for normalizing SIMULATE overlay colors
+    const maxDormantPool = useMemo(() => {
+        if (!dormantPoolData) return 1;
+        const vals = Object.values(dormantPoolData);
+        return vals.length > 0 ? Math.max(...vals, 1) : 1;
+    }, [dormantPoolData]);
+
+    const maxDropoff = useMemo(() => {
+        if (!dropoffData) return 1;
+        const vals = Object.values(dropoffData).map(d => d.dropoff);
+        return vals.length > 0 ? Math.max(...vals, 1) : 1;
+    }, [dropoffData]);
+
     // OPTIMIZATION: Create a fast lookup dictionary for results
-    // Key: "Municipality Name-WardNumber" (normalized)
-    // Value: PrecinctResult[] (usually just one, but keeping array structure for compatibility)
     const resultsMap = useMemo(() => {
         const map: Record<string, PrecinctResult[]> = {};
         if (precinctResults) {
             precinctResults.forEach(r => {
-                const wardNum = parseInt(r.wardNumber).toString(); // Normalize to string "1", "2"
+                const wardNum = parseInt(r.wardNumber).toString();
                 if (!map[wardNum]) map[wardNum] = [];
                 map[wardNum].push(r);
             });
@@ -183,21 +189,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             .catch(err => console.error('Error loading GeoJSON:', err));
     }, []);
 
-    // Memoize style function to prevent recreation on every render
     const style = useCallback((feature: any, currentSelectedWard: { name: string; num: string } | null = null) => {
         const municipality = feature.properties.NAME;
-        const wardNum = parseInt(feature.properties.WardNumber).toString(); // Normalize
+        const wardNum = parseInt(feature.properties.WardNumber).toString();
 
-        // OPTIMIZED LOOKUP: Get candidates by ward number first
-        const potentialMatches = resultsMap[wardNum] || [];
-
-        // Then do the string matching on this small subset
-        const relevantResults = potentialMatches.filter((r: PrecinctResult) =>
-            r.precinctName.toLowerCase().includes(municipality.toLowerCase()) ||
-            municipality.toLowerCase().includes(r.precinctName.toLowerCase())
-        );
-
-        // Base style for empty/irrelevant wards
         let baseStyle = {
             fillColor: '#0f172a',
             weight: 1,
@@ -206,134 +201,134 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             fillOpacity: 0.3
         };
 
-        if (relevantResults.length > 0) {
-            const total = relevantResults[0].ballotscast;
-            const sorted = relevantResults.sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
-            const winner = sorted[0];
-            const runnerUp = sorted[1];
+        // ── SIMULATE-SPECIFIC OVERLAYS ──────────────────────────────────────────
+        // These operate on ward keys (not precinctResults) and work for ALL wards.
 
-            // Get Analysis Data
-            const analysis = getWardAnalysis(wardNum, municipality);
-
-            // --- CANDIDATE FOCUS VIEW ---
-            // When a candidate is selected in the sidebar, show their vote share per ward
-            // as a gradient: pale = few votes, saturated = dominant share.
-            // Wards where the focused candidate WON get a glowing hue-colored border.
-            if (focusedCandidate) {
-                const candidateResult = relevantResults.find(
-                    r => r.candidateName.trim() === focusedCandidate.trim()
-                );
-                if (candidateResult && total > 0) {
-                    const baseColor = candidateColors[focusedCandidate.trim()] || { h: 215, s: 80, l: 50 };
-                    const votePct = candidateResult.votes / total; // 0–1
-                    const t = Math.min(votePct / 0.7, 1.0); // normalize: 70%+ → full saturation
-                    const lightness = Math.round(88 - t * 52); // 88% (0 votes) → 36% (dominant)
-                    const saturation = Math.round(20 + t * Math.max(0, baseColor.s - 20));
-                    const isWinner = winner.candidateName.trim() === focusedCandidate.trim();
-                    baseStyle = {
-                        fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
-                        weight: isWinner ? 2 : 1,
-                        opacity: isWinner ? 0.9 : 1,
-                        color: isWinner ? `hsl(${baseColor.h}, 80%, 70%)` : '#334155',
-                        fillOpacity: 0.85,
-                    };
+        if (overlayMode === 'CANVASS_PRIORITY') {
+            if (dormantPoolData) {
+                const normalizedKey = buildProjectionKey(municipality, wardNum);
+                const pool = dormantPoolData[normalizedKey];
+                if (pool !== undefined) {
+                    if (pool > 0) {
+                        const intensity = Math.min(pool / maxDormantPool, 1.0);
+                        // Indigo palette: light (few dormant) → deep indigo (many dormant)
+                        const l = Math.round(90 - intensity * 54);
+                        const s = Math.round(15 + intensity * 80);
+                        baseStyle = {
+                            fillColor: `hsl(243, ${s}%, ${l}%)`,
+                            weight: 1,
+                            opacity: 1,
+                            color: '#334155',
+                            fillOpacity: 0.85,
+                        };
+                    } else {
+                        // Zero dormant pool — very faint
+                        baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.4, color: '#334155', fillOpacity: 0.3 };
+                    }
                 } else {
-                    // Candidate has no votes here — very faint
-                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.3, color: '#1e293b', fillOpacity: 0.15 };
+                    // Ward not in data — dim
+                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
                 }
             }
-            // --- STANDARD VIEW ---
-            else if (overlayMode === 'NONE') {
-                const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 75, l: 50 };
-
-                // Gradient: normalize margin 0–45% → t 0–1.
-                // Lightness: 82% (pale toss-up) → 42% (deep landslide) — 40pt range.
-                // Saturation: ramps from 25% up to the candidate's full saturation.
-                // This gives crisp color for safe seats and near-white for toss-ups.
-                const t = Math.min(margin / 0.45, 1.0);
-                const lightness = Math.round(82 - t * 40);
-                const saturation = Math.round(25 + t * Math.max(0, baseColor.s - 25));
-
-                baseStyle = {
-                    fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
-                    weight: 1,
-                    opacity: 1,
-                    color: '#334155',
-                    fillOpacity: 0.75
-                };
-            }
-            // --- TURNOUT HEATMAP (VOTE VOLUME) ---
-            // Compares each ward's current ballots cast to its own historical baseline.
-            // Per-ward comparison is preferred (accurate); falls back to the pre-computed
-            // county-wide average when the ward key doesn't match historical data.
-            // Both paths use O(1) lookups — no per-render iteration of the full cache.
-            // Red = below baseline, Green = above baseline.
-            else if (overlayMode === 'TURNOUT') {
-                const wardAnalysis = getWardAnalysis(wardNum, municipality);
-                // Prefer the ward's own historical vote count; fall back to county avg.
-                const historicalRef = wardAnalysis.historicalVotes > 0
-                    ? wardAnalysis.historicalVotes
-                    : (getCachedAvgVotes() ?? 0);
-
-                if (historicalRef === 0 || total === 0) {
-                    // Historical data not yet loaded — neutral grey
-                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
-                } else {
-                    const ratio = total / historicalRef;
-
-                    let h: number, s: number, l: number;
-                    if (ratio < 1.0) {
-                        // Below historical baseline — red gradient
-                        h = 0;
-                        const intensity = Math.min((1.0 - ratio) / 0.5, 1);
-                        l = 90 - (intensity * 40);
-                        s = intensity * 80;
+        } else if (overlayMode === 'PRIMARY_DROPOFF') {
+            if (dropoffData) {
+                const normalizedKey = buildProjectionKey(municipality, wardNum);
+                const info = dropoffData[normalizedKey];
+                if (info) {
+                    if (info.dropoff > 0) {
+                        const intensity = Math.min(info.dropoff / maxDropoff, 1.0);
+                        // Amber/orange palette: light (low dropoff) → deep orange (high dropoff)
+                        const l = Math.round(90 - intensity * 52);
+                        const s = Math.round(15 + intensity * 85);
+                        baseStyle = {
+                            fillColor: `hsl(28, ${s}%, ${l}%)`,
+                            weight: 1,
+                            opacity: 1,
+                            color: '#334155',
+                            fillOpacity: 0.85,
+                        };
                     } else {
-                        // Above historical baseline — green gradient
-                        // Starts near-white at baseline (matching red branch) and ramps to deep green.
-                        h = 140;
-                        const intensity = Math.min((ratio - 1.0) / 0.5, 1);
-                        l = 90 - (intensity * 50);
-                        s = intensity * 100;
+                        baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.4, color: '#334155', fillOpacity: 0.3 };
                     }
+                } else {
+                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                }
+            }
+        } else {
+            // ── STANDARD OVERLAYS (require precinctResults) ──────────────────────
+            const potentialMatches = resultsMap[wardNum] || [];
+            const relevantResults = potentialMatches.filter((r: PrecinctResult) =>
+                r.precinctName.toLowerCase().includes(municipality.toLowerCase()) ||
+                municipality.toLowerCase().includes(r.precinctName.toLowerCase())
+            );
 
+            if (relevantResults.length > 0) {
+                const total = relevantResults[0].ballotscast;
+                const sorted = relevantResults.sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
+                const winner = sorted[0];
+                const runnerUp = sorted[1];
+
+                const analysis = getWardAnalysis(wardNum, municipality);
+
+                // --- CANDIDATE FOCUS VIEW ---
+                if (focusedCandidate) {
+                    const candidateResult = relevantResults.find(
+                        r => r.candidateName.trim() === focusedCandidate.trim()
+                    );
+                    if (candidateResult && total > 0) {
+                        const baseColor = candidateColors[focusedCandidate.trim()] || { h: 215, s: 80, l: 50 };
+                        const votePct = candidateResult.votes / total;
+                        const t = Math.min(votePct / 0.7, 1.0);
+                        const lightness = Math.round(88 - t * 52);
+                        const saturation = Math.round(20 + t * Math.max(0, baseColor.s - 20));
+                        const isWinner = winner.candidateName.trim() === focusedCandidate.trim();
+                        baseStyle = {
+                            fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
+                            weight: isWinner ? 2 : 1,
+                            opacity: isWinner ? 0.9 : 1,
+                            color: isWinner ? `hsl(${baseColor.h}, 80%, 70%)` : '#334155',
+                            fillOpacity: 0.85,
+                        };
+                    } else {
+                        baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.3, color: '#1e293b', fillOpacity: 0.15 };
+                    }
+                }
+                // --- STANDARD VIEW ---
+                else if (overlayMode === 'NONE') {
+                    const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                    const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 75, l: 50 };
+                    const t = Math.min(margin / 0.45, 1.0);
+                    const lightness = Math.round(82 - t * 40);
+                    const saturation = Math.round(25 + t * Math.max(0, baseColor.s - 25));
                     baseStyle = {
-                        fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                        fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
                         weight: 1,
                         opacity: 1,
                         color: '#334155',
                         fillOpacity: 0.75
                     };
                 }
-            }
-            // --- PROJECTION HEATMAP (SIMULATE mode) ---
-            // Shows relative historical turnout within the selected district.
-            // Green = above-average turnout ward (protect/grow), Red = below-average (opportunity).
-            // projectionData values are ratios: 1.0 = district mean, >1 = green, <1 = red.
-            else if (overlayMode === 'PROJECTION') {
-                // Not in the selected district — show dimmed
-                if (!projectionData) {
-                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.1 };
-                } else {
-                    // Build normalized ward key to look up projection ratio
-                    const normalizedKey = buildProjectionKey(municipality, wardNum);
-                    const ratio = projectionData[normalizedKey] ?? -1;
+                // --- TURNOUT HEATMAP ---
+                else if (overlayMode === 'TURNOUT') {
+                    const wardAnalysis = getWardAnalysis(wardNum, municipality);
+                    const historicalRef = wardAnalysis.historicalVotes > 0
+                        ? wardAnalysis.historicalVotes
+                        : (getCachedAvgVotes() ?? 0);
 
-                    if (ratio < 0) {
-                        // Ward not in selected district → dim
-                        baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                    if (historicalRef === 0 || total === 0) {
+                        baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
                     } else {
+                        const ratio = total / historicalRef;
                         let h: number, s: number, l: number;
                         if (ratio < 1.0) {
-                            h = 0; // red — below district average
-                            const intensity = Math.min((1.0 - ratio) / 0.6, 1);
-                            l = 90 - intensity * 45;
-                            s = intensity * 85;
+                            h = 0;
+                            const intensity = Math.min((1.0 - ratio) / 0.5, 1);
+                            l = 90 - (intensity * 40);
+                            s = intensity * 80;
                         } else {
-                            h = 140; // green — above district average
-                            const intensity = Math.min((ratio - 1.0) / 0.6, 1);
-                            l = 90 - intensity * 52;
+                            h = 140;
+                            const intensity = Math.min((ratio - 1.0) / 0.5, 1);
+                            l = 90 - (intensity * 50);
                             s = intensity * 100;
                         }
                         baseStyle = {
@@ -341,26 +336,55 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             weight: 1,
                             opacity: 1,
                             color: '#334155',
-                            fillOpacity: 0.8,
+                            fillOpacity: 0.75
                         };
                     }
                 }
-            }
-            // --- MARGIN INTENSITY ---
-            // Shows how competitive each ward is right now: pale = toss-up, saturated = landslide.
-            // Useful for GOTV targeting. No historical data needed — works immediately.
-            else if (overlayMode === 'SWING') {
-                const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                const winnerColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 80, l: 50 };
-                // 0% margin → pale/white; 40%+ margin → fully saturated winner color
-                const intensity = Math.min(margin / 0.4, 1);
-                baseStyle = {
-                    fillColor: `hsl(${winnerColor.h}, ${Math.round(intensity * 85)}%, ${Math.round(90 - intensity * 40)}%)`,
-                    weight: 1,
-                    opacity: 1,
-                    color: '#334155',
-                    fillOpacity: 0.8
-                };
+                // --- PROJECTION HEATMAP (SIMULATE What If mode) ---
+                else if (overlayMode === 'PROJECTION') {
+                    if (!projectionData) {
+                        baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.1 };
+                    } else {
+                        const normalizedKey = buildProjectionKey(municipality, wardNum);
+                        const ratio = projectionData[normalizedKey] ?? -1;
+                        if (ratio < 0) {
+                            baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                        } else {
+                            let h: number, s: number, l: number;
+                            if (ratio < 1.0) {
+                                h = 0;
+                                const intensity = Math.min((1.0 - ratio) / 0.6, 1);
+                                l = 90 - intensity * 45;
+                                s = intensity * 85;
+                            } else {
+                                h = 140;
+                                const intensity = Math.min((ratio - 1.0) / 0.6, 1);
+                                l = 90 - intensity * 52;
+                                s = intensity * 100;
+                            }
+                            baseStyle = {
+                                fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                                weight: 1,
+                                opacity: 1,
+                                color: '#334155',
+                                fillOpacity: 0.8,
+                            };
+                        }
+                    }
+                }
+                // --- MARGIN INTENSITY ---
+                else if (overlayMode === 'SWING') {
+                    const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+                    const winnerColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 80, l: 50 };
+                    const intensity = Math.min(margin / 0.4, 1);
+                    baseStyle = {
+                        fillColor: `hsl(${winnerColor.h}, ${Math.round(intensity * 85)}%, ${Math.round(90 - intensity * 40)}%)`,
+                        weight: 1,
+                        opacity: 1,
+                        color: '#334155',
+                        fillOpacity: 0.8
+                    };
+                }
             }
         }
 
@@ -371,19 +395,19 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     municipality.toLowerCase().includes(currentSelectedWard.name.toLowerCase()));
 
             if (!isSelected) {
-                baseStyle.fillOpacity = baseStyle.fillOpacity * 0.1; // Dim significantly
-                baseStyle.opacity = 0.1; // Fade borders
+                baseStyle.fillOpacity = baseStyle.fillOpacity * 0.1;
+                baseStyle.opacity = 0.1;
                 baseStyle.color = '#1e293b';
             } else {
-                baseStyle.weight = 3; // Thicker border for selected
-                baseStyle.color = '#ffffff'; // White border for selected
+                baseStyle.weight = 3;
+                baseStyle.color = '#ffffff';
                 baseStyle.opacity = 1;
-                baseStyle.fillOpacity = 0.9; // High visibility
+                baseStyle.fillOpacity = 0.9;
             }
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode, focusedCandidate]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -399,6 +423,14 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         const defaultBorderColor = hasData ? '#334155' : '#1e293b';
         const defaultBorderOpacity = hasData ? 1 : 0.5;
 
+        // Check for SIMULATE overlay data (can hover even without precinctResults)
+        const isSimOverlay = overlayMode === 'CANVASS_PRIORITY' || overlayMode === 'PRIMARY_DROPOFF';
+        const normalizedKey = isSimOverlay ? buildProjectionKey(municipality, wardNum) : '';
+        const hasSimData = isSimOverlay && (
+            (overlayMode === 'CANVASS_PRIORITY' && dormantPoolData && normalizedKey in dormantPoolData) ||
+            (overlayMode === 'PRIMARY_DROPOFF' && dropoffData && normalizedKey in dropoffData)
+        );
+
         // In PROJECTION mode with onWardClick, ward click adds ward to What If list
         const isProjectionClickable = overlayMode === 'PROJECTION' && !!onWardClick;
 
@@ -407,12 +439,31 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 e.target.setStyle({ weight: 2, color: '#ffffff', opacity: 1 });
                 e.target.bringToFront();
 
-                if (hasData) {
+                if (hasSimData) {
+                    // SIMULATE overlay tooltip
+                    const ward: HoveredWard = {
+                        municipality,
+                        wardNum,
+                        results: [],
+                        total: 0,
+                        x: e.originalEvent.clientX,
+                        y: e.originalEvent.clientY,
+                        analysis: null,
+                        fillColor: '',
+                        dormantPool: overlayMode === 'CANVASS_PRIORITY'
+                            ? dormantPoolData![normalizedKey]
+                            : undefined,
+                        dropoffInfo: overlayMode === 'PRIMARY_DROPOFF'
+                            ? dropoffData![normalizedKey]
+                            : undefined,
+                    };
+                    setHoveredWard(ward);
+                    onWardHover?.(ward);
+                } else if (hasData) {
                     const total = relevantResults[0].ballotscast;
                     const sorted = [...relevantResults].sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
                     const analysis = getWardAnalysis(wardNum, municipality);
 
-                    // Compute fill color for debug (mirrors style() logic)
                     const winner = sorted[0];
                     const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
                     const runnerUp = sorted[1];
@@ -439,7 +490,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 }
             },
             mousemove: (e: any) => {
-                if (hasData) {
+                if (hasData || hasSimData) {
                     setHoveredWard(prev => prev ? { ...prev, x: e.originalEvent.clientX, y: e.originalEvent.clientY } : null);
                 }
             },
@@ -455,11 +506,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             },
         });
 
-        // Show pointer cursor on clickable wards in PROJECTION mode
         if (isProjectionClickable) {
             (layer as any).options = { ...((layer as any).options || {}), className: 'cursor-pointer' };
         }
-    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick]);
+    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData]);
 
     return (
         <>
@@ -475,7 +525,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}
@@ -494,7 +544,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     transform: 'translateY(-100%)',
                     zIndex: 9999,
                     pointerEvents: 'none',
-                    minWidth: '230px',
+                    minWidth: '220px',
                     maxWidth: '290px',
                 }}>
                     <div style={{
@@ -509,62 +559,101 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     }}>
                         {/* Header */}
                         <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #1e293b' }}>
-                            <div
-                                title={raceResult?.raceName || 'Election Results'}
-                                style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                            >
-                                {raceResult?.raceName || 'Election Results'}
+                            <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
+                                {overlayMode === 'CANVASS_PRIORITY' ? 'Canvass Priority' :
+                                 overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
+                                 (raceResult?.raceName || 'Election Results')}
                             </div>
                             <div style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>
                                 {hoveredWard.municipality} · Wd.&nbsp;{hoveredWard.wardNum}
                             </div>
                         </div>
 
-                        {/* Candidate rows */}
-                        <div style={{ padding: '10px 14px' }}>
-                            {(() => {
-                                // For Presidential races, only show D and R candidates in the tooltip.
-                                const isPresidential = raceResult?.type === 'Presidential';
-                                const partyMap: Record<string, string | undefined> = Object.fromEntries(
-                                    (raceResult?.candidates ?? []).map(c => [c.candidateName.trim(), c.party])
-                                );
-                                const visibleResults = isPresidential
-                                    ? hoveredWard.results.filter(r => {
-                                        const party = partyMap[r.candidateName.trim()];
-                                        const name = r.candidateName;
-                                        return party === 'Democratic' || party === 'Republican'
-                                            || name.includes('Biden') || name.includes('Harris')
-                                            || name.includes('Trump');
-                                    })
-                                    : hoveredWard.results;
-                                return visibleResults.map((r, i) => {
-                                    const hsl = candidateColors[r.candidateName.trim()];
-                                    const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#64748b';
-                                    const isWinner = i === 0;
-                                    return (
-                                        <div key={i} style={{ marginBottom: i < visibleResults.length - 1 ? '10px' : 0 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                                                <span title={r.candidateName} style={{ color: isWinner ? '#f1f5f9' : '#94a3b8', fontWeight: isWinner ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-                                                    {isWinner ? '▲ ' : '\u00a0\u00a0 '}{r.candidateName}
-                                                </span>
-                                                <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#f1f5f9' : '#64748b', marginLeft: '12px' }}>
-                                                    {r.pct.toFixed(1)}%
-                                                </span>
-                                            </div>
-                                            <div style={{ height: '5px', background: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
-                                                <div style={{ height: '100%', width: `${r.pct}%`, background: barColor, borderRadius: '3px' }} />
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
-                                                {r.votes.toLocaleString()} votes
-                                            </div>
-                                        </div>
-                                    );
-                                });
-                            })()}
-                        </div>
+                        {/* CANVASS PRIORITY tooltip body */}
+                        {hoveredWard.dormantPool !== undefined && (
+                            <div style={{ padding: '10px 14px 12px' }}>
+                                <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>Dormant voter pool</div>
+                                <div style={{ fontSize: '22px', fontWeight: 800, color: '#818cf8' }}>
+                                    {hoveredWard.dormantPool.toLocaleString()}
+                                </div>
+                                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px' }}>
+                                    Avg voters who turn out in general elections but skip primaries
+                                </div>
+                            </div>
+                        )}
 
-                        {/* Margin comparison row — shown in NONE/SWING when real historical margin exists */}
-                        {overlayMode !== 'TURNOUT' && hoveredWard.analysis?.historicalRaceName && hoveredWard.analysis.historicalMargin !== 0 && (() => {
+                        {/* PRIMARY DROPOFF tooltip body */}
+                        {hoveredWard.dropoffInfo !== undefined && (
+                            <div style={{ padding: '10px 14px 12px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '10px', color: '#64748b' }}>Spring Election</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#f1f5f9' }}>
+                                            {hoveredWard.dropoffInfo.general.toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '10px', color: '#64748b' }}>Spring Primary</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#f1f5f9' }}>
+                                            {hoveredWard.dropoffInfo.primary.toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{ borderTop: '1px solid #1e293b', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>Dropoff</span>
+                                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fb923c' }}>
+                                        −{hoveredWard.dropoffInfo.dropoff.toLocaleString()} ({hoveredWard.dropoffInfo.dropoffPct.toFixed(1)}%)
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Standard candidate rows (non-SIMULATE overlays) */}
+                        {hoveredWard.results.length > 0 && (
+                            <div style={{ padding: '10px 14px' }}>
+                                {(() => {
+                                    const isPresidential = raceResult?.type === 'Presidential';
+                                    const partyMap: Record<string, string | undefined> = Object.fromEntries(
+                                        (raceResult?.candidates ?? []).map(c => [c.candidateName.trim(), c.party])
+                                    );
+                                    const visibleResults = isPresidential
+                                        ? hoveredWard.results.filter(r => {
+                                            const party = partyMap[r.candidateName.trim()];
+                                            const name = r.candidateName;
+                                            return party === 'Democratic' || party === 'Republican'
+                                                || name.includes('Biden') || name.includes('Harris')
+                                                || name.includes('Trump');
+                                        })
+                                        : hoveredWard.results;
+                                    return visibleResults.map((r, i) => {
+                                        const hsl = candidateColors[r.candidateName.trim()];
+                                        const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#64748b';
+                                        const isWinner = i === 0;
+                                        return (
+                                            <div key={i} style={{ marginBottom: i < visibleResults.length - 1 ? '10px' : 0 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                                                    <span title={r.candidateName} style={{ color: isWinner ? '#f1f5f9' : '#94a3b8', fontWeight: isWinner ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
+                                                        {isWinner ? '▲ ' : '\u00a0\u00a0 '}{r.candidateName}
+                                                    </span>
+                                                    <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#f1f5f9' : '#64748b', marginLeft: '12px' }}>
+                                                        {r.pct.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                                <div style={{ height: '5px', background: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
+                                                    <div style={{ height: '100%', width: `${r.pct}%`, background: barColor, borderRadius: '3px' }} />
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
+                                                    {r.votes.toLocaleString()} votes
+                                                </div>
+                                            </div>
+                                        );
+                                    });
+                                })()}
+                            </div>
+                        )}
+
+                        {/* Margin comparison row */}
+                        {overlayMode !== 'TURNOUT' && hoveredWard.results.length > 0 && hoveredWard.analysis?.historicalRaceName && hoveredWard.analysis.historicalMargin !== 0 && (() => {
                             const histMarginPct = hoveredWard.analysis!.historicalMargin * 100;
                             const currentMarginPct = hoveredWard.results.length >= 2
                                 ? hoveredWard.results[0].pct - hoveredWard.results[1].pct
@@ -585,7 +674,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             );
                         })()}
 
-                        {/* Turnout delta row — shown only in TURNOUT overlay mode */}
+                        {/* Turnout delta row */}
                         {overlayMode === 'TURNOUT' && hoveredWard.analysis && hoveredWard.analysis.historicalVotes > 0 && (() => {
                             const ratio = hoveredWard.total / hoveredWard.analysis!.historicalVotes;
                             const deltaPct = (ratio - 1) * 100;
@@ -608,7 +697,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             );
                         })()}
 
-                        {/* Footer — only shown for contested races (2+ candidates) */}
+                        {/* Footer */}
                         {hoveredWard.results.length >= 2 && (
                             <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: '11px', color: '#475569' }}>
