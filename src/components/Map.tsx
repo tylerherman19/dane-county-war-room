@@ -25,6 +25,9 @@ interface MapProps {
     onWardHover?: (ward: HoveredWard | null) => void;
     historicalLabel?: string | null;
     focusedCandidate?: string | null;
+    // SIMULATE mode
+    projectionData?: Record<string, number>; // wardKey → ratio vs district mean (1.0 = avg)
+    onWardClick?: (ward: { name: string; num: string }) => void;
 }
 
 export interface HoveredWard {
@@ -116,7 +119,29 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
 export { assignCandidateColors };
 export type { HSL };
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate }: MapProps) {
+/**
+ * Convert GeoJSON feature properties (municipality name + ward number) into a
+ * normalized ward key that matches the format stored in projectionData.
+ * Format: "madison-city-1", "sun-prairie-city-3", "westport-town-1", etc.
+ */
+function buildProjectionKey(municipality: string, wardNum: string): string {
+    let s = municipality.toLowerCase();
+    let type = '';
+    if (s.includes('town')) type = 'town';
+    else if (s.includes('village')) type = 'village';
+    else if (s.includes('city')) type = 'city';
+    s = s
+        .replace(/^(city|village|town) of\s+/, '')
+        .replace(/\s+(city|village|town)\b/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+    let key = s;
+    if (type) key += `-${type}`;
+    if (wardNum && wardNum !== '0') key += `-${wardNum}`;
+    return key;
+}
+
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
@@ -282,6 +307,45 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     };
                 }
             }
+            // --- PROJECTION HEATMAP (SIMULATE mode) ---
+            // Shows relative historical turnout within the selected district.
+            // Green = above-average turnout ward (protect/grow), Red = below-average (opportunity).
+            // projectionData values are ratios: 1.0 = district mean, >1 = green, <1 = red.
+            else if (overlayMode === 'PROJECTION') {
+                // Not in the selected district — show dimmed
+                if (!projectionData) {
+                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.1 };
+                } else {
+                    // Build normalized ward key to look up projection ratio
+                    const normalizedKey = buildProjectionKey(municipality, wardNum);
+                    const ratio = projectionData[normalizedKey] ?? -1;
+
+                    if (ratio < 0) {
+                        // Ward not in selected district → dim
+                        baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                    } else {
+                        let h: number, s: number, l: number;
+                        if (ratio < 1.0) {
+                            h = 0; // red — below district average
+                            const intensity = Math.min((1.0 - ratio) / 0.6, 1);
+                            l = 90 - intensity * 45;
+                            s = intensity * 85;
+                        } else {
+                            h = 140; // green — above district average
+                            const intensity = Math.min((ratio - 1.0) / 0.6, 1);
+                            l = 90 - intensity * 52;
+                            s = intensity * 100;
+                        }
+                        baseStyle = {
+                            fillColor: `hsl(${h}, ${s}%, ${l}%)`,
+                            weight: 1,
+                            opacity: 1,
+                            color: '#334155',
+                            fillOpacity: 0.8,
+                        };
+                    }
+                }
+            }
             // --- MARGIN INTENSITY ---
             // Shows how competitive each ward is right now: pale = toss-up, saturated = landslide.
             // Useful for GOTV targeting. No historical data needed — works immediately.
@@ -335,6 +399,9 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         const defaultBorderColor = hasData ? '#334155' : '#1e293b';
         const defaultBorderOpacity = hasData ? 1 : 0.5;
 
+        // In PROJECTION mode with onWardClick, ward click adds ward to What If list
+        const isProjectionClickable = overlayMode === 'PROJECTION' && !!onWardClick;
+
         layer.on({
             mouseover: (e: any) => {
                 e.target.setStyle({ weight: 2, color: '#ffffff', opacity: 1 });
@@ -381,8 +448,18 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 setHoveredWard(null);
                 onWardHover?.(null);
             },
+            click: () => {
+                if (isProjectionClickable) {
+                    onWardClick!({ name: municipality, num: wardNum });
+                }
+            },
         });
-    }, [resultsMap, candidateColors, onWardHover]);
+
+        // Show pointer cursor on clickable wards in PROJECTION mode
+        if (isProjectionClickable) {
+            (layer as any).options = { ...((layer as any).options || {}), className: 'cursor-pointer' };
+        }
+    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick]);
 
     return (
         <>
@@ -398,7 +475,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}

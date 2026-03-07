@@ -12,7 +12,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { execSync } from 'child_process';
 
 const BASE = 'https://api.danecounty.gov/api/v1/elections';
-const RELEVANT_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', 'Congress']);
+const RELEVANT_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', 'Congress', 'Alder']);
 
 // ── Helpers (mirrors logic in src/lib/) ──────────────────────────────────────
 
@@ -60,6 +60,7 @@ function detectRaceType(raceName) {
     if (n.includes('referendum') || n.includes('question') || n.includes('advisory')) return 'Referendum';
     if (n.includes('mayor')) return 'Mayor';
     if (n.includes('governor')) return 'Governor';
+    if (n.includes('alder') || n.includes('alderperson') || n.includes('alderman')) return 'Alder';
     return 'Other';
 }
 
@@ -131,6 +132,9 @@ for (const election of recent) {
 
     for (const race of relevant) {
         const raceType = detectRaceType(race.RaceName);
+
+        // For Alder races: only keep City of Madison aldermanic seats
+        if (raceType === 'Alder' && !race.RaceName.toLowerCase().includes('madison')) continue;
 
         // Fetch party info from race-level results so we can sign the historical margin
         // (positive = Dem lead, negative = GOP lead) to match Map.tsx overlay logic.
@@ -206,6 +210,13 @@ for (const election of recent) {
             };
         }
 
+        // For Alder races, extract district number from race name
+        let districtNum = null;
+        if (raceType === 'Alder') {
+            const m = race.RaceName.match(/district\s+(\d+)/i);
+            districtNum = m ? parseInt(m[1]) : null;
+        }
+
         if (!output.data[raceType]) output.data[raceType] = [];
         output.data[raceType].push({
             electionId: String(election.ElectionId),
@@ -214,6 +225,7 @@ for (const election of recent) {
             raceId: String(race.RaceNumber),
             raceName: race.RaceName,
             raceType,
+            districtNum,
             wardResults,
         });
 
