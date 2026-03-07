@@ -18,7 +18,7 @@ export interface Candidate {
     party?: string;
 }
 
-export type RaceType = 'Presidential' | 'Senate' | 'Congress' | 'Assembly' | 'StateSenate' | 'Referendum' | 'Mayor' | 'Governor' | 'Other';
+export type RaceType = 'Presidential' | 'Senate' | 'Congress' | 'Assembly' | 'StateSenate' | 'Referendum' | 'Mayor' | 'Governor' | 'Alder' | 'Other';
 
 export interface Race {
     id: string;

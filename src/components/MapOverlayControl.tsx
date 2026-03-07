@@ -2,7 +2,7 @@ import { Layers, TrendingUp, Users } from 'lucide-react';
 import { HistoricalRaceSummary } from '@/lib/historical-api-data';
 import { RaceType } from '@/lib/api';
 
-export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING';
+export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING' | 'PROJECTION';
 
 interface MapOverlayControlProps {
     currentMode: OverlayMode;

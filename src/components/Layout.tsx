@@ -13,8 +13,8 @@ interface LayoutProps {
     elections?: Election[];
     selectedElectionId?: string | null;
     onSelectElection?: (id: string) => void;
-    viewMode: 'LIVE' | 'ARCHIVE';
-    onToggleViewMode: (mode: 'LIVE' | 'ARCHIVE') => void;
+    viewMode: 'LIVE' | 'ARCHIVE' | 'SIMULATE';
+    onToggleViewMode: (mode: 'LIVE' | 'ARCHIVE' | 'SIMULATE') => void;
     hasError?: boolean;
 }
 
@@ -64,6 +64,11 @@ export default function Layout({ children, sidebar, lastUpdated, elections, sele
                             </div>
                             <span className="text-red-500 font-bold text-xs tracking-wider uppercase">Live Results</span>
                         </div>
+                    ) : viewMode === 'SIMULATE' ? (
+                        <div className="flex items-center gap-2">
+                            <div className="h-3 w-3 rounded-full bg-violet-500"></div>
+                            <span className="text-violet-400 font-bold text-xs tracking-wider uppercase">Simulate Mode</span>
+                        </div>
                     ) : (
                         <div className="flex items-center gap-2">
                             <div className="h-3 w-3 rounded-full bg-slate-600"></div>
@@ -86,6 +91,12 @@ export default function Layout({ children, sidebar, lastUpdated, elections, sele
                         className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'ARCHIVE' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                     >
                         ARCHIVE
+                    </button>
+                    <button
+                        onClick={() => onToggleViewMode('SIMULATE')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'SIMULATE' ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                    >
+                        SIMULATE
                     </button>
                 </div>
 

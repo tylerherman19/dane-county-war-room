@@ -20,9 +20,13 @@ interface MapWrapperProps {
     onReset: () => void;
     focusedCandidate: string | null;
     onCandidateReset: () => void;
+    // SIMULATE mode
+    simulateMode?: boolean;
+    projectionData?: Record<string, number>;
+    onWardClick?: (ward: { name: string; num: string }) => void;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, onWardClick }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -114,30 +118,37 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         setIsLoadingComparison(false);
     }, []);
 
+    // In SIMULATE mode force PROJECTION overlay, hide normal overlay control
+    const effectiveOverlayMode = simulateMode ? 'PROJECTION' : overlayMode;
+
     return (
         <div className="relative w-full h-full">
-            <MapOverlayControl
-                currentMode={overlayMode}
-                onChange={handleOverlayChange}
-                historicalLabel={historicalLabel}
-                availableRaces={availableRaces}
-                selectedComparisonKey={selectedComparisonKey}
-                onComparisonChange={handleComparisonChange}
-                isLoadingComparison={isLoadingComparison}
-                historicalTotalVotes={historicalTotalVotes}
-                candidateLegend={candidateLegend}
-                currentRaceType={raceResult?.type}
-            />
+            {!simulateMode && (
+                <MapOverlayControl
+                    currentMode={overlayMode}
+                    onChange={handleOverlayChange}
+                    historicalLabel={historicalLabel}
+                    availableRaces={availableRaces}
+                    selectedComparisonKey={selectedComparisonKey}
+                    onComparisonChange={handleComparisonChange}
+                    isLoadingComparison={isLoadingComparison}
+                    historicalTotalVotes={historicalTotalVotes}
+                    candidateLegend={candidateLegend}
+                    currentRaceType={raceResult?.type}
+                />
+            )}
             <Map
                 precinctResults={precinctResults}
                 isLoading={isLoading}
                 selectedWard={selectedWard}
                 raceResult={raceResult}
                 onReset={onReset}
-                overlayMode={overlayMode}
+                overlayMode={effectiveOverlayMode}
                 onWardHover={setDebugWardData}
                 historicalLabel={historicalLabel}
                 focusedCandidate={focusedCandidate}
+                projectionData={simulateMode ? projectionData : undefined}
+                onWardClick={simulateMode ? onWardClick : undefined}
             />
 
             {/* Debug toggle button */}
