@@ -122,6 +122,41 @@ export async function getDropoffByWard(): Promise<Record<string, DropoffInfo>> {
     return result;
 }
 
+export interface DropoffWard {
+    wardKey: string;
+    displayName: string;
+    wardNumber: string;
+    dropoff: number;
+    dropoffPct: number;
+    general: number;
+    primary: number;
+}
+
+/**
+ * Return the top N wards sorted by primary dropoff size.
+ */
+export function rankDropoffWards(
+    dropoffData: Record<string, DropoffInfo>,
+    topN = 15,
+): DropoffWard[] {
+    return Object.entries(dropoffData)
+        .filter(([, d]) => d.dropoff > 0)
+        .sort(([, a], [, b]) => b.dropoff - a.dropoff)
+        .slice(0, topN)
+        .map(([wardKey, d]) => {
+            const { precinctName, wardNumber } = wardKeyToPrecinctInfo(wardKey);
+            return {
+                wardKey,
+                displayName: `${precinctName} Ward ${wardNumber}`,
+                wardNumber,
+                dropoff: d.dropoff,
+                dropoffPct: d.dropoffPct,
+                general: d.general,
+                primary: d.primary,
+            };
+        });
+}
+
 /**
  * Return the top N wards sorted by dormant pool size, with priority badges.
  * HIGH = top 5, MEDIUM = 6–10, LOW = 11–15.

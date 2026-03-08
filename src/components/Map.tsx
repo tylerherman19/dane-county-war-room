@@ -32,6 +32,7 @@ interface MapProps {
     // SIMULATE overlay data
     dormantPoolData?: Record<string, number>;           // wardKey → dormant voter pool size
     dropoffData?: Record<string, DropoffInfo>;          // wardKey → dropoff info
+    simulateHighlightedWards?: Set<string> | null;      // wards in selected district (others dimmed)
 }
 
 export interface HoveredWard {
@@ -137,7 +138,7 @@ function buildProjectionKey(municipality: string, wardNum: string): string {
     return key;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick, dormantPoolData, dropoffData }: MapProps) {
+export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick, dormantPoolData, dropoffData, simulateHighlightedWards }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
@@ -207,6 +208,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         if (overlayMode === 'CANVASS_PRIORITY') {
             if (dormantPoolData) {
                 const normalizedKey = buildProjectionKey(municipality, wardNum);
+                // Dim wards outside the selected district
+                if (simulateHighlightedWards && simulateHighlightedWards.size > 0 && !simulateHighlightedWards.has(normalizedKey)) {
+                    return { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                }
                 const pool = dormantPoolData[normalizedKey];
                 if (pool !== undefined) {
                     if (pool > 0) {
@@ -233,6 +238,10 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         } else if (overlayMode === 'PRIMARY_DROPOFF') {
             if (dropoffData) {
                 const normalizedKey = buildProjectionKey(municipality, wardNum);
+                // Dim wards outside the selected district
+                if (simulateHighlightedWards && simulateHighlightedWards.size > 0 && !simulateHighlightedWards.has(normalizedKey)) {
+                    return { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                }
                 const info = dropoffData[normalizedKey];
                 if (info) {
                     if (info.dropoff > 0) {
@@ -407,7 +416,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -525,7 +534,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}

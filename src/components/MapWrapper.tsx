@@ -24,11 +24,12 @@ interface MapWrapperProps {
     // SIMULATE mode
     simulateMode?: boolean;
     projectionData?: Record<string, number>;
+    simulateHighlightedWards?: Set<string> | null;
     onWardClick?: (ward: { name: string; num: string }) => void;
     simulateOverlayMode?: OverlayMode;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, onWardClick, simulateOverlayMode }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -153,6 +154,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 historicalLabel={historicalLabel}
                 focusedCandidate={focusedCandidate}
                 projectionData={simulateMode ? projectionData : undefined}
+                simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}
                 dormantPoolData={simulateMode ? dormantPoolData : undefined}
                 dropoffData={simulateMode ? dropoffData : undefined}

@@ -161,6 +161,7 @@ export default function Home() {
           onCandidateReset={() => setFocusedCandidate(null)}
           simulateMode={viewMode === 'SIMULATE'}
           projectionData={viewMode === 'SIMULATE' ? simUpdate.projectionData : undefined}
+          simulateHighlightedWards={viewMode === 'SIMULATE' ? simUpdate.highlightedWardKeys : null}
           onWardClick={viewMode === 'SIMULATE' ? setSimClickedWard : undefined}
           simulateOverlayMode={viewMode === 'SIMULATE' ? simulateOverlayMode : undefined}
         />
