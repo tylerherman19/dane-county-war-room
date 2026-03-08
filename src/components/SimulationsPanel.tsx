@@ -355,7 +355,7 @@ export default function SimulationsPanel({
                         <div className="mt-2 text-xs text-slate-500">
                             {selectedDistrict.label} ·{' '}
                             {hasPrimaryData
-                                ? <>primary avg <span className="text-slate-400">{selectedDistrict.primaryHistoricalAvg.toLocaleString()}</span> votes ({selectedDistrict.primaryElectionsCount} primary{selectedDistrict.primaryElectionsCount !== 1 ? 's' : ''})</>
+                                ? <>primary avg <span className="text-slate-400">{selectedDistrict.primaryHistoricalAvg!.toLocaleString()}</span> votes ({selectedDistrict.primaryElectionsCount} {selectedDistrict.primaryElectionsCount !== 1 ? 'primaries' : 'primary'})</>
                                 : <>avg <span className="text-slate-400">{selectedDistrict.historicalAvg.toLocaleString()}</span> votes ({selectedDistrict.electionsCount} election{selectedDistrict.electionsCount !== 1 ? 's' : ''} averaged)</>
                             }
                         </div>
