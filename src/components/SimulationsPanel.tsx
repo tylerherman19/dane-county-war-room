@@ -100,6 +100,8 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
             setDormantPoolData(computeDormantPool(histData as any));
             setDropoffData(computePrimaryDropoff(histData as any));
             setIsLoading(false);
+        }).catch(() => {
+            setIsLoading(false);
         });
     }, []);
 
@@ -371,7 +373,7 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                 </div>
 
                 {/* ── Canvass Priority Panel ── */}
-                {simulateLayerMode === 'CANVASS_PRIORITY' && top15Wards.length > 0 && (
+                {simulateLayerMode === 'CANVASS_PRIORITY' && (
                     <div className="bg-slate-800/40 rounded-xl border border-violet-800/30 overflow-hidden">
                         <button
                             onClick={() => setCanvassPanelOpen(o => !o)}
@@ -380,37 +382,47 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                             <div className="flex items-center gap-2">
                                 <TrendingDown className="w-3.5 h-3.5 text-violet-400" />
                                 <span className="text-xs font-semibold text-white">Top Canvass Wards</span>
-                                <span className="text-[9px] text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded-full">TOP 15</span>
+                                {top15Wards.length > 0 && (
+                                    <span className="text-[9px] text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded-full">TOP 15</span>
+                                )}
                             </div>
                             {canvassPanelOpen ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
                         </button>
                         {canvassPanelOpen && (
                             <div className="border-t border-slate-700/40">
-                                <div className="px-3 pb-1 pt-2 text-[9px] text-slate-500">
-                                    Ranked by dormant voter pool size (avg spring general − avg spring primary)
-                                </div>
-                                <div className="divide-y divide-slate-700/30 max-h-64 overflow-y-auto">
-                                    {top15Wards.map(({ wardKey, entry, rank }) => {
-                                        const badge = getPriorityBadge(rank);
-                                        return (
-                                            <div key={wardKey} className="px-3 py-2 flex items-center gap-2">
-                                                <span className="text-[9px] text-slate-600 w-4 shrink-0">{rank}.</span>
-                                                <span
-                                                    className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
-                                                    style={{ background: badge.bg, color: badge.text }}
-                                                >
-                                                    {badge.label}
-                                                </span>
-                                                <span className="text-[10px] text-slate-300 flex-1 truncate" title={wardKeyToDisplay(wardKey)}>
-                                                    {wardKeyToDisplay(wardKey)}
-                                                </span>
-                                                <span className="text-[10px] font-semibold text-violet-400 shrink-0">
-                                                    ~{entry.dormant.toLocaleString()}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                {top15Wards.length > 0 ? (
+                                    <>
+                                        <div className="px-3 pb-1 pt-2 text-[9px] text-slate-500">
+                                            Ranked by dormant voter pool size (avg spring general − avg spring primary)
+                                        </div>
+                                        <div className="divide-y divide-slate-700/30 max-h-64 overflow-y-auto">
+                                            {top15Wards.map(({ wardKey, entry, rank }) => {
+                                                const badge = getPriorityBadge(rank);
+                                                return (
+                                                    <div key={wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                        <span className="text-[9px] text-slate-600 w-4 shrink-0">{rank}.</span>
+                                                        <span
+                                                            className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                                                            style={{ background: badge.bg, color: badge.text }}
+                                                        >
+                                                            {badge.label}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-300 flex-1 truncate" title={wardKeyToDisplay(wardKey)}>
+                                                            {wardKeyToDisplay(wardKey)}
+                                                        </span>
+                                                        <span className="text-[10px] font-semibold text-violet-400 shrink-0">
+                                                            ~{entry.dormant.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="px-3 py-4 text-center text-xs text-slate-500">
+                                        No dormant pool data available.
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -688,7 +700,8 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
 
                                                 {wardList.length === 0 ? (
                                                     <div className="text-xs text-slate-600 text-center py-3 border border-dashed border-slate-700 rounded-lg">
-                                                        Click any ward on the map to add it here
+                                                        Click any ward on the map to add it here.
+                                                        <span className="block mt-1 text-[10px]">Move its slider to see margin impact.</span>
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-2">
@@ -723,9 +736,13 @@ export default function SimulationsPanel({ whatIfClickedWard, onClearWhatIfClick
                                                                         style={{ accentColor: '#f59e0b' }}
                                                                     />
                                                                     {/* Turnout surge margin impact label */}
-                                                                    {showImpact && (
+                                                                    {showImpact ? (
                                                                         <div className={`mt-1.5 text-[10px] font-medium ${delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
                                                                             {delta > 0 ? '+' : ''}{delta.toLocaleString()} votes · {delta > 0 ? '+' : '−'}{marginImpactPts} pt margin impact
+                                                                        </div>
+                                                                    ) : origVotes > 0 && (
+                                                                        <div className="mt-1 text-[9px] text-slate-600">
+                                                                            Move slider to see margin impact
                                                                         </div>
                                                                     )}
                                                                 </div>
