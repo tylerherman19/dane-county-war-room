@@ -14,7 +14,7 @@ import {
 } from '@/lib/projections-data';
 import { HistoricalRaceData } from '@/lib/historical-api-data';
 import { OverlayMode } from './MapOverlayControl';
-import { getDormantPoolByWard, rankCanvassWards, CanvassWard } from '@/lib/dormant-voter-data';
+import { getDormantPoolByWard, rankCanvassWards, CanvassWard, getDropoffByWard, rankDropoffWards, DropoffWard, DropoffInfo } from '@/lib/dormant-voter-data';
 
 interface SimulationsPanelProps {
     whatIfClickedWard: { name: string; num: string } | null;
@@ -39,6 +39,9 @@ export default function SimulationsPanel({
     // ── Dormant pool data (for Canvass Priority) ───────────────────────────
     const [dormantPoolData, setDormantPoolData] = useState<Record<string, number> | null>(null);
 
+    // ── Dropoff data (for Primary Dropoff) ────────────────────────────────
+    const [dropoffData, setDropoffData] = useState<Record<string, DropoffInfo> | null>(null);
+
     // ── Core simulation inputs ─────────────────────────────────────────────
     const [turnoutPct, setTurnoutPct] = useState(100);
     const [numCandidates, setNumCandidates] = useState(2);
@@ -46,7 +49,7 @@ export default function SimulationsPanel({
     const [selectedKey, setSelectedKey] = useState<string>('Mayor');
 
     // ── What If state ──────────────────────────────────────────────────────
-    const [whatIfOpen, setWhatIfOpen] = useState(false);
+    const [whatIfOpen, setWhatIfOpen] = useState(true);
     const [whatIfRaceKey, setWhatIfRaceKey] = useState<string>('');
     const [globalWhatIfMult, setGlobalWhatIfMult] = useState(100);
     const [wardList, setWardList] = useState<Array<{ wardKey: string; label: string; multiplier: number }>>([]);
@@ -62,6 +65,7 @@ export default function SimulationsPanel({
             setIsLoading(false);
         });
         getDormantPoolByWard().then(setDormantPoolData).catch(() => {});
+        getDropoffByWard().then(setDropoffData).catch(() => {});
     }, []);
 
     // ── Resolve selected district ──────────────────────────────────────────
@@ -92,8 +96,18 @@ export default function SimulationsPanel({
         });
     }, [whatIfClickedWard]);
 
+    // ── Auto-select most recent race when elections become available ───────
+    useEffect(() => {
+        if (allElections.length > 0 && !whatIfRaceKey) {
+            setWhatIfRaceKey(`${allElections[0].electionId}|${allElections[0].raceId}`);
+        }
+    }, [allElections.length]);
+
     // ── Derived values ─────────────────────────────────────────────────────
-    const baseline = selectedDistrict?.historicalAvg ?? 0;
+    const hasPrimaryData = (selectedDistrict?.primaryHistoricalAvg ?? 0) > 0;
+    const baseline = hasPrimaryData
+        ? selectedDistrict!.primaryHistoricalAvg
+        : (selectedDistrict?.historicalAvg ?? 0);
     const expectedTotal = applyMultipliers(baseline, turnoutPct, regDelta);
     const winResult = computeWinNumber(expectedTotal, numCandidates);
 
@@ -162,11 +176,25 @@ export default function SimulationsPanel({
         return Array.from(names);
     }, [whatIfRace]);
 
-    // ── Top 15 canvass wards ───────────────────────────────────────────────
+    // ── Top 15 canvass wards (filtered to selected district) ──────────────
     const topCanvassWards = useMemo((): CanvassWard[] => {
         if (!dormantPoolData) return [];
-        return rankCanvassWards(dormantPoolData, 15);
-    }, [dormantPoolData]);
+        const districtWards = selectedDistrict?.wardKeys;
+        const filtered = districtWards
+            ? Object.fromEntries(Object.entries(dormantPoolData).filter(([k]) => districtWards.includes(k)))
+            : dormantPoolData;
+        return rankCanvassWards(filtered, 15);
+    }, [dormantPoolData, selectedDistrict]);
+
+    // ── Top 15 dropoff wards (filtered to selected district) ──────────────
+    const topDropoffWards = useMemo((): DropoffWard[] => {
+        if (!dropoffData) return [];
+        const districtWards = selectedDistrict?.wardKeys;
+        const filtered = districtWards
+            ? Object.fromEntries(Object.entries(dropoffData).filter(([k]) => districtWards.includes(k)))
+            : dropoffData;
+        return rankDropoffWards(filtered, 15);
+    }, [dropoffData, selectedDistrict]);
 
     // ── Map projection update ──────────────────────────────────────────────
     const buildUpdate = useCallback((): SimProjectionUpdate => {
@@ -244,7 +272,7 @@ export default function SimulationsPanel({
                         {/* Your Share / Projected */}
                         <div className="text-center">
                             <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">
-                                {whatIfOpen && whatIfRace ? 'Your Share' : 'Projected'}
+                                {whatIfOpen && whatIfRace ? 'Your Share' : 'Projected Total'}
                             </div>
                             <div className="text-xl font-black text-white tabular-nums">
                                 {yourShareTotal.toLocaleString()}
@@ -325,7 +353,11 @@ export default function SimulationsPanel({
                     </div>
                     {selectedDistrict && (
                         <div className="mt-2 text-xs text-slate-500">
-                            {selectedDistrict.label} · avg {selectedDistrict.historicalAvg.toLocaleString()} votes ({selectedDistrict.electionsCount} election{selectedDistrict.electionsCount !== 1 ? 's' : ''} averaged)
+                            {selectedDistrict.label} ·{' '}
+                            {hasPrimaryData
+                                ? <>primary avg <span className="text-slate-400">{selectedDistrict.primaryHistoricalAvg.toLocaleString()}</span> votes ({selectedDistrict.primaryElectionsCount} primary{selectedDistrict.primaryElectionsCount !== 1 ? 's' : ''})</>
+                                : <>avg <span className="text-slate-400">{selectedDistrict.historicalAvg.toLocaleString()}</span> votes ({selectedDistrict.electionsCount} election{selectedDistrict.electionsCount !== 1 ? 's' : ''} averaged)</>
+                            }
                         </div>
                     )}
                 </div>
@@ -419,28 +451,41 @@ export default function SimulationsPanel({
                             </div>
                         )}
 
-                        {/* ── Primary Dropoff Info ── */}
+                        {/* ── Primary Dropoff Ranked List ── */}
                         {simulateOverlayMode === 'PRIMARY_DROPOFF' && (
-                            <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
-                                <div className="flex items-center gap-1.5 mb-2">
+                            <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
+                                <div className="px-3 py-2.5 border-b border-slate-700/40 flex items-center gap-1.5">
                                     <TrendingDown className="w-3 h-3 text-amber-400" />
-                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Primary Dropoff</span>
+                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Dropoff Wards</span>
                                 </div>
-                                <p className="text-[11px] text-slate-500 leading-relaxed">
-                                    Darker orange = more voters who show up in April Spring Elections but skip February primaries.
-                                    Hover any ward for exact numbers. These are your highest-leverage canvassing targets.
-                                </p>
-                                <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-600">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-3 h-3 rounded-sm" style={{ background: 'hsl(28, 15%, 90%)' }} />
-                                        Low dropoff
-                                    </div>
-                                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-700 to-amber-500 opacity-60" />
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-3 h-3 rounded-sm" style={{ background: 'hsl(28, 95%, 38%)' }} />
-                                        High dropoff
-                                    </div>
+                                <div className="px-3 py-2 border-b border-slate-800/60 flex items-center gap-2 text-[10px] text-slate-600">
+                                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 15%, 90%)' }} />
+                                    Low
+                                    <div className="flex-1 h-px bg-gradient-to-r from-amber-900/40 to-amber-500 opacity-60" />
+                                    High
+                                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 95%, 38%)' }} />
                                 </div>
+                                {topDropoffWards.length === 0 ? (
+                                    <div className="p-3 text-xs text-slate-600 text-center">Loading dropoff data…</div>
+                                ) : (
+                                    <div className="divide-y divide-slate-800/60">
+                                        {topDropoffWards.map((ward, i) => (
+                                            <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
+                                                    <div className="text-[10px] text-slate-500">
+                                                        {ward.general.toLocaleString()} gen · {ward.primary.toLocaleString()} pri
+                                                    </div>
+                                                </div>
+                                                <div className="text-right flex-shrink-0">
+                                                    <div className="text-xs font-bold text-amber-400">−{ward.dropoff.toLocaleString()}</div>
+                                                    <div className="text-[10px] text-slate-500">{ward.dropoffPct.toFixed(0)}% drop</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -516,24 +561,29 @@ export default function SimulationsPanel({
                             </div>
                         </div>
 
-                        {/* ── Number of Candidates ── */}
+                        {/* ── Race Settings ── */}
                         <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40 space-y-3">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Candidates in Race</div>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setNumCandidates(n => Math.max(2, n - 1))}
-                                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold text-lg flex items-center justify-center transition-colors"
-                                    disabled={numCandidates <= 2}
-                                >−</button>
-                                <span className="text-2xl font-black text-white w-8 text-center">{numCandidates}</span>
-                                <button
-                                    onClick={() => setNumCandidates(n => Math.min(5, n + 1))}
-                                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold text-lg flex items-center justify-center transition-colors"
-                                    disabled={numCandidates >= 5}
-                                >+</button>
-                                <span className="text-xs text-slate-500 ml-1">
-                                    {numCandidates === 2 ? 'head-to-head' : `${numCandidates}-way race`}
-                                </span>
+                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Race Settings</div>
+                            <div>
+                                <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Candidates in Race</div>
+                                <div className="flex gap-1">
+                                    {[2, 3].map(n => (
+                                        <button
+                                            key={n}
+                                            onClick={() => setNumCandidates(n)}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                                                numCandidates === n
+                                                    ? 'bg-violet-600 text-white'
+                                                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                                            }`}
+                                        >
+                                            {n === 2 ? '2-way' : '3-way'}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="mt-1.5 text-[10px] text-slate-500">
+                                    {numCandidates === 2 ? 'Head-to-head — exact majority required' : '3-way plurality — win threshold is an estimate'}
+                                </div>
                             </div>
                         </div>
 
@@ -607,7 +657,7 @@ export default function SimulationsPanel({
                             {whatIfOpen && (
                                 <div className="px-4 pb-4 space-y-4 border-t border-slate-700/40 pt-3">
                                     <p className="text-xs text-slate-500">
-                                        Replay a past race with adjusted turnout. Click wards on the map to add per-ward overrides.
+                                        Adjust ward-level turnout to see margin impact in real time. Click any ward on the map to add a per-ward slider.
                                     </p>
 
                                     {/* Past race selector */}

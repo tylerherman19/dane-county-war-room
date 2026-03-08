@@ -10,8 +10,10 @@ export interface DistrictProjection {
     label: string;
     raceType: 'Mayor' | 'Alder';
     districtNum: number | null;        // null for Mayor
-    historicalAvg: number;             // mean total votes across elections
+    historicalAvg: number;             // mean total votes across ALL elections
+    primaryHistoricalAvg: number;      // mean total votes across Spring Primary elections only (0 if none)
     electionsCount: number;            // how many elections were averaged
+    primaryElectionsCount: number;     // how many Spring Primary elections were averaged
     wardKeys: string[];                // normalized ward keys in this district
     wardAvgVotes: Record<string, number>; // wardKey → mean historical votes
     elections: HistoricalRaceData[];   // individual elections (for What If dropdown)
@@ -228,12 +230,25 @@ function computeMayorProjection(races: HistoricalRaceData[]): DistrictProjection
         }, 0) / races.length
     );
 
+    const primaryRaces = races.filter(r =>
+        r.electionName.toLowerCase().includes('spring primary')
+    );
+    const primaryHistoricalAvg = primaryRaces.length > 0
+        ? Math.round(
+            primaryRaces.reduce((sum, r) => {
+                return sum + Array.from(r.wardResults.values()).reduce((s, w) => s + w.totalVotes, 0);
+            }, 0) / primaryRaces.length
+        )
+        : 0;
+
     return {
         label: 'Mayor of Madison',
         raceType: 'Mayor',
         districtNum: null,
         historicalAvg,
+        primaryHistoricalAvg,
         electionsCount: races.length,
+        primaryElectionsCount: primaryRaces.length,
         wardKeys: Array.from(allWardKeys),
         wardAvgVotes,
         elections: races,
@@ -277,12 +292,25 @@ function computeAlderProjections(
             }, 0) / distRaces.length
         );
 
+        const primaryRaces = distRaces.filter(r =>
+            r.electionName.toLowerCase().includes('spring primary')
+        );
+        const primaryHistoricalAvg = primaryRaces.length > 0
+            ? Math.round(
+                primaryRaces.reduce((sum, r) => {
+                    return sum + Array.from(r.wardResults.values()).reduce((s, w) => s + w.totalVotes, 0);
+                }, 0) / primaryRaces.length
+            )
+            : 0;
+
         results.push({
             label: `Aldermanic District ${districtNum}`,
             raceType: 'Alder',
             districtNum,
             historicalAvg,
+            primaryHistoricalAvg,
             electionsCount: distRaces.length,
+            primaryElectionsCount: primaryRaces.length,
             wardKeys: Array.from(allWardKeys),
             wardAvgVotes,
             elections: distRaces,
