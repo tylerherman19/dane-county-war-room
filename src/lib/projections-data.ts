@@ -15,7 +15,8 @@ export interface DistrictProjection {
     electionsCount: number;            // how many elections were averaged
     primaryElectionsCount: number;     // how many Spring Primary elections were averaged
     wardKeys: string[];                // normalized ward keys in this district
-    wardAvgVotes: Record<string, number>; // wardKey → mean historical votes
+    wardAvgVotes: Record<string, number>; // wardKey → mean historical votes (all elections)
+    primaryWardAvgVotes: Record<string, number>; // wardKey → mean primary-only votes per ward
     elections: HistoricalRaceData[];   // individual elections (for What If dropdown)
 }
 
@@ -241,6 +242,19 @@ function computeMayorProjection(races: HistoricalRaceData[]): DistrictProjection
         )
         : 0;
 
+    // Per-ward primary-only averages (for per-ward win number granularity)
+    const primaryWardAvgVotes: Record<string, number> = {};
+    if (primaryRaces.length > 0) {
+        for (const wardKey of allWardKeys) {
+            const counts = primaryRaces
+                .filter(r => r.wardResults.has(wardKey))
+                .map(r => r.wardResults.get(wardKey)!.totalVotes);
+            primaryWardAvgVotes[wardKey] = counts.length > 0
+                ? Math.round(counts.reduce((a, b) => a + b, 0) / counts.length)
+                : 0;
+        }
+    }
+
     return {
         label: 'Mayor of Madison',
         raceType: 'Mayor',
@@ -251,6 +265,7 @@ function computeMayorProjection(races: HistoricalRaceData[]): DistrictProjection
         primaryElectionsCount: primaryRaces.length,
         wardKeys: Array.from(allWardKeys),
         wardAvgVotes,
+        primaryWardAvgVotes,
         elections: races,
     };
 }
@@ -303,6 +318,19 @@ function computeAlderProjections(
             )
             : 0;
 
+        // Per-ward primary-only averages
+        const primaryWardAvgVotes: Record<string, number> = {};
+        if (primaryRaces.length > 0) {
+            for (const wardKey of allWardKeys) {
+                const counts = primaryRaces
+                    .filter(r => r.wardResults.has(wardKey))
+                    .map(r => r.wardResults.get(wardKey)!.totalVotes);
+                primaryWardAvgVotes[wardKey] = counts.length > 0
+                    ? Math.round(counts.reduce((a, b) => a + b, 0) / counts.length)
+                    : 0;
+            }
+        }
+
         results.push({
             label: `Aldermanic District ${districtNum}`,
             raceType: 'Alder',
@@ -313,6 +341,7 @@ function computeAlderProjections(
             primaryElectionsCount: primaryRaces.length,
             wardKeys: Array.from(allWardKeys),
             wardAvgVotes,
+            primaryWardAvgVotes,
             elections: distRaces,
         });
     }

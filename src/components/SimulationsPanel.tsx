@@ -57,6 +57,10 @@ export default function SimulationsPanel({
     // ── Feature 3: Candidate selection for margin impact ───────────────────
     const [yourCandidate, setYourCandidate] = useState<string>('');
 
+    // ── Collapsible panel state ────────────────────────────────────────────
+    const [canvassPanelCollapsed, setCanvassPanelCollapsed] = useState(false);
+    const [dropoffPanelCollapsed, setDropoffPanelCollapsed] = useState(false);
+
     // Load data on mount
     useEffect(() => {
         loadDistrictProjections().then(({ mayor, alderDistricts }) => {
@@ -418,35 +422,53 @@ export default function SimulationsPanel({
                         {/* ── Canvass Priority Sidebar List ── */}
                         {simulateOverlayMode === 'CANVASS_PRIORITY' && (
                             <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
-                                <div className="px-3 py-2.5 border-b border-slate-700/40 flex items-center gap-1.5">
-                                    <Users className="w-3 h-3 text-indigo-400" />
-                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Canvass Wards</span>
-                                </div>
-                                {topCanvassWards.length === 0 ? (
-                                    <div className="p-3 text-xs text-slate-600 text-center">Loading dormant voter data…</div>
-                                ) : (
-                                    <div className="divide-y divide-slate-800/60">
-                                        {topCanvassWards.map((ward, i) => (
-                                            <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
-                                                <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
-                                                    <div className="text-[10px] text-slate-500">
-                                                        ~{ward.dormantPool.toLocaleString()} dormant voters
-                                                    </div>
-                                                </div>
-                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
-                                                    ward.priority === 'HIGH'
-                                                        ? 'bg-red-500/20 text-red-400'
-                                                        : ward.priority === 'MEDIUM'
-                                                        ? 'bg-amber-500/20 text-amber-400'
-                                                        : 'bg-slate-700 text-slate-400'
-                                                }`}>
-                                                    {ward.priority}
-                                                </span>
-                                            </div>
-                                        ))}
+                                <button
+                                    onClick={() => setCanvassPanelCollapsed(c => !c)}
+                                    className="w-full px-3 py-2.5 border-b border-slate-700/40 flex items-center justify-between hover:bg-slate-700/20 transition-colors"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <Users className="w-3 h-3 text-indigo-400" />
+                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Canvass Wards</span>
+                                        {topCanvassWards.length > 0 && (
+                                            <span className="text-[10px] text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded-full">
+                                                {topCanvassWards.length}
+                                            </span>
+                                        )}
                                     </div>
+                                    {canvassPanelCollapsed
+                                        ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                                        : <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                                    }
+                                </button>
+                                {!canvassPanelCollapsed && (
+                                    <>
+                                        {topCanvassWards.length === 0 ? (
+                                            <div className="p-3 text-xs text-slate-600 text-center">Loading dormant voter data…</div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-800/60">
+                                                {topCanvassWards.map((ward, i) => (
+                                                    <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                        <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
+                                                            <div className="text-[10px] text-slate-500">
+                                                                ~{ward.dormantPool.toLocaleString()} dormant voters
+                                                            </div>
+                                                        </div>
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                                                            ward.priority === 'HIGH'
+                                                                ? 'bg-red-500/20 text-red-400'
+                                                                : ward.priority === 'MEDIUM'
+                                                                ? 'bg-amber-500/20 text-amber-400'
+                                                                : 'bg-slate-700 text-slate-400'
+                                                        }`}>
+                                                            {ward.priority}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         )}
@@ -454,37 +476,55 @@ export default function SimulationsPanel({
                         {/* ── Primary Dropoff Ranked List ── */}
                         {simulateOverlayMode === 'PRIMARY_DROPOFF' && (
                             <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
-                                <div className="px-3 py-2.5 border-b border-slate-700/40 flex items-center gap-1.5">
-                                    <TrendingDown className="w-3 h-3 text-amber-400" />
-                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Dropoff Wards</span>
-                                </div>
-                                <div className="px-3 py-2 border-b border-slate-800/60 flex items-center gap-2 text-[10px] text-slate-600">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 15%, 90%)' }} />
-                                    Low
-                                    <div className="flex-1 h-px bg-gradient-to-r from-amber-900/40 to-amber-500 opacity-60" />
-                                    High
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 95%, 38%)' }} />
-                                </div>
-                                {topDropoffWards.length === 0 ? (
-                                    <div className="p-3 text-xs text-slate-600 text-center">Loading dropoff data…</div>
-                                ) : (
-                                    <div className="divide-y divide-slate-800/60">
-                                        {topDropoffWards.map((ward, i) => (
-                                            <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
-                                                <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
-                                                    <div className="text-[10px] text-slate-500">
-                                                        {ward.general.toLocaleString()} gen · {ward.primary.toLocaleString()} pri
-                                                    </div>
-                                                </div>
-                                                <div className="text-right flex-shrink-0">
-                                                    <div className="text-xs font-bold text-amber-400">−{ward.dropoff.toLocaleString()}</div>
-                                                    <div className="text-[10px] text-slate-500">{ward.dropoffPct.toFixed(0)}% drop</div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                <button
+                                    onClick={() => setDropoffPanelCollapsed(c => !c)}
+                                    className="w-full px-3 py-2.5 border-b border-slate-700/40 flex items-center justify-between hover:bg-slate-700/20 transition-colors"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <TrendingDown className="w-3 h-3 text-amber-400" />
+                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Dropoff Wards</span>
+                                        {topDropoffWards.length > 0 && (
+                                            <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
+                                                {topDropoffWards.length}
+                                            </span>
+                                        )}
                                     </div>
+                                    {dropoffPanelCollapsed
+                                        ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                                        : <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                                    }
+                                </button>
+                                {!dropoffPanelCollapsed && (
+                                    <>
+                                        <div className="px-3 py-2 border-b border-slate-800/60 flex items-center gap-2 text-[10px] text-slate-600">
+                                            <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 15%, 90%)' }} />
+                                            Low
+                                            <div className="flex-1 h-px bg-gradient-to-r from-amber-900/40 to-amber-500 opacity-60" />
+                                            High
+                                            <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 95%, 38%)' }} />
+                                        </div>
+                                        {topDropoffWards.length === 0 ? (
+                                            <div className="p-3 text-xs text-slate-600 text-center">Loading dropoff data…</div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-800/60">
+                                                {topDropoffWards.map((ward, i) => (
+                                                    <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                        <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
+                                                            <div className="text-[10px] text-slate-500">
+                                                                {ward.general.toLocaleString()} gen · {ward.primary.toLocaleString()} pri
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right flex-shrink-0">
+                                                            <div className="text-xs font-bold text-amber-400">−{ward.dropoff.toLocaleString()}</div>
+                                                            <div className="text-[10px] text-slate-500">{ward.dropoffPct.toFixed(0)}% drop</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         )}
@@ -796,11 +836,17 @@ export default function SimulationsPanel({
                                                                     />
                                                                     {/* ── Feature 3: Margin impact display ── */}
                                                                     {marginLabel !== null && (
-                                                                        <div className={`mt-1.5 text-[10px] font-mono px-1.5 py-1 rounded ${
+                                                                        <div className={`mt-1.5 text-[10px] px-1.5 py-1 rounded ${
                                                                             marginLabel.votes >= 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
                                                                         }`}>
-                                                                            {marginLabel.votes >= 0 ? '+' : ''}{marginLabel.votes.toLocaleString()} votes
-                                                                            {' · '}margin {marginLabel.pts >= 0 ? '+' : ''}{marginLabel.pts.toFixed(1)} pts
+                                                                            {ward.multiplier > 100 ? 'Boosting' : 'Cutting'} by {Math.abs(ward.multiplier - 100)}%{' '}
+                                                                            {marginLabel.votes >= 0 ? 'adds' : 'removes'} ~{Math.abs(marginLabel.votes).toLocaleString()} votes
+                                                                            {marginLabel.pts !== 0 && (
+                                                                                <span>
+                                                                                    {', '}
+                                                                                    {marginLabel.pts >= 0 ? 'improves' : 'hurts'} margin by {Math.abs(marginLabel.pts).toFixed(1)} pts
+                                                                                </span>
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </div>
