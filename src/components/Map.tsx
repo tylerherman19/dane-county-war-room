@@ -184,7 +184,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
     }, [raceResult]);
 
     useEffect(() => {
-        fetch('dane_wards.geojson')
+        fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/dane_wards.geojson`)
             .then(res => res.json())
             .then(data => setGeoJsonData(data))
             .catch(err => console.error('Error loading GeoJSON:', err));
