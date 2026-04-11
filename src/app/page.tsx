@@ -6,6 +6,7 @@ import MapWrapper from '@/components/MapWrapper';
 import Sidebar from '@/components/Sidebar';
 import SimulationsPanel from '@/components/SimulationsPanel';
 import RaceSelector from '@/components/RaceSelector';
+import RaceGroupSidebar from '@/components/RaceGroupSidebar';
 import {
   useElections,
   useRaces,
@@ -15,7 +16,7 @@ import {
   useLastPublished
 } from '@/hooks/useElectionData';
 import { SimProjectionUpdate } from '@/lib/projections-data';
-import { PrecinctResult } from '@/lib/api';
+import { PrecinctResult, Race, getRaceGroupKey } from '@/lib/api';
 import { OverlayMode } from '@/components/MapOverlayControl';
 
 export default function Home() {
@@ -25,6 +26,7 @@ export default function Home() {
   // ── LIVE / ARCHIVE state ─────────────────────────────────────────────────
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
   const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null);
+  const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
   const [selectedWard, setSelectedWard] = useState<{ name: string; num: string } | null>(null);
   const [focusedCandidate, setFocusedCandidate] = useState<string | null>(null);
 
@@ -61,6 +63,7 @@ export default function Home() {
 
   useEffect(() => {
     setSelectedRaceId(null);
+    setSelectedGroupKey(null);
     setSelectedWard(null);
     setFocusedCandidate(null);
   }, [selectedElectionId]);
@@ -71,19 +74,24 @@ export default function Home() {
 
   const { races } = useRaces(viewMode !== 'SIMULATE' ? selectedElectionId : null);
 
+  // Races belonging to the currently selected group
+  const groupRaces: Race[] = selectedGroupKey
+    ? (races?.filter((r: Race) => getRaceGroupKey(r) === selectedGroupKey) ?? [])
+    : [];
+
   const RACE_PRIORITY: Record<string, number> = {
     Presidential: 0, Governor: 1, Senate: 2, Congress: 3,
     Mayor: 4, StateSenate: 5, Assembly: 6, Referendum: 7, Other: 8,
   };
   useEffect(() => {
     if (viewMode === 'SIMULATE') return;
-    if (races && races.length > 0 && !selectedRaceId) {
+    if (races && races.length > 0 && !selectedRaceId && !selectedGroupKey) {
       const sorted = [...races].sort(
         (a, b) => (RACE_PRIORITY[a.type] ?? 99) - (RACE_PRIORITY[b.type] ?? 99)
       );
       setSelectedRaceId(sorted[0].id);
     }
-  }, [races, selectedRaceId, viewMode]);
+  }, [races, selectedRaceId, selectedGroupKey, viewMode]);
 
   const { results: raceResult, isLoading: isLoadingRace, isError: raceError } = useRaceResults(
     viewMode !== 'SIMULATE' ? selectedElectionId : null,
@@ -111,6 +119,22 @@ export default function Home() {
       ? simUpdate.whatIfPrecinctResults
       : (precinctResults || []);
 
+  function handleSelectRace(raceId: string) {
+    setSelectedRaceId(raceId);
+    setSelectedGroupKey(null);
+    setSelectedWard(null);
+    setFocusedCandidate(null);
+  }
+
+  function handleSelectGroup(groupKey: string | null) {
+    setSelectedGroupKey(groupKey);
+    setSelectedRaceId(null);
+    setSelectedWard(null);
+    setFocusedCandidate(null);
+  }
+
+  const showGroupSidebar = viewMode !== 'SIMULATE' && !!selectedGroupKey && groupRaces.length > 0 && !!selectedElectionId;
+
   return (
     <Layout
       sidebar={
@@ -121,6 +145,14 @@ export default function Home() {
             onProjectionUpdate={setSimUpdate}
             simulateOverlayMode={simulateOverlayMode}
             onSimulateOverlayModeChange={setSimulateOverlayMode}
+          />
+        ) : showGroupSidebar ? (
+          <RaceGroupSidebar
+            races={groupRaces}
+            electionId={selectedElectionId!}
+            groupLabel={selectedGroupKey!}
+            onSelectRace={handleSelectRace}
+            isArchive={viewMode === 'ARCHIVE'}
           />
         ) : (
           <Sidebar
@@ -148,7 +180,9 @@ export default function Home() {
           <RaceSelector
             races={races}
             selectedRaceId={selectedRaceId}
-            onSelectRace={setSelectedRaceId}
+            onSelectRace={handleSelectRace}
+            selectedGroupKey={selectedGroupKey}
+            onSelectGroup={handleSelectGroup}
           />
         )}
         <MapWrapper

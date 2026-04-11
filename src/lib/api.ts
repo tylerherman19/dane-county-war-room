@@ -18,7 +18,7 @@ export interface Candidate {
     party?: string;
 }
 
-export type RaceType = 'Presidential' | 'Senate' | 'Congress' | 'Assembly' | 'StateSenate' | 'Referendum' | 'Mayor' | 'Governor' | 'Alder' | 'Other';
+export type RaceType = 'Presidential' | 'Senate' | 'Congress' | 'Assembly' | 'StateSenate' | 'Referendum' | 'Mayor' | 'Governor' | 'Alder' | 'Supervisor' | 'Other';
 
 export interface Race {
     id: string;
@@ -122,7 +122,32 @@ function detectRaceType(raceName: string): RaceType {
     if (name.includes('referendum') || name.includes('question') || name.includes('advisory')) return 'Referendum';
     if (name.includes('mayor')) return 'Mayor';
     if (name.includes('governor')) return 'Governor';
+    if (name.includes('alder')) return 'Alder';
+    if (name.includes('supervisor')) return 'Supervisor';
     return 'Other';
+}
+
+/**
+ * Returns a group key for races that share a jurisdiction + office type,
+ * e.g. "Madison Alder" or "Dane County Supervisor".
+ * Returns null for standalone races that don't form a multi-district group.
+ */
+export function getRaceGroupKey(race: Race): string | null {
+    const name = race.name;
+    const alderMatch = name.match(/^([\w\s]+?)\s+Alder(?:person)?[,\s]/i);
+    if (alderMatch) return `${alderMatch[1].trim()} Alder`;
+    const supervisorMatch = name.match(/^([\w\s]+?)\s+(?:(?:County\s+)?Board\s+)?Supervisor/i);
+    if (supervisorMatch) return `${supervisorMatch[1].trim()} Supervisor`;
+    return null;
+}
+
+/**
+ * Extracts a district number from a race name for sorting within a group.
+ * e.g. "Madison Alder District 7" -> 7
+ */
+export function extractDistrictNumber(raceName: string): number {
+    const m = raceName.match(/District\s+(\d+)/i);
+    return m ? parseInt(m[1]) : 0;
 }
 
 /**
