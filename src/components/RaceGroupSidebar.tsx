@@ -39,7 +39,7 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
         return (
             <button
                 onClick={onClick}
-                className="w-full text-left px-4 py-3 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0 animate-pulse"
+                className="w-full text-left px-4 py-2 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0 animate-pulse"
             >
                 <div className="flex items-center justify-between gap-3">
                     <div className="h-4 bg-slate-700 rounded w-20" />
@@ -53,7 +53,7 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
         return (
             <button
                 onClick={onClick}
-                className="w-full text-left px-4 py-3 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0"
+                className="w-full text-left px-4 py-2 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0"
             >
                 <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-semibold text-slate-300">{shortLabel}</span>
@@ -79,7 +79,7 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
     return (
         <button
             onClick={onClick}
-            className="w-full text-left px-4 py-3 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0 group"
+            className="w-full text-left px-4 py-2 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0 group"
         >
             <div className="flex items-center gap-3">
                 {/* District label */}
@@ -96,6 +96,9 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
                                     {leader.candidateName}
                                 </span>
                                 <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="text-[10px] text-slate-600 tabular-nums">
+                                        {results.precinctsReporting}/{results.totalPrecincts}p
+                                    </span>
                                     <span className="text-sm font-bold tabular-nums" style={{ color: leaderColor }}>
                                         {leader.percentage.toFixed(1)}%
                                     </span>
@@ -104,23 +107,17 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
                                             +{margin.toFixed(1)}
                                         </span>
                                     )}
+                                    {isComplete && totalVotes > 0 && (
+                                        <span className="text-[10px] text-green-600 font-medium">Final</span>
+                                    )}
                                 </div>
                             </div>
                             {/* Thin vote bar */}
-                            <div className="mt-1.5 h-1 bg-slate-700/60 rounded-full overflow-hidden">
+                            <div className="mt-1 h-0.5 bg-slate-700/60 rounded-full overflow-hidden">
                                 <div
                                     className="h-full rounded-full transition-all duration-500"
                                     style={{ width: `${leader.percentage}%`, background: leaderColor }}
                                 />
-                            </div>
-                            {/* Precincts reporting */}
-                            <div className="mt-1 flex items-center justify-between">
-                                <span className="text-[10px] text-slate-600">
-                                    {results.precinctsReporting}/{results.totalPrecincts} precincts
-                                </span>
-                                {isComplete && totalVotes > 0 && (
-                                    <span className="text-[10px] text-green-600 font-medium">Final</span>
-                                )}
                             </div>
                         </>
                     ) : (
