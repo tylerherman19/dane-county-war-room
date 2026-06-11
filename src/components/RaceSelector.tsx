@@ -101,7 +101,7 @@ export default function RaceSelector({ races, selectedRaceId, onSelectRace, sele
     }
 
     return (
-        <div className="absolute top-4 left-16 z-[1000] w-80">
+        <div className="absolute top-3 md:top-4 left-2 md:left-16 z-[1000] w-[calc(100%-100px)] md:w-80 max-w-sm">
             {/* Backdrop to close on click outside */}
             {isOpen && (
                 <div

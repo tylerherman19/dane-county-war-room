@@ -27,12 +27,12 @@ interface MapProps {
     historicalLabel?: string | null;
     focusedCandidate?: string | null;
     // SIMULATE mode
-    projectionData?: Record<string, number>; // wardKey → ratio vs district mean (1.0 = avg)
+    projectionData?: Record<string, number>;
     onWardClick?: (ward: { name: string; num: string }) => void;
     // SIMULATE overlay data
-    dormantPoolData?: Record<string, number>;           // wardKey → dormant voter pool size
-    dropoffData?: Record<string, DropoffInfo>;          // wardKey → dropoff info
-    simulateHighlightedWards?: Set<string> | null;      // wards in selected district (others dimmed)
+    dormantPoolData?: Record<string, number>;
+    dropoffData?: Record<string, DropoffInfo>;
+    simulateHighlightedWards?: Set<string> | null;
 }
 
 export interface HoveredWard {
@@ -44,12 +44,15 @@ export interface HoveredWard {
     y: number;
     analysis: WardAnalysis | null;
     fillColor: string;
-    // SIMULATE overlay fields
     dormantPool?: number;
     dropoffInfo?: DropoffInfo;
 }
 
-function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: any; selectedWard?: { name: string; num: string } | null; onReset?: () => void }) {
+function MapController({ geoJsonData, selectedWard, onReset }: {
+    geoJsonData: any;
+    selectedWard?: { name: string; num: string } | null;
+    onReset?: () => void;
+}) {
     const map = useMap();
 
     useEffect(() => {
@@ -66,7 +69,6 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
                     const wardNum = parseInt(feature.properties.WardNumber);
                     const targetNum = parseInt(selectedWard.num);
                     const muniName = feature.properties.NAME;
-
                     if (wardNum !== targetNum) return false;
                     return selectedWard.name.toLowerCase().includes(muniName.toLowerCase()) ||
                         muniName.toLowerCase().includes(selectedWard.name.toLowerCase());
@@ -85,16 +87,13 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
                         if (wardNum === targetNum) {
                             if (selectedWard.name.toLowerCase().includes(muniName.toLowerCase()) ||
                                 muniName.toLowerCase().includes(selectedWard.name.toLowerCase())) {
-
                                 if (l.getElement) {
                                     const el = l.getElement();
                                     if (el) {
                                         el.classList.add('ward-pulse');
-
                                         setTimeout(() => {
                                             map.flyTo([43.0731, -89.4012], 10, { duration: 1.5 });
                                         }, 2000);
-
                                         setTimeout(() => {
                                             el.classList.remove('ward-pulse');
                                             if (onReset) onReset();
@@ -112,15 +111,19 @@ function MapController({ geoJsonData, selectedWard, onReset }: { geoJsonData: an
     return null;
 }
 
-// Re-export so existing downstream imports from './Map' keep working
+/** Component that listens for map-level clicks to dismiss pinned tooltip */
+function MapClickDismiss({ onDismiss }: { onDismiss: () => void }) {
+    const map = useMap();
+    useEffect(() => {
+        map.on('click', onDismiss);
+        return () => { map.off('click', onDismiss); };
+    }, [map, onDismiss]);
+    return null;
+}
+
 export { assignCandidateColors };
 export type { HSL };
 
-/**
- * Convert GeoJSON feature properties (municipality name + ward number) into a
- * normalized ward key that matches the format stored in projectionData.
- * Format: "madison-city-1", "sun-prairie-city-3", "westport-town-1", etc.
- */
 function buildProjectionKey(municipality: string, wardNum: string): string {
     let s = municipality.toLowerCase();
     let type = '';
@@ -138,10 +141,66 @@ function buildProjectionKey(municipality: string, wardNum: string): string {
     return key;
 }
 
-export default function Map({ precinctResults, isLoading, selectedWard, raceResult, onReset, overlayMode, onWardHover, historicalLabel, focusedCandidate, projectionData, onWardClick, dormantPoolData, dropoffData, simulateHighlightedWards }: MapProps) {
+/** Returns a tooltip style that keeps the box within the viewport. */
+function getSafeTooltipStyle(x: number, y: number): React.CSSProperties {
+    const TOOLTIP_W = 290;
+    const TOOLTIP_H = 240;
+    const MARGIN = 12;
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    let left = x + 16;
+    let top = y - 8;
+    let transform = 'translateY(-100%)';
+
+    // Flip left if near right edge
+    if (left + TOOLTIP_W > vw - MARGIN) {
+        left = x - TOOLTIP_W - 16;
+    }
+    // Clamp to left margin
+    if (left < MARGIN) left = MARGIN;
+
+    // Flip down if near top
+    if (top - TOOLTIP_H < MARGIN) {
+        transform = 'translateY(8px)';
+    }
+    // Clamp bottom
+    if (top + TOOLTIP_H > vh - MARGIN) {
+        top = vh - TOOLTIP_H - MARGIN;
+    }
+
+    return {
+        position: 'fixed',
+        left,
+        top,
+        transform,
+        zIndex: 9999,
+        pointerEvents: 'none',
+        minWidth: '220px',
+        maxWidth: `${TOOLTIP_W}px`,
+    };
+}
+
+export default function Map({
+    precinctResults,
+    isLoading,
+    selectedWard,
+    raceResult,
+    onReset,
+    overlayMode,
+    onWardHover,
+    historicalLabel,
+    focusedCandidate,
+    projectionData,
+    onWardClick,
+    dormantPoolData,
+    dropoffData,
+    simulateHighlightedWards,
+}: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
     const [hoveredWard, setHoveredWard] = useState<HoveredWard | null>(null);
+    const [pinnedWard, setPinnedWard] = useState<HoveredWard | null>(null);
     const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
 
     // Start loading historical data when the race changes
@@ -151,7 +210,9 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         }
     }, [raceResult?.id]);
 
-    // Precompute max values for normalizing SIMULATE overlay colors
+    // Clear pinned ward when race changes
+    useEffect(() => { setPinnedWard(null); }, [raceResult?.id, overlayMode]);
+
     const maxDormantPool = useMemo(() => {
         if (!dormantPoolData) return 1;
         const vals = Object.values(dormantPoolData);
@@ -164,7 +225,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         return vals.length > 0 ? Math.max(...vals, 1) : 1;
     }, [dropoffData]);
 
-    // OPTIMIZATION: Create a fast lookup dictionary for results
     const resultsMap = useMemo(() => {
         const map: Record<string, PrecinctResult[]> = {};
         if (precinctResults) {
@@ -202,13 +262,9 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             fillOpacity: 0.3
         };
 
-        // ── SIMULATE-SPECIFIC OVERLAYS ──────────────────────────────────────────
-        // These operate on ward keys (not precinctResults) and work for ALL wards.
-
         if (overlayMode === 'CANVASS_PRIORITY') {
             if (dormantPoolData) {
                 const normalizedKey = buildProjectionKey(municipality, wardNum);
-                // Dim wards outside the selected district
                 if (simulateHighlightedWards && simulateHighlightedWards.size > 0 && !simulateHighlightedWards.has(normalizedKey)) {
                     return { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
                 }
@@ -216,29 +272,19 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 if (pool !== undefined) {
                     if (pool > 0) {
                         const intensity = Math.min(pool / maxDormantPool, 1.0);
-                        // Indigo palette: light (few dormant) → deep indigo (many dormant)
                         const l = Math.round(90 - intensity * 54);
                         const s = Math.round(15 + intensity * 80);
-                        baseStyle = {
-                            fillColor: `hsl(243, ${s}%, ${l}%)`,
-                            weight: 1,
-                            opacity: 1,
-                            color: '#334155',
-                            fillOpacity: 0.85,
-                        };
+                        baseStyle = { fillColor: `hsl(243, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.85 };
                     } else {
-                        // Zero dormant pool — very faint
                         baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.4, color: '#334155', fillOpacity: 0.3 };
                     }
                 } else {
-                    // Ward not in data — dim
                     baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
                 }
             }
         } else if (overlayMode === 'PRIMARY_DROPOFF') {
             if (dropoffData) {
                 const normalizedKey = buildProjectionKey(municipality, wardNum);
-                // Dim wards outside the selected district
                 if (simulateHighlightedWards && simulateHighlightedWards.size > 0 && !simulateHighlightedWards.has(normalizedKey)) {
                     return { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
                 }
@@ -246,16 +292,9 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 if (info) {
                     if (info.dropoff > 0) {
                         const intensity = Math.min(info.dropoff / maxDropoff, 1.0);
-                        // Amber/orange palette: light (low dropoff) → deep orange (high dropoff)
                         const l = Math.round(90 - intensity * 52);
                         const s = Math.round(15 + intensity * 85);
-                        baseStyle = {
-                            fillColor: `hsl(28, ${s}%, ${l}%)`,
-                            weight: 1,
-                            opacity: 1,
-                            color: '#334155',
-                            fillOpacity: 0.85,
-                        };
+                        baseStyle = { fillColor: `hsl(28, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.85 };
                     } else {
                         baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.4, color: '#334155', fillOpacity: 0.3 };
                     }
@@ -264,7 +303,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 }
             }
         } else {
-            // ── STANDARD OVERLAYS (require precinctResults) ──────────────────────
             const potentialMatches = resultsMap[wardNum] || [];
             const relevantResults = potentialMatches.filter((r: PrecinctResult) =>
                 r.precinctName.toLowerCase().includes(municipality.toLowerCase()) ||
@@ -277,13 +315,8 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 const winner = sorted[0];
                 const runnerUp = sorted[1];
 
-                const analysis = getWardAnalysis(wardNum, municipality);
-
-                // --- CANDIDATE FOCUS VIEW ---
                 if (focusedCandidate) {
-                    const candidateResult = relevantResults.find(
-                        r => r.candidateName.trim() === focusedCandidate.trim()
-                    );
+                    const candidateResult = relevantResults.find(r => r.candidateName.trim() === focusedCandidate.trim());
                     if (candidateResult && total > 0) {
                         const baseColor = candidateColors[focusedCandidate.trim()] || { h: 215, s: 80, l: 50 };
                         const votePct = candidateResult.votes / total;
@@ -301,56 +334,31 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                     } else {
                         baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.3, color: '#1e293b', fillOpacity: 0.15 };
                     }
-                }
-                // --- STANDARD VIEW ---
-                else if (overlayMode === 'NONE') {
+                } else if (overlayMode === 'NONE') {
                     const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
                     const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 75, l: 50 };
                     const t = Math.min(margin / 0.45, 1.0);
                     const lightness = Math.round(82 - t * 40);
                     const saturation = Math.round(25 + t * Math.max(0, baseColor.s - 25));
-                    baseStyle = {
-                        fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
-                        weight: 1,
-                        opacity: 1,
-                        color: '#334155',
-                        fillOpacity: 0.75
-                    };
-                }
-                // --- TURNOUT HEATMAP ---
-                else if (overlayMode === 'TURNOUT') {
+                    baseStyle = { fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.75 };
+                } else if (overlayMode === 'TURNOUT') {
                     const wardAnalysis = getWardAnalysis(wardNum, municipality);
-                    const historicalRef = wardAnalysis.historicalVotes > 0
-                        ? wardAnalysis.historicalVotes
-                        : (getCachedAvgVotes() ?? 0);
-
+                    const historicalRef = wardAnalysis.historicalVotes > 0 ? wardAnalysis.historicalVotes : (getCachedAvgVotes() ?? 0);
                     if (historicalRef === 0 || total === 0) {
                         baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
                     } else {
                         const ratio = total / historicalRef;
                         let h: number, s: number, l: number;
                         if (ratio < 1.0) {
-                            h = 0;
-                            const intensity = Math.min((1.0 - ratio) / 0.5, 1);
-                            l = 90 - (intensity * 40);
-                            s = intensity * 80;
+                            h = 0; const intensity = Math.min((1.0 - ratio) / 0.5, 1);
+                            l = 90 - (intensity * 40); s = intensity * 80;
                         } else {
-                            h = 140;
-                            const intensity = Math.min((ratio - 1.0) / 0.5, 1);
-                            l = 90 - (intensity * 50);
-                            s = intensity * 100;
+                            h = 140; const intensity = Math.min((ratio - 1.0) / 0.5, 1);
+                            l = 90 - (intensity * 50); s = intensity * 100;
                         }
-                        baseStyle = {
-                            fillColor: `hsl(${h}, ${s}%, ${l}%)`,
-                            weight: 1,
-                            opacity: 1,
-                            color: '#334155',
-                            fillOpacity: 0.75
-                        };
+                        baseStyle = { fillColor: `hsl(${h}, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.75 };
                     }
-                }
-                // --- PROJECTION HEATMAP (SIMULATE What If mode) ---
-                else if (overlayMode === 'PROJECTION') {
+                } else if (overlayMode === 'PROJECTION') {
                     if (!projectionData) {
                         baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.1 };
                     } else {
@@ -361,48 +369,32 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                         } else {
                             let h: number, s: number, l: number;
                             if (ratio < 1.0) {
-                                h = 0;
-                                const intensity = Math.min((1.0 - ratio) / 0.6, 1);
-                                l = 90 - intensity * 45;
-                                s = intensity * 85;
+                                h = 0; const intensity = Math.min((1.0 - ratio) / 0.6, 1);
+                                l = 90 - intensity * 45; s = intensity * 85;
                             } else {
-                                h = 140;
-                                const intensity = Math.min((ratio - 1.0) / 0.6, 1);
-                                l = 90 - intensity * 52;
-                                s = intensity * 100;
+                                h = 140; const intensity = Math.min((ratio - 1.0) / 0.6, 1);
+                                l = 90 - intensity * 52; s = intensity * 100;
                             }
-                            baseStyle = {
-                                fillColor: `hsl(${h}, ${s}%, ${l}%)`,
-                                weight: 1,
-                                opacity: 1,
-                                color: '#334155',
-                                fillOpacity: 0.8,
-                            };
+                            baseStyle = { fillColor: `hsl(${h}, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.8 };
                         }
                     }
-                }
-                // --- MARGIN INTENSITY ---
-                else if (overlayMode === 'SWING') {
+                } else if (overlayMode === 'SWING') {
                     const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
                     const winnerColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 80, l: 50 };
                     const intensity = Math.min(margin / 0.4, 1);
                     baseStyle = {
                         fillColor: `hsl(${winnerColor.h}, ${Math.round(intensity * 85)}%, ${Math.round(90 - intensity * 40)}%)`,
-                        weight: 1,
-                        opacity: 1,
-                        color: '#334155',
-                        fillOpacity: 0.8
+                        weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.8
                     };
                 }
             }
         }
 
-        // SPOTLIGHT EFFECT: If a ward is selected, dim everyone else
+        // Spotlight effect when a ward is selected
         if (currentSelectedWard) {
             const isSelected = parseInt(wardNum) === parseInt(currentSelectedWard.num) &&
                 (currentSelectedWard.name.toLowerCase().includes(municipality.toLowerCase()) ||
                     municipality.toLowerCase().includes(currentSelectedWard.name.toLowerCase()));
-
             if (!isSelected) {
                 baseStyle.fillOpacity = baseStyle.fillOpacity * 0.1;
                 baseStyle.opacity = 0.1;
@@ -418,6 +410,52 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         return baseStyle;
     }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards]);
 
+    /** Build a HoveredWard from feature data + pointer coordinates */
+    const buildWardData = useCallback((feature: { municipality: string; wardNum: string }, x: number, y: number): HoveredWard | null => {
+        const { municipality, wardNum } = feature;
+        const isSimOverlay = overlayMode === 'CANVASS_PRIORITY' || overlayMode === 'PRIMARY_DROPOFF';
+        const normalizedKey = isSimOverlay ? buildProjectionKey(municipality, wardNum) : '';
+
+        if (isSimOverlay) {
+            const hasSimData = (overlayMode === 'CANVASS_PRIORITY' && dormantPoolData && normalizedKey in dormantPoolData) ||
+                               (overlayMode === 'PRIMARY_DROPOFF' && dropoffData && normalizedKey in dropoffData);
+            if (!hasSimData) return null;
+            return {
+                municipality, wardNum,
+                results: [], total: 0, x, y, analysis: null, fillColor: '',
+                dormantPool: overlayMode === 'CANVASS_PRIORITY' ? dormantPoolData![normalizedKey] : undefined,
+                dropoffInfo: overlayMode === 'PRIMARY_DROPOFF' ? dropoffData![normalizedKey] : undefined,
+            };
+        }
+
+        const potentialMatches = resultsMap[wardNum] || [];
+        const relevantResults = potentialMatches.filter((r: PrecinctResult) =>
+            r.precinctName.toLowerCase().includes(municipality.toLowerCase()) ||
+            municipality.toLowerCase().includes(r.precinctName.toLowerCase())
+        );
+        if (relevantResults.length === 0) return null;
+
+        const total = relevantResults[0].ballotscast;
+        const sorted = [...relevantResults].sort((a, b) => b.votes - a.votes);
+        const analysis = getWardAnalysis(wardNum, municipality);
+        const winner = sorted[0];
+        const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
+        const runnerUp = sorted[1];
+        const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
+        const lightness = 65 - (Math.min(margin, 0.5) * 30);
+        const fillColor = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
+
+        return {
+            municipality, wardNum,
+            results: sorted.map((r: PrecinctResult) => ({
+                candidateName: r.candidateName,
+                votes: r.votes,
+                pct: total > 0 ? (r.votes / total) * 100 : 0,
+            })),
+            total, x, y, analysis, fillColor,
+        };
+    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData]);
+
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
         const wardNum = parseInt(feature.properties.WardNumber).toString();
@@ -432,7 +470,6 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
         const defaultBorderColor = hasData ? '#334155' : '#1e293b';
         const defaultBorderOpacity = hasData ? 1 : 0.5;
 
-        // Check for SIMULATE overlay data (can hover even without precinctResults)
         const isSimOverlay = overlayMode === 'CANVASS_PRIORITY' || overlayMode === 'PRIMARY_DROPOFF';
         const normalizedKey = isSimOverlay ? buildProjectionKey(municipality, wardNum) : '';
         const hasSimData = isSimOverlay && (
@@ -440,66 +477,27 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
             (overlayMode === 'PRIMARY_DROPOFF' && dropoffData && normalizedKey in dropoffData)
         );
 
-        // In PROJECTION mode with onWardClick, ward click adds ward to What If list
         const isProjectionClickable = overlayMode === 'PROJECTION' && !!onWardClick;
+        const isInteractive = hasData || hasSimData;
 
         layer.on({
             mouseover: (e: any) => {
                 e.target.setStyle({ weight: 2, color: '#ffffff', opacity: 1 });
                 e.target.bringToFront();
 
-                if (hasSimData) {
-                    // SIMULATE overlay tooltip
-                    const ward: HoveredWard = {
-                        municipality,
-                        wardNum,
-                        results: [],
-                        total: 0,
-                        x: e.originalEvent.clientX,
-                        y: e.originalEvent.clientY,
-                        analysis: null,
-                        fillColor: '',
-                        dormantPool: overlayMode === 'CANVASS_PRIORITY'
-                            ? dormantPoolData![normalizedKey]
-                            : undefined,
-                        dropoffInfo: overlayMode === 'PRIMARY_DROPOFF'
-                            ? dropoffData![normalizedKey]
-                            : undefined,
-                    };
-                    setHoveredWard(ward);
-                    onWardHover?.(ward);
-                } else if (hasData) {
-                    const total = relevantResults[0].ballotscast;
-                    const sorted = [...relevantResults].sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
-                    const analysis = getWardAnalysis(wardNum, municipality);
-
-                    const winner = sorted[0];
-                    const baseColor = candidateColors[winner.candidateName.trim()] || { h: 215, s: 16, l: 47 };
-                    const runnerUp = sorted[1];
-                    const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
-                    const lightness = 65 - (Math.min(margin, 0.5) * 30);
-                    const fillColor = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
-
-                    const ward: HoveredWard = {
-                        municipality,
-                        wardNum,
-                        results: sorted.map((r: PrecinctResult) => ({
-                            candidateName: r.candidateName,
-                            votes: r.votes,
-                            pct: total > 0 ? (r.votes / total) * 100 : 0,
-                        })),
-                        total,
-                        x: e.originalEvent.clientX,
-                        y: e.originalEvent.clientY,
-                        analysis,
-                        fillColor,
-                    };
+                if (!isInteractive) return;
+                const ward = buildWardData(
+                    { municipality, wardNum },
+                    e.originalEvent.clientX,
+                    e.originalEvent.clientY
+                );
+                if (ward) {
                     setHoveredWard(ward);
                     onWardHover?.(ward);
                 }
             },
             mousemove: (e: any) => {
-                if (hasData || hasSimData) {
+                if (isInteractive) {
                     setHoveredWard(prev => prev ? { ...prev, x: e.originalEvent.clientX, y: e.originalEvent.clientY } : null);
                 }
             },
@@ -508,17 +506,44 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                 setHoveredWard(null);
                 onWardHover?.(null);
             },
-            click: () => {
+            click: (e: any) => {
                 if (isProjectionClickable) {
                     onWardClick!({ name: municipality, num: wardNum });
+                    return;
                 }
+                if (!isInteractive) return;
+
+                // Get coordinates from mouse or touch
+                const clientX = e.originalEvent.clientX
+                    ?? e.originalEvent.changedTouches?.[0]?.clientX
+                    ?? e.originalEvent.touches?.[0]?.clientX
+                    ?? 0;
+                const clientY = e.originalEvent.clientY
+                    ?? e.originalEvent.changedTouches?.[0]?.clientY
+                    ?? e.originalEvent.touches?.[0]?.clientY
+                    ?? 0;
+
+                const ward = buildWardData({ municipality, wardNum }, clientX, clientY);
+                if (!ward) return;
+
+                // Toggle pin: same ward = dismiss, different ward = show new
+                setPinnedWard(prev =>
+                    prev && prev.wardNum === wardNum && prev.municipality === municipality
+                        ? null
+                        : ward
+                );
+                // Stop event from propagating to map (which would dismiss via MapClickDismiss)
+                L.DomEvent.stopPropagation(e);
             },
         });
 
-        if (isProjectionClickable) {
+        if (isProjectionClickable || isInteractive) {
             (layer as any).options = { ...((layer as any).options || {}), className: 'cursor-pointer' };
         }
-    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData]);
+    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData]);
+
+    // Which ward to display in the tooltip: pinned takes priority
+    const displayWard = pinnedWard ?? hoveredWard;
 
     return (
         <>
@@ -541,49 +566,54 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             ref={geoJsonLayerRef}
                         />
                         <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} />
+                        <MapClickDismiss onDismiss={() => setPinnedWard(null)} />
                     </>
                 )}
             </MapContainer>
 
-            {hoveredWard && (
-                <div style={{
-                    position: 'fixed',
-                    left: hoveredWard.x + 16,
-                    top: hoveredWard.y - 8,
-                    transform: 'translateY(-100%)',
-                    zIndex: 9999,
-                    pointerEvents: 'none',
-                    minWidth: '220px',
-                    maxWidth: '290px',
-                }}>
+            {displayWard && (
+                <div style={getSafeTooltipStyle(displayWard.x, displayWard.y)}>
                     <div style={{
                         background: '#0f172a',
-                        border: '1px solid #334155',
+                        border: `1px solid ${pinnedWard ? '#3b82f6' : '#334155'}`,
                         borderRadius: '10px',
                         overflow: 'hidden',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.65)',
+                        boxShadow: pinnedWard ? '0 8px 32px rgba(59,130,246,0.3)' : '0 8px 32px rgba(0,0,0,0.65)',
                         color: 'white',
                         fontSize: '13px',
                         fontFamily: 'system-ui, sans-serif',
                     }}>
                         {/* Header */}
-                        <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #1e293b' }}>
-                            <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
-                                {overlayMode === 'CANVASS_PRIORITY' ? 'Canvass Priority' :
-                                 overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
-                                 (raceResult?.raceName || 'Election Results')}
+                        <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
+                                    {overlayMode === 'CANVASS_PRIORITY' ? 'Canvass Priority' :
+                                     overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
+                                     (raceResult?.raceName || 'Election Results')}
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>
+                                    {displayWard.municipality} · Wd.&nbsp;{displayWard.wardNum}
+                                </div>
                             </div>
-                            <div style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>
-                                {hoveredWard.municipality} · Wd.&nbsp;{hoveredWard.wardNum}
-                            </div>
+                            {pinnedWard && (
+                                <button
+                                    onClick={() => setPinnedWard(null)}
+                                    style={{
+                                        background: 'none', border: 'none', color: '#64748b',
+                                        cursor: 'pointer', fontSize: '16px', lineHeight: 1,
+                                        padding: '0 0 0 8px', pointerEvents: 'auto',
+                                    }}
+                                    aria-label="Close"
+                                >×</button>
+                            )}
                         </div>
 
-                        {/* CANVASS PRIORITY tooltip body */}
-                        {hoveredWard.dormantPool !== undefined && (
+                        {/* CANVASS PRIORITY body */}
+                        {displayWard.dormantPool !== undefined && (
                             <div style={{ padding: '10px 14px 12px' }}>
                                 <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>Dormant voter pool</div>
                                 <div style={{ fontSize: '22px', fontWeight: 800, color: '#818cf8' }}>
-                                    {hoveredWard.dormantPool.toLocaleString()}
+                                    {displayWard.dormantPool.toLocaleString()}
                                 </div>
                                 <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px' }}>
                                     Avg voters who turn out in general elections but skip primaries
@@ -591,34 +621,34 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                             </div>
                         )}
 
-                        {/* PRIMARY DROPOFF tooltip body */}
-                        {hoveredWard.dropoffInfo !== undefined && (
+                        {/* PRIMARY DROPOFF body */}
+                        {displayWard.dropoffInfo !== undefined && (
                             <div style={{ padding: '10px 14px 12px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                                     <div>
                                         <div style={{ fontSize: '10px', color: '#64748b' }}>Spring Election</div>
                                         <div style={{ fontSize: '14px', fontWeight: 700, color: '#f1f5f9' }}>
-                                            {hoveredWard.dropoffInfo.general.toLocaleString()}
+                                            {displayWard.dropoffInfo.general.toLocaleString()}
                                         </div>
                                     </div>
                                     <div>
                                         <div style={{ fontSize: '10px', color: '#64748b' }}>Spring Primary</div>
                                         <div style={{ fontSize: '14px', fontWeight: 700, color: '#f1f5f9' }}>
-                                            {hoveredWard.dropoffInfo.primary.toLocaleString()}
+                                            {displayWard.dropoffInfo.primary.toLocaleString()}
                                         </div>
                                     </div>
                                 </div>
                                 <div style={{ borderTop: '1px solid #1e293b', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>Dropoff</span>
                                     <span style={{ fontSize: '13px', fontWeight: 700, color: '#fb923c' }}>
-                                        −{hoveredWard.dropoffInfo.dropoff.toLocaleString()} ({hoveredWard.dropoffInfo.dropoffPct.toFixed(1)}%)
+                                        −{displayWard.dropoffInfo.dropoff.toLocaleString()} ({displayWard.dropoffInfo.dropoffPct.toFixed(1)}%)
                                     </span>
                                 </div>
                             </div>
                         )}
 
-                        {/* Standard candidate rows (non-SIMULATE overlays) */}
-                        {hoveredWard.results.length > 0 && (
+                        {/* Standard candidate rows */}
+                        {displayWard.results.length > 0 && (
                             <div style={{ padding: '10px 14px' }}>
                                 {(() => {
                                     const isPresidential = raceResult?.type === 'Presidential';
@@ -626,14 +656,13 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                                         (raceResult?.candidates ?? []).map(c => [c.candidateName.trim(), c.party])
                                     );
                                     const visibleResults = isPresidential
-                                        ? hoveredWard.results.filter(r => {
+                                        ? displayWard.results.filter(r => {
                                             const party = partyMap[r.candidateName.trim()];
                                             const name = r.candidateName;
                                             return party === 'Democratic' || party === 'Republican'
-                                                || name.includes('Biden') || name.includes('Harris')
-                                                || name.includes('Trump');
+                                                || name.includes('Biden') || name.includes('Harris') || name.includes('Trump');
                                         })
-                                        : hoveredWard.results;
+                                        : displayWard.results;
                                     return visibleResults.map((r, i) => {
                                         const hsl = candidateColors[r.candidateName.trim()];
                                         const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#64748b';
@@ -642,7 +671,7 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                                             <div key={i} style={{ marginBottom: i < visibleResults.length - 1 ? '10px' : 0 }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
                                                     <span title={r.candidateName} style={{ color: isWinner ? '#f1f5f9' : '#94a3b8', fontWeight: isWinner ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-                                                        {isWinner ? '▲ ' : '\u00a0\u00a0 '}{r.candidateName}
+                                                        {isWinner ? '▲ ' : '   '}{r.candidateName}
                                                     </span>
                                                     <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#f1f5f9' : '#64748b', marginLeft: '12px' }}>
                                                         {r.pct.toFixed(1)}%
@@ -662,21 +691,19 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                         )}
 
                         {/* Margin comparison row */}
-                        {overlayMode !== 'TURNOUT' && hoveredWard.results.length > 0 && hoveredWard.analysis?.historicalRaceName && hoveredWard.analysis.historicalMargin !== 0 && (() => {
-                            const histMarginPct = hoveredWard.analysis!.historicalMargin * 100;
-                            const currentMarginPct = hoveredWard.results.length >= 2
-                                ? hoveredWard.results[0].pct - hoveredWard.results[1].pct
-                                : 100;
+                        {overlayMode !== 'TURNOUT' && displayWard.results.length > 0 && displayWard.analysis?.historicalRaceName && displayWard.analysis.historicalMargin !== 0 && (() => {
+                            const histMarginPct = displayWard.analysis!.historicalMargin * 100;
+                            const currentMarginPct = displayWard.results.length >= 2
+                                ? displayWard.results[0].pct - displayWard.results[1].pct : 100;
                             const diff = currentMarginPct - Math.abs(histMarginPct);
                             const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' pts';
                             const diffColor = diff >= 0 ? '#4ade80' : '#f87171';
-                            const year = hoveredWard.analysis!.historicalDate
-                                ? new Date(hoveredWard.analysis!.historicalDate).getFullYear()
-                                : '?';
+                            const year = displayWard.analysis!.historicalDate
+                                ? new Date(displayWard.analysis!.historicalDate).getFullYear() : '?';
                             return (
                                 <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '10px', color: '#475569' }}>
-                                        vs {year} {hoveredWard.analysis!.historicalRaceName.split(' ').slice(0, 2).join(' ')}
+                                        vs {year} {displayWard.analysis!.historicalRaceName.split(' ').slice(0, 2).join(' ')}
                                     </span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: diffColor }}>{diffStr}</span>
                                 </div>
@@ -684,37 +711,43 @@ export default function Map({ precinctResults, isLoading, selectedWard, raceResu
                         })()}
 
                         {/* Turnout delta row */}
-                        {overlayMode === 'TURNOUT' && hoveredWard.analysis && hoveredWard.analysis.historicalVotes > 0 && (() => {
-                            const ratio = hoveredWard.total / hoveredWard.analysis!.historicalVotes;
+                        {overlayMode === 'TURNOUT' && displayWard.analysis && displayWard.analysis.historicalVotes > 0 && (() => {
+                            const ratio = displayWard.total / displayWard.analysis!.historicalVotes;
                             const deltaPct = (ratio - 1) * 100;
                             const isAbove = deltaPct >= 0;
                             const arrow = isAbove ? '↑' : '↓';
                             const deltaColor = isAbove ? '#4ade80' : '#f87171';
-                            const year = hoveredWard.analysis!.historicalDate
-                                ? new Date(hoveredWard.analysis!.historicalDate).getFullYear()
-                                : '?';
-                            const prevVotes = hoveredWard.analysis!.historicalVotes.toLocaleString();
-                            const ballotDiff = hoveredWard.total - hoveredWard.analysis!.historicalVotes;
+                            const year = displayWard.analysis!.historicalDate
+                                ? new Date(displayWard.analysis!.historicalDate).getFullYear() : '?';
+                            const prevVotes = displayWard.analysis!.historicalVotes.toLocaleString();
+                            const ballotDiff = displayWard.total - displayWard.analysis!.historicalVotes;
                             const diffStr = (isAbove ? '+' : '') + ballotDiff.toLocaleString();
                             return (
                                 <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '10px', color: '#475569' }}>vs {year} baseline · {prevVotes} ballots</span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
-                                        {arrow} {Math.abs(deltaPct).toFixed(0)}% &middot; {diffStr} ballots
+                                        {arrow} {Math.abs(deltaPct).toFixed(0)}% · {diffStr} ballots
                                     </span>
                                 </div>
                             );
                         })()}
 
                         {/* Footer */}
-                        {hoveredWard.results.length >= 2 && (
+                        {displayWard.results.length >= 2 && (
                             <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: '11px', color: '#475569' }}>
-                                    {hoveredWard.total.toLocaleString()} ballots cast
+                                    {displayWard.total.toLocaleString()} ballots cast
                                 </span>
                                 <span style={{ fontSize: '11px', color: '#64748b' }}>
-                                    +{Math.abs(hoveredWard.results[0].pct - hoveredWard.results[1].pct).toFixed(1)}% margin
+                                    +{Math.abs(displayWard.results[0].pct - displayWard.results[1].pct).toFixed(1)}% margin
                                 </span>
+                            </div>
+                        )}
+
+                        {/* Tap hint on mobile when pinned */}
+                        {pinnedWard && (
+                            <div style={{ padding: '4px 14px 8px', fontSize: '10px', color: '#334155', textAlign: 'center' }}>
+                                Tap another ward or the × to dismiss
                             </div>
                         )}
                     </div>

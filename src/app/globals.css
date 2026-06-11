@@ -140,4 +140,26 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Prevent 300ms tap delay on mobile */
+  button, [role="button"], a {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth momentum scroll in overflow containers */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Ensure leaflet map fills its container properly on iOS */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Prevent rubber-band scroll on iOS from moving the map accidentally */
+html, body {
+  overscroll-behavior: none;
 }
