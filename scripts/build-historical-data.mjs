@@ -51,6 +51,8 @@ function normalizeWardName(precinctName, wardNumber) {
 
 function detectRaceType(raceName) {
     const n = raceName.toLowerCase();
+    // Local "president"/chair offices must not match the Presidential check below
+    if (/(village|school board|county board)\s+president/.test(n) || n.includes('chairperson') || n.includes('town chair')) return 'Other';
     if (n.includes('president')) return 'Presidential';
     if (n.includes('u.s. senator') || n.includes('us senator') || n.includes('united states senator')) return 'Senate';
     if (n.includes('state senator') || n.includes('state senate')) return 'StateSenate';

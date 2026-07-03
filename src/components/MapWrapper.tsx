@@ -5,8 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
 import { HoveredWard } from './Map';
-import { isHistoricalDataLoaded, getHistoricalRaceInfo, getExpectedTotalVotes, loadHistoricalRaceById, normalizeWardName } from '@/lib/analysis-data';
-import { getAvailableRacesWithOverlap, HistoricalRaceSummary } from '@/lib/historical-api-data';
+import { isHistoricalDataLoaded, getHistoricalRaceInfo } from '@/lib/analysis-data';
 import { assignCandidateColors } from '@/lib/candidate-colors';
 import { getDormantPoolByWard, getDropoffByWard, DropoffInfo } from '@/lib/dormant-voter-data';
 
@@ -27,17 +26,17 @@ interface MapWrapperProps {
     simulateHighlightedWards?: Set<string> | null;
     onWardClick?: (ward: { name: string; num: string }) => void;
     simulateOverlayMode?: OverlayMode;
+    // Real turnout (ballots cast) keyed by "City of Madison|46"
+    turnoutByWard?: Record<string, number>;
+    comparisonTurnoutByWard?: Record<string, number>;
+    comparisonLabel?: string | null;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
     const [historicalLabel, setHistoricalLabel] = useState<string | null>(null);
-    const [availableRaces, setAvailableRaces] = useState<HistoricalRaceSummary[]>([]);
-    const [selectedComparisonKey, setSelectedComparisonKey] = useState<string | null>(null);
-    const [isLoadingComparison, setIsLoadingComparison] = useState(false);
-    const [historicalTotalVotes, setHistoricalTotalVotes] = useState<number | null>(null);
 
     // SIMULATE overlay data (loaded once when simulateMode is first true)
     const [dormantPoolData, setDormantPoolData] = useState<Record<string, number> | undefined>(undefined);
@@ -49,19 +48,15 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         getDropoffByWard().then(setDropoffData).catch(() => {});
     }, [simulateMode]);
 
-    // Reset overlay + label on race change, then poll until historical data loads.
+    // Reset overlay + label on race change, then poll until historical data loads
+    // (the label drives the "vs historical margin" tooltip row re-render).
     useEffect(() => {
         setOverlayMode('NONE');
         setHistoricalLabel(null);
-        setHistoricalTotalVotes(null);
-        setAvailableRaces([]);
-        setSelectedComparisonKey(null);
         const id = setInterval(() => {
             if (isHistoricalDataLoaded()) {
                 const info = getHistoricalRaceInfo();
                 if (info) setHistoricalLabel(`${info.year} ${info.name}`);
-                const total = getExpectedTotalVotes();
-                setHistoricalTotalVotes(total > 0 ? total : null);
                 clearInterval(id);
             }
         }, 1000);
@@ -86,41 +81,10 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
             });
     }, [raceResult]);
 
-    const currentWardKeys = useMemo(() => {
-        const seen = new Set<string>();
-        const keys: string[] = [];
-        precinctResults.forEach(r => {
-            const k = normalizeWardName(r.precinctName, r.wardNumber);
-            if (!seen.has(k)) { seen.add(k); keys.push(k); }
-        });
-        return keys;
-    }, [precinctResults]);
-
-    useEffect(() => {
-        if (!historicalLabel) return;
-        getAvailableRacesWithOverlap(currentWardKeys).then(setAvailableRaces).catch(() => {});
-    }, [historicalLabel, currentWardKeys]);
-
     const handleOverlayChange = useCallback((mode: OverlayMode) => {
         setOverlayMode(mode);
         onCandidateReset();
     }, [onCandidateReset]);
-
-    const handleComparisonChange = useCallback(async (key: string) => {
-        if (!key) {
-            setSelectedComparisonKey(null);
-            return;
-        }
-        const [electionId, raceId] = key.split('|');
-        setSelectedComparisonKey(key);
-        setIsLoadingComparison(true);
-        await loadHistoricalRaceById(electionId, raceId);
-        const info = getHistoricalRaceInfo();
-        if (info) setHistoricalLabel(`${info.year} ${info.name}`);
-        const total = getExpectedTotalVotes();
-        setHistoricalTotalVotes(total > 0 ? total : null);
-        setIsLoadingComparison(false);
-    }, []);
 
     // In SIMULATE mode use the simulateOverlayMode prop; otherwise use local overlayMode
     const effectiveOverlayMode: OverlayMode = simulateMode
@@ -133,14 +97,9 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 <MapOverlayControl
                     currentMode={overlayMode}
                     onChange={handleOverlayChange}
-                    historicalLabel={historicalLabel}
-                    availableRaces={availableRaces}
-                    selectedComparisonKey={selectedComparisonKey}
-                    onComparisonChange={handleComparisonChange}
-                    isLoadingComparison={isLoadingComparison}
-                    historicalTotalVotes={historicalTotalVotes}
+                    comparisonLabel={comparisonLabel}
+                    turnoutReady={!!turnoutByWard}
                     candidateLegend={candidateLegend}
-                    currentRaceType={raceResult?.type}
                 />
             )}
             <Map
@@ -153,6 +112,9 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 onWardHover={setDebugWardData}
                 historicalLabel={historicalLabel}
                 focusedCandidate={focusedCandidate}
+                turnoutByWard={turnoutByWard}
+                comparisonTurnoutByWard={comparisonTurnoutByWard}
+                comparisonLabel={comparisonLabel}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}

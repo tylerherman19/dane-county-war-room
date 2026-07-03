@@ -55,13 +55,6 @@ export interface LastPublished {
     lastPublished: string;
 }
 
-export interface HistoricalTurnout {
-    expectedBallots: number;
-    outstandingEstimate: number;
-    confidence: 'Low' | 'Medium' | 'High';
-    percentageReported: number;
-}
-
 // --- API Response Interfaces (PascalCase) ---
 
 interface ApiElection {
@@ -113,6 +106,8 @@ interface ApiPrecinctResultResponse {
  */
 function detectRaceType(raceName: string): RaceType {
     const name = raceName.toLowerCase();
+    // Local "president"/chair offices must not match the Presidential check below
+    if (/(village|school board|county board)\s+president/.test(name) || name.includes('chairperson') || name.includes('town chair')) return 'Other';
     if (name.includes('president')) return 'Presidential';
     if (name.includes('u.s. senator') || name.includes('us senator') || name.includes('united states senator')) return 'Senate';
     if (name.includes('state senator') || name.includes('state senate')) return 'StateSenate';
@@ -138,6 +133,10 @@ export function getRaceGroupKey(race: Race): string | null {
     if (alderMatch) return `${alderMatch[1].trim()} Alder`;
     const supervisorMatch = name.match(/^([\w\s]+?)\s+(?:(?:County\s+)?Board\s+)?Supervisor/i);
     if (supervisorMatch) return `${supervisorMatch[1].trim()} Supervisor`;
+    // One race per municipality, but grouping them declutters spring ballots
+    if (/Village President$/i.test(name)) return 'Village President';
+    if (/Town Board Chairperson$/i.test(name)) return 'Town Board Chairperson';
+    if (/Town Board Chair$/i.test(name)) return 'Town Board Chairperson';
     return null;
 }
 
@@ -241,10 +240,18 @@ export async function getLastPublished(electionId: string): Promise<LastPublishe
     };
 }
 
+// Administrative tally rows the county publishes alongside real contests.
+// They are excluded from the race list but used as the turnout data source.
+const ADMIN_RACE_RE = /^\s*(BALLOTS CAST|REGISTERED VOTERS|STRAIGHT PARTY)/i;
+
+export function isAdminRace(raceName: string): boolean {
+    return ADMIN_RACE_RE.test(raceName);
+}
+
 export async function getRaces(electionId: string): Promise<Race[]> {
     const data = await fetchAPI<ApiRace[]>(`/races/${electionId}`);
 
-    return data.map(r => ({
+    return data.filter(r => !isAdminRace(r.RaceName)).map(r => ({
         id: r.RaceNumber,
         electionId: electionId,
         name: r.RaceName,
@@ -348,15 +355,55 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
     return results;
 }
 
-import { getExpectedTurnout } from './historical-data';
+// --- Turnout (from the county's BALLOTS CAST - TOTAL tally race) ---
 
-export async function getHistoricalTurnout(raceId: string | null, currentTotalVotes: number, raceName?: string): Promise<HistoricalTurnout> {
-    const expected = getExpectedTurnout(raceName || 'Default');
-
-    return {
-        expectedBallots: Math.max(expected, currentTotalVotes),
-        outstandingEstimate: Math.max(0, expected - currentTotalVotes),
-        confidence: 'Low',
-        percentageReported: Math.min((currentTotalVotes / expected) * 100, 100)
-    };
+export interface WardTurnout {
+    precinctName: string;   // normalized municipality, e.g. "City of Madison"
+    wardNumber: string;
+    ballotsCast: number;
 }
+
+export interface ElectionTurnout {
+    electionId: string;
+    totalBallots: number;
+    byWard: WardTurnout[];
+}
+
+/**
+ * Fetches real turnout for an election using the "BALLOTS CAST - TOTAL"
+ * administrative race (one row per precinct, TotalVotes = ballots cast).
+ * Returns null if the election has no ballots-cast tally.
+ */
+export async function getElectionTurnout(electionId: string): Promise<ElectionTurnout | null> {
+    const races = await fetchAPI<ApiRace[]>(`/races/${electionId}`);
+    const ballotsRace = races.find(r => /^\s*BALLOTS CAST/i.test(r.RaceName));
+    if (!ballotsRace) return null;
+
+    const data = await fetchAPI<ApiPrecinctResultResponse>(`/precinctresults/${electionId}/${ballotsRace.RaceNumber}`);
+
+    let totalBallots = 0;
+    const byWard: WardTurnout[] = [];
+
+    data.PrecinctVotes.forEach(pv => {
+        totalBallots += pv.TotalVotes;
+
+        let precinctName = pv.PrecinctName.split(' Wd')[0].trim();
+        precinctName = precinctName
+            .replace(/^C[\s.]+/i, 'City of ')
+            .replace(/^T[\s.]+/i, 'Town of ')
+            .replace(/^V[\s.]+/i, 'Village of ');
+
+        const wards = expandWardRanges(pv.PrecinctName);
+        if (wards.length > 0) {
+            const perWard = Math.round(pv.TotalVotes / wards.length);
+            for (const wardNum of wards) {
+                byWard.push({ precinctName, wardNumber: wardNum.toString(), ballotsCast: perWard });
+            }
+        } else {
+            byWard.push({ precinctName, wardNumber: '0', ballotsCast: pv.TotalVotes });
+        }
+    });
+
+    return { electionId, totalBallots, byWard };
+}
+

@@ -6,13 +6,13 @@ import {
     getRaces,
     getRaceResults,
     getPrecinctResults,
-    getHistoricalTurnout,
+    getElectionTurnout,
     Election,
     Race,
     RaceResult,
     PrecinctResult,
     LastPublished,
-    HistoricalTurnout
+    ElectionTurnout
 } from '@/lib/api';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -79,15 +79,18 @@ export function usePrecinctResults(electionId: string | null, raceId: string | n
     };
 }
 
-export function useHistoricalTurnout(raceId: string | null, currentVotes: number | undefined, raceName?: string) {
-    // currentVotes is intentionally excluded from the SWR key — it changes every poll cycle
-    // and getHistoricalTurnout uses it only to clamp the outstanding estimate, not for caching.
-    const { data, error, isLoading } = useSWR<HistoricalTurnout>(
-        raceId ? ['historicalTurnout', raceId, raceName] : null,
-        ([_, rId, rName]) => getHistoricalTurnout(rId as string, currentVotes ?? 0, rName as string | undefined)
+/**
+ * Real turnout for an election from the county's BALLOTS CAST - TOTAL tally.
+ * `live` enables periodic refresh (only useful for the current election).
+ */
+export function useElectionTurnout(electionId: string | null, live = false) {
+    const { data, error, isLoading } = useSWR<ElectionTurnout | null>(
+        electionId ? ['electionTurnout', electionId] : null,
+        ([_, id]) => getElectionTurnout(id as string),
+        live ? { refreshInterval: REFRESH_INTERVAL } : { revalidateOnFocus: false }
     );
     return {
-        turnoutData: data,
+        turnout: data ?? undefined,
         isLoading,
         isError: error
     };
