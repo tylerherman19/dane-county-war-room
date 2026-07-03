@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Layout from '@/components/Layout';
 import MapWrapper from '@/components/MapWrapper';
 import Sidebar from '@/components/Sidebar';
@@ -12,12 +12,32 @@ import {
   useRaces,
   useRaceResults,
   usePrecinctResults,
-  useHistoricalTurnout,
+  useElectionTurnout,
   useLastPublished
 } from '@/hooks/useElectionData';
 import { SimProjectionUpdate } from '@/lib/projections-data';
-import { PrecinctResult, Race, getRaceGroupKey } from '@/lib/api';
+import { Election, PrecinctResult, Race, getRaceGroupKey } from '@/lib/api';
 import { OverlayMode } from '@/components/MapOverlayControl';
+
+/**
+ * Picks the default comparison election: the most recent election strictly
+ * older than the selected one of the same season type (general vs general,
+ * spring vs spring...), falling back to the next older election of any kind.
+ */
+function defaultComparisonElection(elections: Election[], selectedId: string | null): string | null {
+  if (!selectedId) return null;
+  const idx = elections.findIndex(e => e.electionId === selectedId);
+  if (idx < 0) return null;
+  const older = elections.slice(idx + 1); // list is sorted newest-first
+  if (older.length === 0) return null;
+  const SEASONS = ['General Election', 'Partisan Primary', 'Spring Election', 'Spring Primary'];
+  const season = SEASONS.find(s => elections[idx].electionName.includes(s));
+  if (season) {
+    const match = older.find(e => e.electionName.includes(season));
+    if (match) return match.electionId;
+  }
+  return older[0].electionId;
+}
 
 export default function Home() {
   // ── Top-level mode ───────────────────────────────────────────────────────
@@ -29,6 +49,14 @@ export default function Home() {
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
   const [selectedWard, setSelectedWard] = useState<{ name: string; num: string } | null>(null);
   const [focusedCandidate, setFocusedCandidate] = useState<string | null>(null);
+
+  // ── Comparison election (turnout baseline) ──────────────────────────────
+  // null = auto (previous comparable election); user can override in the sidebar.
+  const [comparisonOverride, setComparisonOverride] = useState<string | null>(null);
+
+  // ── Shareable URL state (?e=&r=) ─────────────────────────────────────────
+  const pendingUrlState = useRef<{ e: string | null; r: string | null } | null>(null);
+  const urlStateApplied = useRef(false);
 
   // ── SIMULATE state ───────────────────────────────────────────────────────
   const [simUpdate, setSimUpdate] = useState<SimProjectionUpdate>({
@@ -52,6 +80,21 @@ export default function Home() {
   useEffect(() => {
     if (viewMode === 'SIMULATE') return;
     if (!elections || elections.length === 0) return;
+
+    // Apply shared-link state (?e=&r=) once, before the LIVE pin below
+    if (!urlStateApplied.current) {
+      urlStateApplied.current = true;
+      const params = new URLSearchParams(window.location.search);
+      const e = params.get('e');
+      const r = params.get('r');
+      pendingUrlState.current = { e, r };
+      if (e && elections.some(el => el.electionId === e)) {
+        if (e !== elections[0].electionId) setViewMode('ARCHIVE');
+        setSelectedElectionId(e);
+        return;
+      }
+    }
+
     if (viewMode === 'LIVE') {
       if (selectedElectionId !== elections[0].electionId) {
         setSelectedElectionId(elections[0].electionId);
@@ -66,7 +109,17 @@ export default function Home() {
     setSelectedGroupKey(null);
     setSelectedWard(null);
     setFocusedCandidate(null);
+    setComparisonOverride(null);
   }, [selectedElectionId]);
+
+  // Keep the URL shareable: reflect current selection in ?e=&r=
+  useEffect(() => {
+    if (!urlStateApplied.current || !selectedElectionId) return;
+    const params = new URLSearchParams();
+    params.set('e', selectedElectionId);
+    if (selectedRaceId) params.set('r', selectedRaceId);
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+  }, [selectedElectionId, selectedRaceId]);
 
   useEffect(() => {
     setFocusedCandidate(null);
@@ -79,17 +132,19 @@ export default function Home() {
     ? (races?.filter((r: Race) => getRaceGroupKey(r) === selectedGroupKey) ?? [])
     : [];
 
-  const RACE_PRIORITY: Record<string, number> = {
-    Presidential: 0, Governor: 1, Senate: 2, Congress: 3,
-    Mayor: 4, StateSenate: 5, Assembly: 6, Referendum: 7, Other: 8,
-  };
   useEffect(() => {
     if (viewMode === 'SIMULATE') return;
     if (races && races.length > 0 && !selectedRaceId && !selectedGroupKey) {
-      const sorted = [...races].sort(
-        (a, b) => (RACE_PRIORITY[a.type] ?? 99) - (RACE_PRIORITY[b.type] ?? 99)
-      );
-      setSelectedRaceId(sorted[0].id);
+      // Shared link may name a specific race
+      const pendingRace = pendingUrlState.current?.r;
+      if (pendingRace && races.some(x => x.id === pendingRace)) {
+        pendingUrlState.current = null;
+        setSelectedRaceId(pendingRace);
+        return;
+      }
+      // The county lists races in ballot order, so the first race is the
+      // top-of-ticket contest (President/VP in generals, Supreme Court in springs).
+      setSelectedRaceId(races[0].id);
     }
   }, [races, selectedRaceId, selectedGroupKey, viewMode]);
 
@@ -103,12 +158,39 @@ export default function Home() {
   );
   const { lastPublished } = useLastPublished(viewMode !== 'SIMULATE' ? selectedElectionId : null);
 
-  const currentTotalVotes = raceResult?.totalVotes ?? 0;
-  const { turnoutData } = useHistoricalTurnout(
-    viewMode !== 'SIMULATE' ? selectedRaceId : null,
-    currentTotalVotes,
-    raceResult?.raceName
+  // ── Real turnout: selected election + comparison baseline ────────────────
+  const comparisonElectionId = useMemo(
+    () => comparisonOverride ?? defaultComparisonElection(elections ?? [], selectedElectionId),
+    [comparisonOverride, elections, selectedElectionId]
   );
+  const { turnout: electionTurnout } = useElectionTurnout(
+    viewMode !== 'SIMULATE' ? selectedElectionId : null,
+    viewMode === 'LIVE'
+  );
+  const { turnout: comparisonTurnout } = useElectionTurnout(
+    viewMode !== 'SIMULATE' ? comparisonElectionId : null
+  );
+  const comparisonElection = elections?.find(e => e.electionId === comparisonElectionId);
+
+  // Ward-keyed maps for the map overlay: "City of Madison|46" -> ballots cast
+  const turnoutByWard = useMemo(() => {
+    if (!electionTurnout) return undefined;
+    const m: Record<string, number> = {};
+    electionTurnout.byWard.forEach(w => {
+      const k = `${w.precinctName}|${w.wardNumber}`;
+      m[k] = (m[k] ?? 0) + w.ballotsCast;
+    });
+    return m;
+  }, [electionTurnout]);
+  const comparisonTurnoutByWard = useMemo(() => {
+    if (!comparisonTurnout) return undefined;
+    const m: Record<string, number> = {};
+    comparisonTurnout.byWard.forEach(w => {
+      const k = `${w.precinctName}|${w.wardNumber}`;
+      m[k] = (m[k] ?? 0) + w.ballotsCast;
+    });
+    return m;
+  }, [comparisonTurnout]);
 
   const isLoading = isLoadingRace || isLoadingPrecincts;
   const hasError = viewMode !== 'SIMULATE' && (!!electionsError || !!raceError || !!precinctError);
@@ -128,7 +210,9 @@ export default function Home() {
 
   function handleSelectGroup(groupKey: string | null) {
     setSelectedGroupKey(groupKey);
-    setSelectedRaceId(null);
+    // Only clear the race when opening a group overview; clearing the group
+    // (groupKey === null) must not wipe a race that was just selected.
+    if (groupKey !== null) setSelectedRaceId(null);
     setSelectedWard(null);
     setFocusedCandidate(null);
   }
@@ -157,13 +241,18 @@ export default function Home() {
         ) : (
           <Sidebar
             raceResult={raceResult}
-            turnoutData={turnoutData}
             precinctResults={precinctResults}
             isLoading={isLoading}
             onSelectWard={setSelectedWard}
             isArchive={viewMode === 'ARCHIVE'}
             focusedCandidate={focusedCandidate}
             onFocusCandidate={setFocusedCandidate}
+            electionTurnout={electionTurnout}
+            comparisonTurnout={comparisonTurnout}
+            comparisonElection={comparisonElection}
+            elections={elections}
+            selectedElectionId={selectedElectionId}
+            onSelectComparison={setComparisonOverride}
           />
         )
       }
@@ -190,6 +279,9 @@ export default function Home() {
           isLoading={viewMode !== 'SIMULATE' ? isLoading : false}
           selectedWard={viewMode !== 'SIMULATE' ? selectedWard : null}
           raceResult={viewMode !== 'SIMULATE' ? raceResult : undefined}
+          turnoutByWard={viewMode !== 'SIMULATE' ? turnoutByWard : undefined}
+          comparisonTurnoutByWard={viewMode !== 'SIMULATE' ? comparisonTurnoutByWard : undefined}
+          comparisonLabel={viewMode !== 'SIMULATE' ? (comparisonElection?.electionName ?? null) : null}
           onReset={() => setSelectedWard(null)}
           focusedCandidate={viewMode !== 'SIMULATE' ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}

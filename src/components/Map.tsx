@@ -33,6 +33,10 @@ interface MapProps {
     dormantPoolData?: Record<string, number>;
     dropoffData?: Record<string, DropoffInfo>;
     simulateHighlightedWards?: Set<string> | null;
+    // Real turnout (ballots cast) keyed by "City of Madison|46"
+    turnoutByWard?: Record<string, number>;
+    comparisonTurnoutByWard?: Record<string, number>;
+    comparisonLabel?: string | null;
 }
 
 export interface HoveredWard {
@@ -46,6 +50,8 @@ export interface HoveredWard {
     fillColor: string;
     dormantPool?: number;
     dropoffInfo?: DropoffInfo;
+    turnoutBallots?: number;
+    comparisonBallots?: number;
 }
 
 function MapController({ geoJsonData, selectedWard, onReset }: {
@@ -91,13 +97,12 @@ function MapController({ geoJsonData, selectedWard, onReset }: {
                                     const el = l.getElement();
                                     if (el) {
                                         el.classList.add('ward-pulse');
-                                        setTimeout(() => {
-                                            map.flyTo([43.0731, -89.4012], 10, { duration: 1.5 });
-                                        }, 2000);
+                                        // Clear the spotlight after the pulse but keep the
+                                        // camera on the selected ward (no fly-back to Madison).
                                         setTimeout(() => {
                                             el.classList.remove('ward-pulse');
                                             if (onReset) onReset();
-                                        }, 5000);
+                                        }, 4000);
                                     }
                                 }
                             }
@@ -196,6 +201,9 @@ export default function Map({
     dormantPoolData,
     dropoffData,
     simulateHighlightedWards,
+    turnoutByWard,
+    comparisonTurnoutByWard,
+    comparisonLabel,
 }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
@@ -342,12 +350,22 @@ export default function Map({
                     const saturation = Math.round(25 + t * Math.max(0, baseColor.s - 25));
                     baseStyle = { fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.75 };
                 } else if (overlayMode === 'TURNOUT') {
-                    const wardAnalysis = getWardAnalysis(wardNum, municipality);
-                    const historicalRef = wardAnalysis.historicalVotes > 0 ? wardAnalysis.historicalVotes : (getCachedAvgVotes() ?? 0);
-                    if (historicalRef === 0 || total === 0) {
+                    // Real ballots-cast comparison (from the county's BALLOTS CAST tally),
+                    // falling back to the historical race baseline if turnout data is missing.
+                    const tk = `${municipality}|${wardNum}`;
+                    const curBallots = turnoutByWard?.[tk];
+                    const baseBallots = comparisonTurnoutByWard?.[tk];
+                    let ratio: number | null = null;
+                    if (curBallots !== undefined && baseBallots !== undefined && baseBallots > 0) {
+                        ratio = curBallots / baseBallots;
+                    } else {
+                        const wardAnalysis = getWardAnalysis(wardNum, municipality);
+                        const historicalRef = wardAnalysis.historicalVotes > 0 ? wardAnalysis.historicalVotes : (getCachedAvgVotes() ?? 0);
+                        if (historicalRef > 0 && total > 0) ratio = total / historicalRef;
+                    }
+                    if (ratio === null) {
                         baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
                     } else {
-                        const ratio = total / historicalRef;
                         let h: number, s: number, l: number;
                         if (ratio < 1.0) {
                             h = 0; const intensity = Math.min((1.0 - ratio) / 0.5, 1);
@@ -408,7 +426,7 @@ export default function Map({
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards, turnoutByWard, comparisonTurnoutByWard]);
 
     /** Build a HoveredWard from feature data + pointer coordinates */
     const buildWardData = useCallback((feature: { municipality: string; wardNum: string }, x: number, y: number): HoveredWard | null => {
@@ -445,6 +463,7 @@ export default function Map({
         const lightness = 65 - (Math.min(margin, 0.5) * 30);
         const fillColor = `hsl(${baseColor.h}, ${baseColor.s}%, ${lightness}%)`;
 
+        const tk = `${municipality}|${wardNum}`;
         return {
             municipality, wardNum,
             results: sorted.map((r: PrecinctResult) => ({
@@ -453,8 +472,10 @@ export default function Map({
                 pct: total > 0 ? (r.votes / total) * 100 : 0,
             })),
             total, x, y, analysis, fillColor,
+            turnoutBallots: turnoutByWard?.[tk],
+            comparisonBallots: comparisonTurnoutByWard?.[tk],
         };
-    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData]);
+    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -559,7 +580,7 @@ export default function Map({
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}
@@ -710,8 +731,29 @@ export default function Map({
                             );
                         })()}
 
-                        {/* Turnout delta row */}
-                        {overlayMode === 'TURNOUT' && displayWard.analysis && displayWard.analysis.historicalVotes > 0 && (() => {
+                        {/* Turnout delta row — real ballots-cast comparison when available */}
+                        {overlayMode === 'TURNOUT' && displayWard.turnoutBallots !== undefined
+                            && displayWard.comparisonBallots !== undefined && displayWard.comparisonBallots > 0 && (() => {
+                            const cur = displayWard.turnoutBallots!;
+                            const prev = displayWard.comparisonBallots!;
+                            const deltaPct = ((cur - prev) / prev) * 100;
+                            const isAbove = deltaPct >= 0;
+                            const deltaColor = isAbove ? '#4ade80' : '#f87171';
+                            const diffStr = (isAbove ? '+' : '') + (cur - prev).toLocaleString();
+                            return (
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#475569' }} title={comparisonLabel ?? undefined}>
+                                        Turnout: {cur.toLocaleString()} vs {prev.toLocaleString()}{comparisonLabel ? ` (${comparisonLabel})` : ''}
+                                    </span>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
+                                        {isAbove ? '↑' : '↓'} {Math.abs(deltaPct).toFixed(0)}% · {diffStr}
+                                    </span>
+                                </div>
+                            );
+                        })()}
+                        {/* Fallback: historical race baseline */}
+                        {overlayMode === 'TURNOUT' && (displayWard.turnoutBallots === undefined || !displayWard.comparisonBallots)
+                            && displayWard.analysis && displayWard.analysis.historicalVotes > 0 && (() => {
                             const ratio = displayWard.total / displayWard.analysis!.historicalVotes;
                             const deltaPct = (ratio - 1) * 100;
                             const isAbove = deltaPct >= 0;

@@ -1,19 +1,24 @@
 'use client';
 
-import { RaceResult, HistoricalTurnout, PrecinctResult } from '@/lib/api';
-import { Search, Download, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
-import { getExpectedTotalVotes, isHistoricalDataLoaded, getWardAnalysis, getHistoricalRaceInfo } from '@/lib/analysis-data';
+import { RaceResult, PrecinctResult, Election, ElectionTurnout } from '@/lib/api';
+import { Search, Download, ExternalLink, Check } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 interface SidebarProps {
     raceResult: RaceResult | undefined;
-    turnoutData: HistoricalTurnout | undefined;
     precinctResults: PrecinctResult[] | undefined;
     isLoading: boolean;
     onSelectWard: (ward: { name: string; num: string }) => void;
     isArchive?: boolean;
     focusedCandidate?: string | null;
     onFocusCandidate?: (name: string | null) => void;
+    // Real turnout (county BALLOTS CAST tally) + comparison election
+    electionTurnout?: ElectionTurnout;
+    comparisonTurnout?: ElectionTurnout;
+    comparisonElection?: Election;
+    elections?: Election[];
+    selectedElectionId?: string | null;
+    onSelectComparison?: (electionId: string | null) => void;
 }
 
 // Party → tailwind / hex color
@@ -26,8 +31,34 @@ function getPartyColor(party: string | undefined): { bg: string; text: string; d
     return { bg: '#475569', text: '#cbd5e1', dot: '#64748b' };
 }
 
-export default function Sidebar({ raceResult, turnoutData, precinctResults, isLoading, onSelectWard, isArchive, focusedCandidate, onFocusCandidate }: SidebarProps) {
+function turnoutKey(name: string, num: string): string {
+    return `${name}|${parseInt(num) || 0}`;
+}
+
+function toWardMap(turnout: ElectionTurnout | undefined): Record<string, number> {
+    const m: Record<string, number> = {};
+    turnout?.byWard.forEach(w => {
+        const k = turnoutKey(w.precinctName, w.wardNumber);
+        m[k] = (m[k] ?? 0) + w.ballotsCast;
+    });
+    return m;
+}
+
+function slugify(s: string): string {
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+}
+
+export default function Sidebar({
+    raceResult, precinctResults, isLoading, onSelectWard, isArchive,
+    focusedCandidate, onFocusCandidate,
+    electionTurnout, comparisonTurnout, comparisonElection,
+    elections, selectedElectionId, onSelectComparison,
+}: SidebarProps) {
     const [searchTerm, setSearchTerm] = useState('');
+    const [copied, setCopied] = useState(false);
+
+    const wardTurnoutMap = useMemo(() => toWardMap(electionTurnout), [electionTurnout]);
+    const comparisonWardMap = useMemo(() => toWardMap(comparisonTurnout), [comparisonTurnout]);
 
     if (isLoading) {
         return (
@@ -60,15 +91,6 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
         ? Math.round((raceResult.precinctsReporting / raceResult.totalPrecincts) * 100)
         : 0;
 
-    // Outstanding ballots
-    const historicalLoaded = isHistoricalDataLoaded();
-    const historicalExpected = getExpectedTotalVotes();
-    const expectedBallots = historicalLoaded && historicalExpected > 0
-        ? historicalExpected
-        : (turnoutData?.expectedBallots ?? 0);
-    const outstanding = Math.max(0, expectedBallots - totalVotes);
-    const pct = expectedBallots > 0 ? Math.min(100, (totalVotes / expectedBallots) * 100) : 0;
-
     // Ward list
     const DELIM = '|||';
     const filteredWards = precinctResults?.filter(w =>
@@ -85,16 +107,90 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
             const total = wardResults[0]?.ballotscast || 0;
             const sorted = [...wardResults].sort((a, b) => b.votes - a.votes);
             const winner = sorted[0];
-            // Find party for winner from raceResult candidates
             const winnerParty = raceResult.candidates.find(
                 c => c.candidateName === winner?.candidateName
             )?.party;
-            return { name, num, total, winner, winnerParty };
+            const tk = turnoutKey(name, num);
+            const ballots = wardTurnoutMap[tk];
+            const prevBallots = comparisonWardMap[tk];
+            const turnoutDelta = ballots !== undefined && prevBallots !== undefined && prevBallots > 0
+                ? ((ballots - prevBallots) / prevBallots) * 100
+                : null;
+            return { name, num, total, winner, winnerParty, ballots, prevBallots, turnoutDelta };
         })
         .sort((a, b) => {
             const nc = a.name.localeCompare(b.name);
             return nc !== 0 ? nc : parseInt(a.num) - parseInt(b.num);
         });
+
+    // ── Turnout math (real ballots-cast data, scoped to this race's wards) ──
+    // For district races (alder, supervisor...) county-wide turnout is the wrong
+    // denominator, so sum ballots over just the wards that appear in this race.
+    const raceWardKeys = Array.from(new Set(
+        (precinctResults ?? []).map(w => turnoutKey(w.precinctName, w.wardNumber))
+    ));
+    const raceAreaBallots = raceWardKeys.reduce((sum, k) => sum + (wardTurnoutMap[k] ?? 0), 0);
+    const isCountywide = electionTurnout
+        ? raceAreaBallots >= electionTurnout.totalBallots * 0.98
+        : false;
+    // Apples-to-apples comparison: only wards present in BOTH elections
+    const matchedKeys = raceWardKeys.filter(k => wardTurnoutMap[k] !== undefined && comparisonWardMap[k] !== undefined);
+    const matchedCurrent = matchedKeys.reduce((s, k) => s + wardTurnoutMap[k], 0);
+    const matchedPrev = matchedKeys.reduce((s, k) => s + comparisonWardMap[k], 0);
+    const areaDelta = matchedPrev > 0 ? ((matchedCurrent - matchedPrev) / matchedPrev) * 100 : null;
+    // Roll-off: voters who cast a ballot but skipped this race
+    const rolloff = raceAreaBallots > 0 && totalVotes > 0 && totalVotes <= raceAreaBallots
+        ? (1 - totalVotes / raceAreaBallots) * 100
+        : null;
+
+    // Comparison picker options: every election except the selected one
+    const comparisonOptions = (elections ?? []).filter(e => e.electionId !== selectedElectionId);
+
+    // ── CSV export: ward-level targeting sheet ──────────────────────────────
+    function handleExportCSV() {
+        if (!raceResult) return;
+        const candidateNames = sortedCandidates.map(c => c.candidateName);
+        const header = [
+            'Municipality', 'Ward',
+            ...candidateNames.map(n => `"${n.replace(/"/g, '""')}" votes`),
+            'Race votes total', 'Ballots cast',
+            comparisonElection ? `Ballots cast (${comparisonElection.electionName})` : 'Ballots cast (comparison)',
+            'Turnout change %',
+        ];
+        const allWards = Array.from(new Set((precinctResults ?? []).map(w => `${w.precinctName}${DELIM}${w.wardNumber}`)));
+        const rows = allWards.map(key => {
+            const delimIdx = key.indexOf(DELIM);
+            const name = key.slice(0, delimIdx);
+            const num = key.slice(delimIdx + DELIM.length);
+            const wardRows = (precinctResults ?? []).filter(w => w.precinctName === name && w.wardNumber === num);
+            const votesByCandidate = candidateNames.map(cn =>
+                wardRows.find(w => w.candidateName === cn)?.votes ?? 0
+            );
+            const raceTotal = wardRows.reduce((s, w) => s + w.votes, 0);
+            const tk = turnoutKey(name, num);
+            const ballots = wardTurnoutMap[tk];
+            const prev = comparisonWardMap[tk];
+            const delta = ballots !== undefined && prev !== undefined && prev > 0
+                ? (((ballots - prev) / prev) * 100).toFixed(1)
+                : '';
+            return [`"${name}"`, num, ...votesByCandidate, raceTotal, ballots ?? '', prev ?? '', delta].join(',');
+        });
+        const csv = [header.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${slugify(raceResult.raceName)}-by-ward.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function handleShare() {
+        navigator.clipboard?.writeText(window.location.href).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }).catch(() => {});
+    }
 
     return (
         <div className="h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-hidden">
@@ -198,64 +294,70 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                     )}
                 </div>
 
-                {/* ── Ballots Card ── */}
-                {isArchive ? (
-                    /* Archive: race is over — show final totals only for contested races (2+ candidates).
-                       Uncontested races have no meaningful margin to report, so the card is omitted. */
-                    totalVotes > 0 && sortedCandidates.length >= 2 && (
-                        <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
-                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                                Final Results
-                            </h3>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-white">{totalVotes.toLocaleString()}</span>
-                                <span className="text-slate-400 text-sm">total ballots cast</span>
-                            </div>
-                            <div className="mt-2 h-2 bg-slate-700/50 rounded-full overflow-hidden">
-                                <div className="bg-green-500 h-full rounded-full" style={{ width: '100%' }} />
-                            </div>
-                            <div className="flex justify-between mt-1.5 text-xs text-slate-500">
-                                <span>Certified Final</span>
-                                <span>{raceResult?.precinctsReporting}/{raceResult?.totalPrecincts} precincts</span>
-                            </div>
+                {/* ── Turnout Card (real ballots-cast data) ── */}
+                {raceAreaBallots > 0 && (
+                    <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
+                        <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
+                            Turnout
+                        </h3>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold text-white">{raceAreaBallots.toLocaleString()}</span>
+                            <span className="text-slate-400 text-sm">
+                                ballots cast {isCountywide ? 'county-wide' : "in this race's wards"}
+                            </span>
                         </div>
-                    )
-                ) : (
-                    /* Live: show estimated outstanding ballots + county-wide turnout chip */
-                    expectedBallots > 0 && (
-                        <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
-                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
-                                {historicalLoaded ? 'Outstanding Ballots' : 'Estimated Outstanding'}
-                            </h3>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-white">{outstanding.toLocaleString()}</span>
-                                <span className="text-slate-400 text-sm">remaining</span>
+                        {!isCountywide && electionTurnout && (
+                            <div className="mt-1 text-xs text-slate-500">
+                                {electionTurnout.totalBallots.toLocaleString()} county-wide
                             </div>
-                            <div className="mt-2 h-2 bg-slate-700/50 rounded-full overflow-hidden">
-                                <div className="bg-blue-500 h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
+                        )}
+                        {/* Roll-off: ballots that skipped this race */}
+                        {rolloff !== null && (
+                            <>
+                                <div className="mt-3 h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                                    <div
+                                        className="bg-blue-500 h-full rounded-full transition-all duration-700"
+                                        style={{ width: `${Math.min(100, (totalVotes / raceAreaBallots) * 100)}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between mt-1.5 text-xs text-slate-500">
+                                    <span>{totalVotes.toLocaleString()} voted in this race</span>
+                                    <span>{rolloff.toFixed(1)}% skipped it</span>
+                                </div>
+                            </>
+                        )}
+                        {/* Comparison vs another election */}
+                        <div className="mt-3 pt-3 border-t border-slate-700/50">
+                            <div className="flex items-center justify-between gap-2">
+                                <label className="text-xs text-slate-500 shrink-0">Compare vs</label>
+                                <select
+                                    className="flex-1 min-w-0 bg-slate-900/60 text-slate-300 text-xs rounded-md px-2 py-1 border border-slate-700 focus:outline-none focus:border-blue-500"
+                                    value={comparisonElection?.electionId ?? ''}
+                                    onChange={e => onSelectComparison?.(e.target.value || null)}
+                                >
+                                    {comparisonOptions.map(e => (
+                                        <option key={e.electionId} value={e.electionId}>
+                                            {e.electionName}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                            <div className="flex justify-between mt-1.5 text-xs text-slate-500">
-                                <span>{pct.toFixed(0)}% counted</span>
-                                <span>{historicalLoaded ? '' : 'Est. '}Expected: {expectedBallots.toLocaleString()}</span>
-                            </div>
-                            {/* County-wide turnout vs historical chip */}
-                            {historicalLoaded && historicalExpected > 0 && (() => {
-                                const deltaPct = ((totalVotes - historicalExpected) / historicalExpected) * 100;
-                                const isAbove = deltaPct >= 0;
-                                const raceInfo = getHistoricalRaceInfo();
-                                return (
-                                    <div className={`mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between`}>
-                                        <span className="text-xs text-slate-500">
-                                            vs {raceInfo?.year ?? 'prior'} baseline
-                                        </span>
-                                        <span className={`text-xs font-semibold ${isAbove ? 'text-green-400' : 'text-red-400'}`}>
-                                            {isAbove ? '↑' : '↓'} {Math.abs(deltaPct).toFixed(0)}% county-wide
-                                        </span>
-                                    </div>
-                                );
-                            })()}
+                            {areaDelta !== null ? (
+                                <div className="mt-2 flex items-center justify-between">
+                                    <span className="text-xs text-slate-500">
+                                        {matchedPrev.toLocaleString()} ballots in same wards
+                                    </span>
+                                    <span className={`text-xs font-semibold ${areaDelta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                        {areaDelta >= 0 ? '↑' : '↓'} {Math.abs(areaDelta).toFixed(1)}% turnout
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="mt-2 text-xs text-slate-600">
+                                    {comparisonElection ? 'Loading comparison…' : 'No comparison selected'}
+                                </div>
+                            )}
                         </div>
-                    )
+                    </div>
                 )}
 
                 {/* ── Ward Results ── */}
@@ -279,12 +381,6 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                             const winnerPct = ward.total > 0 && ward.winner
                                 ? ((ward.winner.votes / ward.total) * 100).toFixed(0)
                                 : null;
-                            // Per-ward turnout badge vs historical baseline
-                            const wardHistory = historicalLoaded ? getWardAnalysis(ward.num, ward.name) : null;
-                            const turnoutBadge = wardHistory && wardHistory.historicalVotes > 0 && ward.total > 0
-                                ? (ward.total >= wardHistory.historicalVotes ? '↑' : '↓')
-                                : null;
-                            const turnoutBadgeColor = turnoutBadge === '↑' ? '#4ade80' : '#f87171';
                             return (
                                 <button
                                     key={`${ward.name}-${ward.num}`}
@@ -294,13 +390,22 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ background: ward.winner ? color.dot : '#334155' }} />
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm text-slate-200 truncate">{ward.name} Ward {ward.num}</div>
-                                        {ward.winner && (
-                                            <div className="text-xs text-slate-500 truncate">{ward.winner.candidateName}</div>
-                                        )}
+                                        <div className="text-xs text-slate-500 truncate">
+                                            {ward.winner?.candidateName}
+                                            {ward.ballots !== undefined && (
+                                                <span className="text-slate-600"> · {ward.ballots.toLocaleString()} ballots</span>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-1.5 shrink-0">
-                                        {turnoutBadge && (
-                                            <span className="text-xs font-bold leading-none" style={{ color: turnoutBadgeColor }}>{turnoutBadge}</span>
+                                        {ward.turnoutDelta !== null && (
+                                            <span
+                                                className="text-[10px] font-semibold leading-none"
+                                                style={{ color: ward.turnoutDelta >= 0 ? '#4ade80' : '#f87171' }}
+                                                title={`Turnout vs ${comparisonElection?.electionName ?? 'comparison'}: ${ward.prevBallots?.toLocaleString()} → ${ward.ballots?.toLocaleString()}`}
+                                            >
+                                                {ward.turnoutDelta >= 0 ? '↑' : '↓'}{Math.abs(ward.turnoutDelta).toFixed(0)}%
+                                            </span>
                                         )}
                                         {winnerPct && (
                                             <span className="text-xs font-mono" style={{ color: color.dot }}>{winnerPct}%</span>
@@ -326,11 +431,19 @@ export default function Sidebar({ raceResult, turnoutData, precinctResults, isLo
             {/* Footer */}
             <div className="p-4 border-t border-slate-800 bg-slate-900">
                 <div className="grid grid-cols-2 gap-2">
-                    <button className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors">
+                    <button
+                        onClick={handleExportCSV}
+                        title="Download ward-level results + turnout as CSV"
+                        className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors"
+                    >
                         <Download className="w-3.5 h-3.5" /> CSV
                     </button>
-                    <button className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors">
-                        <ExternalLink className="w-3.5 h-3.5" /> Share
+                    <button
+                        onClick={handleShare}
+                        title="Copy a link to this exact view"
+                        className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors"
+                    >
+                        {copied ? <><Check className="w-3.5 h-3.5 text-green-400" /> Copied</> : <><ExternalLink className="w-3.5 h-3.5" /> Share</>}
                     </button>
                 </div>
             </div>

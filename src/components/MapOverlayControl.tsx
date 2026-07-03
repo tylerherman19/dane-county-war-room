@@ -1,34 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Layers, TrendingUp, Users, ChevronDown } from 'lucide-react';
-import { HistoricalRaceSummary } from '@/lib/historical-api-data';
-import { RaceType } from '@/lib/api';
 
 export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING' | 'PROJECTION' | 'CANVASS_PRIORITY' | 'PRIMARY_DROPOFF';
 
 interface MapOverlayControlProps {
     currentMode: OverlayMode;
     onChange: (mode: OverlayMode) => void;
-    historicalLabel?: string | null;
-    availableRaces?: HistoricalRaceSummary[];
-    selectedComparisonKey?: string | null;
-    onComparisonChange?: (key: string) => void;
-    isLoadingComparison?: boolean;
-    historicalTotalVotes?: number | null;
+    comparisonLabel?: string | null;
+    turnoutReady?: boolean;
     candidateLegend?: { name: string; h: number; s: number; l: number }[];
-    currentRaceType?: RaceType;
 }
 
 export default function MapOverlayControl({
     currentMode,
     onChange,
-    historicalLabel,
-    availableRaces,
-    selectedComparisonKey,
-    onComparisonChange,
-    isLoadingComparison,
-    historicalTotalVotes,
+    comparisonLabel,
+    turnoutReady,
     candidateLegend,
-    currentRaceType,
 }: MapOverlayControlProps) {
     // Collapsed by default on mobile, expanded on desktop
     const [isCollapsed, setIsCollapsed] = useState(true);
@@ -39,16 +27,6 @@ export default function MapOverlayControl({
         window.addEventListener('resize', checkViewport);
         return () => window.removeEventListener('resize', checkViewport);
     }, []);
-
-    const turnoutReady = !!historicalLabel;
-
-    const selectedRace = availableRaces?.find(
-        r => `${r.electionId}|${r.raceId}` === selectedComparisonKey
-    ) ?? null;
-    const baselineBallots = selectedRace?.totalVotes ?? historicalTotalVotes ?? null;
-    const selectTitle = selectedRace
-        ? `${selectedRace.raceName} (${selectedRace.electionDate.slice(0, 4)}) — ${selectedRace.totalVotes.toLocaleString()} ballots`
-        : 'Auto (best match)';
 
     const options: { id: OverlayMode; label: string; icon: any; description: string; disabled?: boolean }[] = [
         {
@@ -61,7 +39,9 @@ export default function MapOverlayControl({
             id: 'TURNOUT',
             label: 'Turnout Heatmap',
             icon: Users,
-            description: turnoutReady ? `vs. ${historicalLabel}` : 'Loading baseline...',
+            description: turnoutReady
+                ? (comparisonLabel ? `Ballots cast vs. ${comparisonLabel}` : 'Ballots cast by ward')
+                : 'Loading turnout...',
             disabled: !turnoutReady,
         },
         {
@@ -167,19 +147,19 @@ export default function MapOverlayControl({
                                 <div>
                                     <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                                         <span>−50%</span>
-                                        <span>Avg</span>
+                                        <span>Even</span>
                                         <span>+50%</span>
                                     </div>
                                     <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-white to-green-500">
                                         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
                                     </div>
                                     <div className="flex justify-between mt-1 text-[9px] text-slate-600">
-                                        <span>Below baseline</span>
-                                        <span>Above baseline</span>
+                                        <span>Turnout down</span>
+                                        <span>Turnout up</span>
                                     </div>
-                                    {historicalTotalVotes != null && (
+                                    {comparisonLabel && (
                                         <div className="text-[9px] text-slate-500 mt-1.5 text-center">
-                                            Baseline: {historicalTotalVotes.toLocaleString()} ballots
+                                            Baseline: {comparisonLabel} · change it in the sidebar
                                         </div>
                                     )}
                                 </div>
@@ -215,58 +195,6 @@ export default function MapOverlayControl({
                             </div>
                         )}
 
-                        {/* Comparison race picker */}
-                        {currentMode === 'TURNOUT' && availableRaces && availableRaces.length > 0 && (
-                            <div className="p-3 border-t border-slate-700/50">
-                                <div className="mb-2">
-                                    <div className="text-xs font-medium text-slate-400">Compare turnout to:</div>
-                                    <div className="text-[10px] text-slate-600 mt-0.5">Races with overlapping wards</div>
-                                </div>
-                                <select
-                                    className="w-full bg-slate-800 text-slate-300 text-xs rounded-md px-2 py-1.5 border border-slate-600 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    value={selectedComparisonKey || ''}
-                                    onChange={e => onComparisonChange?.(e.target.value)}
-                                    disabled={isLoadingComparison}
-                                    title={selectTitle}
-                                >
-                                    <option value="">Auto (best match)</option>
-                                    {(() => {
-                                        const sameType = currentRaceType ? availableRaces.filter(r => r.raceType === currentRaceType) : [];
-                                        const otherTypes = currentRaceType ? availableRaces.filter(r => r.raceType !== currentRaceType) : availableRaces;
-                                        const renderOption = (r: HistoricalRaceSummary) => {
-                                            const key = `${r.electionId}|${r.raceId}`;
-                                            const year = r.electionDate.slice(0, 4);
-                                            const ballots = r.totalVotes.toLocaleString();
-                                            return (
-                                                <option key={key} value={key} title={`${r.raceName} — ${ballots} total ballots`}>
-                                                    {year} — {r.raceName} · {ballots} ballots
-                                                </option>
-                                            );
-                                        };
-                                        return (
-                                            <>
-                                                {sameType.length > 0 && (
-                                                    <optgroup label="Same race type">{sameType.map(renderOption)}</optgroup>
-                                                )}
-                                                {otherTypes.length > 0 && (
-                                                    <optgroup label={sameType.length > 0 ? 'Other races' : 'Available races'}>{otherTypes.map(renderOption)}</optgroup>
-                                                )}
-                                            </>
-                                        );
-                                    })()}
-                                </select>
-                                {isLoadingComparison && (
-                                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
-                                        <span className="animate-spin inline-block">⟳</span> Loading comparison…
-                                    </div>
-                                )}
-                                {baselineBallots != null && !isLoadingComparison && (
-                                    <div className="text-[10px] text-slate-500 mt-1.5">
-                                        Baseline: <span className="text-slate-400">{baselineBallots.toLocaleString()}</span> total ballots
-                                    </div>
-                                )}
-                            </div>
-                        )}
                     </>
                 )}
             </div>
