@@ -3,7 +3,6 @@
 import { RaceResult, PrecinctResult, Election, ElectionTurnout } from '@/lib/api';
 import { Search, Download, ExternalLink, Check } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import TargetingCard from './TargetingCard';
 
 interface SidebarProps {
     raceResult: RaceResult | undefined;
@@ -384,18 +383,6 @@ export default function Sidebar({
                             )}
                         </div>
                     </div>
-                )}
-
-                {/* ── Targeting Universes (door / mail / digital) ── */}
-                {precinctResults && precinctResults.length > 0 && (
-                    <TargetingCard
-                        raceResult={raceResult}
-                        precinctResults={precinctResults}
-                        wardTurnoutMap={wardTurnoutMap}
-                        comparisonWardMap={comparisonWardMap}
-                        comparisonElection={comparisonElection}
-                        scopeLabel={scopeLabel}
-                    />
                 )}
 
                 {/* ── Ward Results ── */}
