@@ -49,6 +49,7 @@ export interface PrecinctResult {
     votes: number;
     registeredVoters: number;
     ballotscast: number;
+    reported: boolean;
 }
 
 export interface LastPublished {
@@ -336,7 +337,8 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
                     candidateName: pv.CandidateName.trim(),
                     votes: votesPerWard,
                     registeredVoters: 0,
-                    ballotscast: ballotsPerWard
+                    ballotscast: ballotsPerWard,
+                    reported: pv.Reported
                 });
             }
         } else {
@@ -347,7 +349,8 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
                 candidateName: pv.CandidateName.trim(),
                 votes: pv.TotalVotes,
                 registeredVoters: 0,
-                ballotscast: totalBallots
+                ballotscast: totalBallots,
+                reported: pv.Reported
             });
         }
     });

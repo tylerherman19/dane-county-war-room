@@ -36,9 +36,11 @@ interface MapWrapperProps {
     trendsMode?: boolean;
     shiftByWard?: Record<string, { from: number; to: number }>;
     shiftLabels?: { from: string; to: string } | null;
+    // LIVE/ARCHIVE: benchmark overlay option (SHIFT layer selectable from the control)
+    benchmarkLabel?: string | null;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -92,6 +94,11 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         onCandidateReset();
     }, [onCandidateReset]);
 
+    // If the benchmark is cleared while its layer is active, fall back
+    useEffect(() => {
+        if (!trendsMode && overlayMode === 'SHIFT' && !shiftByWard) setOverlayMode('NONE');
+    }, [overlayMode, shiftByWard, trendsMode]);
+
     // SIMULATE forces its own overlay; TRENDS forces the SHIFT overlay
     const effectiveOverlayMode: OverlayMode = simulateMode
         ? (simulateOverlayMode ?? 'PROJECTION')
@@ -108,6 +115,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                     comparisonLabel={comparisonLabel}
                     turnoutReady={!!turnoutByWard}
                     candidateLegend={candidateLegend}
+                    benchmarkLabel={benchmarkLabel}
+                    benchmarkReady={!!shiftByWard}
                 />
             )}
             <Map

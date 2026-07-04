@@ -58,6 +58,7 @@ export interface HoveredWard {
     turnoutBallots?: number;
     comparisonBallots?: number;
     shift?: { from: number; to: number };
+    reported?: boolean;
 }
 
 function MapController({ geoJsonData, selectedWard, onReset, fitKey, coveredKeys }: {
@@ -299,7 +300,7 @@ export default function Map({
         const municipality = feature.properties.NAME;
         const wardNum = parseInt(feature.properties.WardNumber).toString();
 
-        let baseStyle = {
+        let baseStyle: { fillColor: string; weight: number; opacity: number; color: string; fillOpacity: number; dashArray?: string } = {
             fillColor: '#0f172a',
             weight: 1,
             opacity: 0.5,
@@ -377,8 +378,12 @@ export default function Map({
                 const sorted = relevantResults.sort((a: PrecinctResult, b: PrecinctResult) => b.votes - a.votes);
                 const winner = sorted[0];
                 const runnerUp = sorted[1];
+                const isUnreported = relevantResults.every(r => !r.reported);
 
-                if (focusedCandidate) {
+                if (isUnreported) {
+                    // Election night: precinct hasn't reported — dashed outline, no fill
+                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.8, color: '#64748b', fillOpacity: 0.15, dashArray: '4 3' };
+                } else if (focusedCandidate) {
                     const candidateResult = relevantResults.find(r => r.candidateName.trim() === focusedCandidate.trim());
                     if (candidateResult && total > 0) {
                         const baseColor = candidateColors[focusedCandidate.trim()] || { h: 215, s: 80, l: 50 };
@@ -543,6 +548,7 @@ export default function Map({
             total, x, y, analysis, fillColor,
             turnoutBallots: turnoutByWard?.[tk],
             comparisonBallots: comparisonTurnoutByWard?.[tk],
+            reported: relevantResults.some(r => r.reported),
         };
     }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard, shiftByWard]);
 
@@ -699,6 +705,13 @@ export default function Map({
                                 >×</button>
                             )}
                         </div>
+
+                        {/* Election night: precinct hasn't reported yet */}
+                        {displayWard.reported === false && (
+                            <div style={{ padding: '8px 14px', background: 'rgba(251,191,36,0.08)', borderBottom: '1px solid #1e293b', fontSize: '11px', color: '#fbbf24' }}>
+                                ⏳ Awaiting results — this precinct hasn&apos;t reported
+                            </div>
+                        )}
 
                         {/* SHIFT body: candidate share in both races + delta */}
                         {displayWard.shift !== undefined && (() => {
