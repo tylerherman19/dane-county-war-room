@@ -30,9 +30,11 @@ interface MapWrapperProps {
     turnoutByWard?: Record<string, number>;
     comparisonTurnoutByWard?: Record<string, number>;
     comparisonLabel?: string | null;
+    // Changes whenever the map should re-fit to the covered wards (race or seat filter)
+    fitKey?: string;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -115,6 +117,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 turnoutByWard={turnoutByWard}
                 comparisonTurnoutByWard={comparisonTurnoutByWard}
                 comparisonLabel={comparisonLabel}
+                fitKey={fitKey}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}
