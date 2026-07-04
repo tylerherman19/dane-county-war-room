@@ -3,6 +3,7 @@
 import { RaceResult, PrecinctResult, Election, ElectionTurnout } from '@/lib/api';
 import { Search, Download, ExternalLink, Check } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import TargetingCard from './TargetingCard';
 
 interface SidebarProps {
     raceResult: RaceResult | undefined;
@@ -19,6 +20,8 @@ interface SidebarProps {
     elections?: Election[];
     selectedElectionId?: string | null;
     onSelectComparison?: (electionId: string | null) => void;
+    // When set, precinctResults are pre-filtered to one district's wards
+    scopeLabel?: string | null;
 }
 
 // Party → tailwind / hex color
@@ -53,12 +56,32 @@ export default function Sidebar({
     focusedCandidate, onFocusCandidate,
     electionTurnout, comparisonTurnout, comparisonElection,
     elections, selectedElectionId, onSelectComparison,
+    scopeLabel,
 }: SidebarProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [copied, setCopied] = useState(false);
 
     const wardTurnoutMap = useMemo(() => toWardMap(electionTurnout), [electionTurnout]);
     const comparisonWardMap = useMemo(() => toWardMap(comparisonTurnout), [comparisonTurnout]);
+
+    // When a seat filter is active, candidate totals come from the scoped
+    // precinct rows rather than the county-wide race result.
+    const scopedCandidates = useMemo(() => {
+        if (!scopeLabel || !raceResult || !precinctResults?.length) return null;
+        const totals = new Map<string, number>();
+        precinctResults.forEach(r => {
+            const name = r.candidateName.trim();
+            totals.set(name, (totals.get(name) ?? 0) + r.votes);
+        });
+        const total = [...totals.values()].reduce((a, b) => a + b, 0);
+        if (total === 0) return null;
+        return [...totals.entries()].map(([name, votes]) => ({
+            candidateName: name,
+            votes,
+            percentage: (votes / total) * 100,
+            party: raceResult.candidates.find(c => c.candidateName.trim() === name)?.party,
+        }));
+    }, [scopeLabel, raceResult, precinctResults]);
 
     if (isLoading) {
         return (
@@ -79,10 +102,12 @@ export default function Sidebar({
         );
     }
 
-    const sortedCandidates = [...raceResult.candidates].sort((a, b) => b.votes - a.votes);
+    const sortedCandidates = [...(scopedCandidates ?? raceResult.candidates)].sort((a, b) => b.votes - a.votes);
     const leader = sortedCandidates[0];
     const runnerUp = sortedCandidates[1];
-    const totalVotes = raceResult.totalVotes;
+    const totalVotes = scopedCandidates
+        ? scopedCandidates.reduce((s, c) => s + c.votes, 0)
+        : raceResult.totalVotes;
     const margin = leader && runnerUp && totalVotes > 0
         ? ((leader.votes - runnerUp.votes) / totalVotes * 100)
         : 0;
@@ -204,6 +229,7 @@ export default function Sidebar({
                     >
                         <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: leaderColor.text }}>
                             {totalVotes > 0 ? (isArchive || reportingPct === 100 ? 'Winner' : 'Leading') : 'Awaiting Results'}
+                            {scopeLabel && <span className="ml-2 normal-case tracking-normal font-semibold text-blue-400">in {scopeLabel}</span>}
                         </div>
                         <div className="text-xl font-bold text-white leading-tight truncate">{leader.candidateName}</div>
                         <div className="flex items-baseline gap-3 mt-2">
@@ -358,6 +384,18 @@ export default function Sidebar({
                             )}
                         </div>
                     </div>
+                )}
+
+                {/* ── Targeting Universes (door / mail / digital) ── */}
+                {precinctResults && precinctResults.length > 0 && (
+                    <TargetingCard
+                        raceResult={raceResult}
+                        precinctResults={precinctResults}
+                        wardTurnoutMap={wardTurnoutMap}
+                        comparisonWardMap={comparisonWardMap}
+                        comparisonElection={comparisonElection}
+                        scopeLabel={scopeLabel}
+                    />
                 )}
 
                 {/* ── Ward Results ── */}

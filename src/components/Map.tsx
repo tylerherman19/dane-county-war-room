@@ -37,6 +37,8 @@ interface MapProps {
     turnoutByWard?: Record<string, number>;
     comparisonTurnoutByWard?: Record<string, number>;
     comparisonLabel?: string | null;
+    // Changes whenever the map should re-fit to the covered wards
+    fitKey?: string;
 }
 
 export interface HoveredWard {
@@ -54,15 +56,15 @@ export interface HoveredWard {
     comparisonBallots?: number;
 }
 
-function MapController({ geoJsonData, selectedWard, onReset, raceId, coveredKeys }: {
+function MapController({ geoJsonData, selectedWard, onReset, fitKey, coveredKeys }: {
     geoJsonData: any;
     selectedWard?: { name: string; num: string } | null;
     onReset?: () => void;
-    raceId?: string | null;
+    fitKey?: string | null;
     coveredKeys?: Set<string>;
 }) {
     const map = useMap();
-    const lastFittedRace = useRef<string | null>(null);
+    const lastFitKey = useRef<string | null>(null);
 
     useEffect(() => {
         if (geoJsonData) {
@@ -71,20 +73,20 @@ function MapController({ geoJsonData, selectedWard, onReset, raceId, coveredKeys
         }
     }, [geoJsonData, map]);
 
-    // Zoom to the selected race's territory. District races (alder, supervisor,
-    // village) cover a sliver of the county and are invisible at county zoom.
+    // Zoom to the covered territory whenever the race or seat filter changes.
+    // District races/seats cover a sliver of the county and are invisible at county zoom.
     useEffect(() => {
-        if (!geoJsonData || !raceId || !coveredKeys || coveredKeys.size === 0) return;
-        if (lastFittedRace.current === raceId) return;
+        if (!geoJsonData || !fitKey || !coveredKeys || coveredKeys.size === 0) return;
+        if (lastFitKey.current === fitKey) return;
         const layer = L.geoJSON(geoJsonData, {
             filter: (feature: any) =>
                 coveredKeys.has(`${feature.properties.NAME}|${parseInt(feature.properties.WardNumber)}`),
         });
         if (layer.getLayers().length > 0) {
-            lastFittedRace.current = raceId;
+            lastFitKey.current = fitKey;
             map.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 13, animate: true });
         }
-    }, [geoJsonData, raceId, coveredKeys, map]);
+    }, [geoJsonData, fitKey, coveredKeys, map]);
 
     useEffect(() => {
         if (selectedWard && geoJsonData) {
@@ -222,6 +224,7 @@ export default function Map({
     turnoutByWard,
     comparisonTurnoutByWard,
     comparisonLabel,
+    fitKey,
 }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
@@ -612,7 +615,7 @@ export default function Map({
                             onEachFeature={onEachFeature}
                             ref={geoJsonLayerRef}
                         />
-                        <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} raceId={raceResult?.id} coveredKeys={coveredKeys} />
+                        <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} fitKey={fitKey ?? raceResult?.id} coveredKeys={coveredKeys} />
                         <MapClickDismiss onDismiss={() => setPinnedWard(null)} />
                     </>
                 )}

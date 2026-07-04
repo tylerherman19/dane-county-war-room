@@ -18,6 +18,8 @@ import {
 import { SimProjectionUpdate } from '@/lib/projections-data';
 import { Election, PrecinctResult, Race, getRaceGroupKey } from '@/lib/api';
 import { OverlayMode } from '@/components/MapOverlayControl';
+import DistrictFilterControl from '@/components/DistrictFilterControl';
+import { DistrictFilter, districtLabel, getWardsInDistrict } from '@/lib/districts';
 
 /**
  * Picks the default comparison election: the most recent election strictly
@@ -53,6 +55,9 @@ export default function Home() {
   // ── Comparison election (turnout baseline) ──────────────────────────────
   // null = auto (previous comparable election); user can override in the sidebar.
   const [comparisonOverride, setComparisonOverride] = useState<string | null>(null);
+
+  // ── Seat scope: restrict the dashboard to one district's wards ───────────
+  const [districtFilter, setDistrictFilter] = useState<DistrictFilter | null>(null);
 
   // ── Shareable URL state (?e=&r=) ─────────────────────────────────────────
   const pendingUrlState = useRef<{ e: string | null; r: string | null } | null>(null);
@@ -196,10 +201,26 @@ export default function Home() {
   const hasError = viewMode !== 'SIMULATE' && (!!electionsError || !!raceError || !!precinctError);
 
   // ── Effective map precincts (What If mode overrides normal results) ───────
-  const effectivePrecincts: PrecinctResult[] =
-    viewMode === 'SIMULATE' && simUpdate.whatIfPrecinctResults
-      ? simUpdate.whatIfPrecinctResults
-      : (precinctResults || []);
+  const effectivePrecincts: PrecinctResult[] = useMemo(
+    () =>
+      viewMode === 'SIMULATE' && simUpdate.whatIfPrecinctResults
+        ? simUpdate.whatIfPrecinctResults
+        : (precinctResults || []),
+    [viewMode, simUpdate.whatIfPrecinctResults, precinctResults]
+  );
+
+  // Seat scope: keep only the selected district's wards
+  const districtWardKeys = useMemo(
+    () => (districtFilter ? getWardsInDistrict(districtFilter) : null),
+    [districtFilter]
+  );
+  const scopedPrecincts: PrecinctResult[] = useMemo(() => {
+    if (!districtWardKeys || viewMode === 'SIMULATE') return effectivePrecincts;
+    return effectivePrecincts.filter(r =>
+      districtWardKeys.has(`${r.precinctName}|${parseInt(r.wardNumber) || 0}`)
+    );
+  }, [effectivePrecincts, districtWardKeys, viewMode]);
+  const scopeLabel = districtFilter && viewMode !== 'SIMULATE' ? districtLabel(districtFilter) : null;
 
   function handleSelectRace(raceId: string) {
     setSelectedRaceId(raceId);
@@ -241,7 +262,7 @@ export default function Home() {
         ) : (
           <Sidebar
             raceResult={raceResult}
-            precinctResults={precinctResults}
+            precinctResults={scopedPrecincts}
             isLoading={isLoading}
             onSelectWard={setSelectedWard}
             isArchive={viewMode === 'ARCHIVE'}
@@ -253,6 +274,7 @@ export default function Home() {
             elections={elections}
             selectedElectionId={selectedElectionId}
             onSelectComparison={setComparisonOverride}
+            scopeLabel={scopeLabel}
           />
         )
       }
@@ -266,22 +288,26 @@ export default function Home() {
     >
       <div className="relative w-full h-full">
         {viewMode !== 'SIMULATE' && (
-          <RaceSelector
-            races={races}
-            selectedRaceId={selectedRaceId}
-            onSelectRace={handleSelectRace}
-            selectedGroupKey={selectedGroupKey}
-            onSelectGroup={handleSelectGroup}
-          />
+          <>
+            <RaceSelector
+              races={races}
+              selectedRaceId={selectedRaceId}
+              onSelectRace={handleSelectRace}
+              selectedGroupKey={selectedGroupKey}
+              onSelectGroup={handleSelectGroup}
+            />
+            <DistrictFilterControl filter={districtFilter} onChange={setDistrictFilter} />
+          </>
         )}
         <MapWrapper
-          precinctResults={effectivePrecincts}
+          precinctResults={scopedPrecincts}
           isLoading={viewMode !== 'SIMULATE' ? isLoading : false}
           selectedWard={viewMode !== 'SIMULATE' ? selectedWard : null}
           raceResult={viewMode !== 'SIMULATE' ? raceResult : undefined}
           turnoutByWard={viewMode !== 'SIMULATE' ? turnoutByWard : undefined}
           comparisonTurnoutByWard={viewMode !== 'SIMULATE' ? comparisonTurnoutByWard : undefined}
           comparisonLabel={viewMode !== 'SIMULATE' ? (comparisonElection?.electionName ?? null) : null}
+          fitKey={`${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}`}
           onReset={() => setSelectedWard(null)}
           focusedCandidate={viewMode !== 'SIMULATE' ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}
