@@ -39,6 +39,9 @@ interface MapProps {
     comparisonLabel?: string | null;
     // Changes whenever the map should re-fit to the covered wards
     fitKey?: string;
+    // TRENDS mode: candidate share per ward in two races (gained/lost ground)
+    shiftByWard?: Record<string, { from: number; to: number }>;
+    shiftLabels?: { from: string; to: string } | null;
 }
 
 export interface HoveredWard {
@@ -54,6 +57,7 @@ export interface HoveredWard {
     dropoffInfo?: DropoffInfo;
     turnoutBallots?: number;
     comparisonBallots?: number;
+    shift?: { from: number; to: number };
 }
 
 function MapController({ geoJsonData, selectedWard, onReset, fitKey, coveredKeys }: {
@@ -225,6 +229,8 @@ export default function Map({
     comparisonTurnoutByWard,
     comparisonLabel,
     fitKey,
+    shiftByWard,
+    shiftLabels,
 }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
@@ -268,11 +274,13 @@ export default function Map({
 
     // "City of Madison|45"-style keys for every ward this race covers,
     // matching the geojson NAME|WardNumber format (used for auto-zoom).
+    // In TRENDS mode there are no precinct results; use the shift keys instead.
     const coveredKeys = useMemo(() => {
         const s = new Set<string>();
         precinctResults?.forEach(r => s.add(`${r.precinctName}|${parseInt(r.wardNumber)}`));
+        if (s.size === 0 && shiftByWard) Object.keys(shiftByWard).forEach(k => s.add(k));
         return s;
-    }, [precinctResults]);
+    }, [precinctResults, shiftByWard]);
 
     useEffect(() => {
         if (raceResult?.candidates) {
@@ -299,7 +307,25 @@ export default function Map({
             fillOpacity: 0.3
         };
 
-        if (overlayMode === 'CANVASS_PRIORITY') {
+        if (overlayMode === 'SHIFT') {
+            // Gained/lost ground: candidate share change between two races
+            const tk = `${municipality}|${wardNum}`;
+            const s = shiftByWard?.[tk];
+            if (!s) {
+                baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+            } else {
+                const delta = s.to - s.from; // percentage points
+                let h: number, sat: number, l: number;
+                if (delta < 0) {
+                    h = 0; const intensity = Math.min(-delta / 15, 1);
+                    l = 90 - intensity * 42; sat = 10 + intensity * 80;
+                } else {
+                    h = 140; const intensity = Math.min(delta / 15, 1);
+                    l = 90 - intensity * 50; sat = 10 + intensity * 90;
+                }
+                baseStyle = { fillColor: `hsl(${h}, ${sat}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.8 };
+            }
+        } else if (overlayMode === 'CANVASS_PRIORITY') {
             if (dormantPoolData) {
                 const normalizedKey = buildProjectionKey(municipality, wardNum);
                 if (simulateHighlightedWards && simulateHighlightedWards.size > 0 && !simulateHighlightedWards.has(normalizedKey)) {
@@ -455,11 +481,25 @@ export default function Map({
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards, turnoutByWard, comparisonTurnoutByWard]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards, turnoutByWard, comparisonTurnoutByWard, shiftByWard]);
 
     /** Build a HoveredWard from feature data + pointer coordinates */
     const buildWardData = useCallback((feature: { municipality: string; wardNum: string }, x: number, y: number): HoveredWard | null => {
         const { municipality, wardNum } = feature;
+
+        if (overlayMode === 'SHIFT') {
+            const tk = `${municipality}|${wardNum}`;
+            const s = shiftByWard?.[tk];
+            if (!s) return null;
+            return {
+                municipality, wardNum,
+                results: [], total: 0, x, y, analysis: null, fillColor: '',
+                shift: s,
+                turnoutBallots: turnoutByWard?.[tk],
+                comparisonBallots: comparisonTurnoutByWard?.[tk],
+            };
+        }
+
         const isSimOverlay = overlayMode === 'CANVASS_PRIORITY' || overlayMode === 'PRIMARY_DROPOFF';
         const normalizedKey = isSimOverlay ? buildProjectionKey(municipality, wardNum) : '';
 
@@ -504,7 +544,7 @@ export default function Map({
             turnoutBallots: turnoutByWard?.[tk],
             comparisonBallots: comparisonTurnoutByWard?.[tk],
         };
-    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard]);
+    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard, shiftByWard]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -526,9 +566,10 @@ export default function Map({
             (overlayMode === 'CANVASS_PRIORITY' && dormantPoolData && normalizedKey in dormantPoolData) ||
             (overlayMode === 'PRIMARY_DROPOFF' && dropoffData && normalizedKey in dropoffData)
         );
+        const hasShiftData = overlayMode === 'SHIFT' && !!shiftByWard && `${municipality}|${wardNum}` in shiftByWard;
 
         const isProjectionClickable = overlayMode === 'PROJECTION' && !!onWardClick;
-        const isInteractive = hasData || hasSimData;
+        const isInteractive = hasData || hasSimData || hasShiftData;
 
         layer.on({
             mouseover: (e: any) => {
@@ -590,7 +631,7 @@ export default function Map({
         if (isProjectionClickable || isInteractive) {
             (layer as any).options = { ...((layer as any).options || {}), className: 'cursor-pointer' };
         }
-    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData]);
+    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData, shiftByWard]);
 
     // Which ward to display in the tooltip: pinned takes priority
     const displayWard = pinnedWard ?? hoveredWard;
@@ -609,7 +650,7 @@ export default function Map({
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}-${shiftByWard ? Object.keys(shiftByWard).length : 0}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}
@@ -639,6 +680,7 @@ export default function Map({
                                 <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
                                     {overlayMode === 'CANVASS_PRIORITY' ? 'Canvass Priority' :
                                      overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
+                                     overlayMode === 'SHIFT' ? 'Gained / Lost Ground' :
                                      (raceResult?.raceName || 'Election Results')}
                                 </div>
                                 <div style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>
@@ -657,6 +699,37 @@ export default function Map({
                                 >×</button>
                             )}
                         </div>
+
+                        {/* SHIFT body: candidate share in both races + delta */}
+                        {displayWard.shift !== undefined && (() => {
+                            const { from, to } = displayWard.shift!;
+                            const delta = to - from;
+                            const deltaColor = delta >= 0 ? '#4ade80' : '#f87171';
+                            return (
+                                <div style={{ padding: '10px 14px 12px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                                        <div>
+                                            <div style={{ fontSize: '10px', color: '#64748b' }} title={shiftLabels?.from}>
+                                                {shiftLabels?.from ?? 'Earlier race'}
+                                            </div>
+                                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>{from.toFixed(1)}%</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '10px', color: '#64748b' }} title={shiftLabels?.to}>
+                                                {shiftLabels?.to ?? 'Later race'}
+                                            </div>
+                                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>{to.toFixed(1)}%</div>
+                                        </div>
+                                    </div>
+                                    <div style={{ borderTop: '1px solid #1e293b', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>Share change</span>
+                                        <span style={{ fontSize: '14px', fontWeight: 700, color: deltaColor }}>
+                                            {delta >= 0 ? '▲ +' : '▼ '}{delta.toFixed(1)} pts
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         {/* CANVASS PRIORITY body */}
                         {displayWard.dormantPool !== undefined && (
@@ -760,8 +833,8 @@ export default function Map({
                             );
                         })()}
 
-                        {/* Turnout delta row — real ballots-cast comparison when available */}
-                        {overlayMode === 'TURNOUT' && displayWard.turnoutBallots !== undefined
+                        {/* Turnout delta row — real ballots-cast comparison, shown on every layer */}
+                        {displayWard.turnoutBallots !== undefined
                             && displayWard.comparisonBallots !== undefined && displayWard.comparisonBallots > 0 && (() => {
                             const cur = displayWard.turnoutBallots!;
                             const prev = displayWard.comparisonBallots!;

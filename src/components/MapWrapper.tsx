@@ -32,9 +32,13 @@ interface MapWrapperProps {
     comparisonLabel?: string | null;
     // Changes whenever the map should re-fit to the covered wards (race or seat filter)
     fitKey?: string;
+    // TRENDS mode: force the SHIFT overlay (gained/lost ground)
+    trendsMode?: boolean;
+    shiftByWard?: Record<string, { from: number; to: number }>;
+    shiftLabels?: { from: string; to: string } | null;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -88,14 +92,16 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         onCandidateReset();
     }, [onCandidateReset]);
 
-    // In SIMULATE mode use the simulateOverlayMode prop; otherwise use local overlayMode
+    // SIMULATE forces its own overlay; TRENDS forces the SHIFT overlay
     const effectiveOverlayMode: OverlayMode = simulateMode
         ? (simulateOverlayMode ?? 'PROJECTION')
-        : overlayMode;
+        : trendsMode
+            ? 'SHIFT'
+            : overlayMode;
 
     return (
         <div className="relative w-full h-full">
-            {!simulateMode && (
+            {!simulateMode && !trendsMode && (
                 <MapOverlayControl
                     currentMode={overlayMode}
                     onChange={handleOverlayChange}
@@ -118,6 +124,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 comparisonTurnoutByWard={comparisonTurnoutByWard}
                 comparisonLabel={comparisonLabel}
                 fitKey={fitKey}
+                shiftByWard={shiftByWard}
+                shiftLabels={shiftLabels}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}

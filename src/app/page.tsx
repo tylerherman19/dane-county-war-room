@@ -20,6 +20,35 @@ import { Election, PrecinctResult, Race, getRaceGroupKey } from '@/lib/api';
 import { OverlayMode } from '@/components/MapOverlayControl';
 import DistrictFilterControl from '@/components/DistrictFilterControl';
 import { DistrictFilter, districtLabel, getWardsInDistrict } from '@/lib/districts';
+import TrendsPanel, { ShiftPair } from '@/components/TrendsPanel';
+import { ElectionTurnout } from '@/lib/api';
+
+function buildWardMap(turnout: ElectionTurnout | undefined): Record<string, number> | undefined {
+  if (!turnout) return undefined;
+  const m: Record<string, number> = {};
+  turnout.byWard.forEach(w => {
+    const k = `${w.precinctName}|${w.wardNumber}`;
+    m[k] = (m[k] ?? 0) + w.ballotsCast;
+  });
+  return m;
+}
+
+/** Per-ward share (%) of one candidate within a race's precinct rows. */
+function sharesByWard(rows: PrecinctResult[], candidateName: string): Record<string, number> {
+  const totals: Record<string, number> = {};
+  const cand: Record<string, number> = {};
+  const target = candidateName.trim();
+  rows.forEach(r => {
+    const k = `${r.precinctName}|${parseInt(r.wardNumber) || 0}`;
+    totals[k] = (totals[k] ?? 0) + r.votes;
+    if (r.candidateName.trim() === target) cand[k] = (cand[k] ?? 0) + r.votes;
+  });
+  const out: Record<string, number> = {};
+  Object.keys(totals).forEach(k => {
+    if (totals[k] > 0) out[k] = ((cand[k] ?? 0) / totals[k]) * 100;
+  });
+  return out;
+}
 
 /**
  * Picks the default comparison election: the most recent election strictly
@@ -43,7 +72,8 @@ function defaultComparisonElection(elections: Election[], selectedId: string | n
 
 export default function Home() {
   // ── Top-level mode ───────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState<'LIVE' | 'ARCHIVE' | 'SIMULATE'>('LIVE');
+  const [viewMode, setViewMode] = useState<'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE'>('LIVE');
+  const isResultsMode = viewMode === 'LIVE' || viewMode === 'ARCHIVE';
 
   // ── LIVE / ARCHIVE state ─────────────────────────────────────────────────
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
@@ -83,7 +113,7 @@ export default function Home() {
   const { elections, isError: electionsError } = useElections();
 
   useEffect(() => {
-    if (viewMode === 'SIMULATE') return;
+    if (!isResultsMode) return;
     if (!elections || elections.length === 0) return;
 
     // Apply shared-link state (?e=&r=) once, before the LIVE pin below
@@ -130,7 +160,7 @@ export default function Home() {
     setFocusedCandidate(null);
   }, [selectedRaceId]);
 
-  const { races } = useRaces(viewMode !== 'SIMULATE' ? selectedElectionId : null);
+  const { races } = useRaces(isResultsMode ? selectedElectionId : null);
 
   // Races belonging to the currently selected group
   const groupRaces: Race[] = selectedGroupKey
@@ -138,7 +168,7 @@ export default function Home() {
     : [];
 
   useEffect(() => {
-    if (viewMode === 'SIMULATE') return;
+    if (!isResultsMode) return;
     if (races && races.length > 0 && !selectedRaceId && !selectedGroupKey) {
       // Shared link may name a specific race
       const pendingRace = pendingUrlState.current?.r;
@@ -154,14 +184,14 @@ export default function Home() {
   }, [races, selectedRaceId, selectedGroupKey, viewMode]);
 
   const { results: raceResult, isLoading: isLoadingRace, isError: raceError } = useRaceResults(
-    viewMode !== 'SIMULATE' ? selectedElectionId : null,
-    viewMode !== 'SIMULATE' ? selectedRaceId : null
+    isResultsMode ? selectedElectionId : null,
+    isResultsMode ? selectedRaceId : null
   );
   const { precinctResults, isLoading: isLoadingPrecincts, isError: precinctError } = usePrecinctResults(
-    viewMode !== 'SIMULATE' ? selectedElectionId : null,
-    viewMode !== 'SIMULATE' ? selectedRaceId : null
+    isResultsMode ? selectedElectionId : null,
+    isResultsMode ? selectedRaceId : null
   );
-  const { lastPublished } = useLastPublished(viewMode !== 'SIMULATE' ? selectedElectionId : null);
+  const { lastPublished } = useLastPublished(isResultsMode ? selectedElectionId : null);
 
   // ── Real turnout: selected election + comparison baseline ────────────────
   const comparisonElectionId = useMemo(
@@ -169,36 +199,61 @@ export default function Home() {
     [comparisonOverride, elections, selectedElectionId]
   );
   const { turnout: electionTurnout } = useElectionTurnout(
-    viewMode !== 'SIMULATE' ? selectedElectionId : null,
+    isResultsMode ? selectedElectionId : null,
     viewMode === 'LIVE'
   );
   const { turnout: comparisonTurnout } = useElectionTurnout(
-    viewMode !== 'SIMULATE' ? comparisonElectionId : null
+    isResultsMode ? comparisonElectionId : null
   );
   const comparisonElection = elections?.find(e => e.electionId === comparisonElectionId);
 
   // Ward-keyed maps for the map overlay: "City of Madison|46" -> ballots cast
-  const turnoutByWard = useMemo(() => {
-    if (!electionTurnout) return undefined;
-    const m: Record<string, number> = {};
-    electionTurnout.byWard.forEach(w => {
-      const k = `${w.precinctName}|${w.wardNumber}`;
-      m[k] = (m[k] ?? 0) + w.ballotsCast;
+  const turnoutByWard = useMemo(() => buildWardMap(electionTurnout), [electionTurnout]);
+  const comparisonTurnoutByWard = useMemo(() => buildWardMap(comparisonTurnout), [comparisonTurnout]);
+
+  // ── TRENDS mode: candidate gained/lost ground between two races ──────────
+  const [shiftPair, setShiftPair] = useState<ShiftPair | null>(null);
+  useEffect(() => {
+    if (viewMode !== 'TRENDS') setShiftPair(null);
+  }, [viewMode]);
+
+  const { precinctResults: shiftFromPrecincts } = usePrecinctResults(
+    viewMode === 'TRENDS' && shiftPair ? shiftPair.from.electionId : null,
+    viewMode === 'TRENDS' && shiftPair ? shiftPair.from.raceId : null
+  );
+  const { precinctResults: shiftToPrecincts } = usePrecinctResults(
+    viewMode === 'TRENDS' && shiftPair ? shiftPair.to.electionId : null,
+    viewMode === 'TRENDS' && shiftPair ? shiftPair.to.raceId : null
+  );
+  const { turnout: shiftToTurnout } = useElectionTurnout(
+    viewMode === 'TRENDS' && shiftPair ? shiftPair.to.electionId : null
+  );
+  const { turnout: shiftFromTurnout } = useElectionTurnout(
+    viewMode === 'TRENDS' && shiftPair ? shiftPair.from.electionId : null
+  );
+  const shiftToTurnoutMap = useMemo(() => buildWardMap(shiftToTurnout), [shiftToTurnout]);
+  const shiftFromTurnoutMap = useMemo(() => buildWardMap(shiftFromTurnout), [shiftFromTurnout]);
+
+  const shiftByWard = useMemo(() => {
+    if (!shiftPair || !shiftFromPrecincts || !shiftToPrecincts) return undefined;
+    const fromShare = sharesByWard(shiftFromPrecincts, shiftPair.candidateName);
+    const toShare = sharesByWard(shiftToPrecincts, shiftPair.candidateName);
+    const out: Record<string, { from: number; to: number }> = {};
+    Object.keys(toShare).forEach(k => {
+      if (fromShare[k] !== undefined) out[k] = { from: fromShare[k], to: toShare[k] };
     });
-    return m;
-  }, [electionTurnout]);
-  const comparisonTurnoutByWard = useMemo(() => {
-    if (!comparisonTurnout) return undefined;
-    const m: Record<string, number> = {};
-    comparisonTurnout.byWard.forEach(w => {
-      const k = `${w.precinctName}|${w.wardNumber}`;
-      m[k] = (m[k] ?? 0) + w.ballotsCast;
-    });
-    return m;
-  }, [comparisonTurnout]);
+    return Object.keys(out).length > 0 ? out : undefined;
+  }, [shiftPair, shiftFromPrecincts, shiftToPrecincts]);
+
+  const shiftLabels = shiftPair
+    ? {
+        from: `${shiftPair.from.electionDate.slice(0, 4)} ${shiftPair.from.raceName}`,
+        to: `${shiftPair.to.electionDate.slice(0, 4)} ${shiftPair.to.raceName}`,
+      }
+    : null;
 
   const isLoading = isLoadingRace || isLoadingPrecincts;
-  const hasError = viewMode !== 'SIMULATE' && (!!electionsError || !!raceError || !!precinctError);
+  const hasError = isResultsMode && (!!electionsError || !!raceError || !!precinctError);
 
   // ── Effective map precincts (What If mode overrides normal results) ───────
   const effectivePrecincts: PrecinctResult[] = useMemo(
@@ -238,7 +293,7 @@ export default function Home() {
     setFocusedCandidate(null);
   }
 
-  const showGroupSidebar = viewMode !== 'SIMULATE' && !!selectedGroupKey && groupRaces.length > 0 && !!selectedElectionId;
+  const showGroupSidebar = isResultsMode && !!selectedGroupKey && groupRaces.length > 0 && !!selectedElectionId;
 
   return (
     <Layout
@@ -251,6 +306,8 @@ export default function Home() {
             simulateOverlayMode={simulateOverlayMode}
             onSimulateOverlayModeChange={setSimulateOverlayMode}
           />
+        ) : viewMode === 'TRENDS' ? (
+          <TrendsPanel elections={elections} onShiftPair={setShiftPair} />
         ) : showGroupSidebar ? (
           <RaceGroupSidebar
             races={groupRaces}
@@ -287,7 +344,7 @@ export default function Home() {
       hasError={hasError}
     >
       <div className="relative w-full h-full">
-        {viewMode !== 'SIMULATE' && (
+        {isResultsMode && (
           <>
             <RaceSelector
               races={races}
@@ -301,15 +358,26 @@ export default function Home() {
         )}
         <MapWrapper
           precinctResults={scopedPrecincts}
-          isLoading={viewMode !== 'SIMULATE' ? isLoading : false}
-          selectedWard={viewMode !== 'SIMULATE' ? selectedWard : null}
-          raceResult={viewMode !== 'SIMULATE' ? raceResult : undefined}
-          turnoutByWard={viewMode !== 'SIMULATE' ? turnoutByWard : undefined}
-          comparisonTurnoutByWard={viewMode !== 'SIMULATE' ? comparisonTurnoutByWard : undefined}
-          comparisonLabel={viewMode !== 'SIMULATE' ? (comparisonElection?.electionName ?? null) : null}
-          fitKey={`${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}`}
+          isLoading={isResultsMode ? isLoading : false}
+          selectedWard={isResultsMode ? selectedWard : null}
+          raceResult={isResultsMode ? raceResult : undefined}
+          turnoutByWard={viewMode === 'TRENDS' ? shiftToTurnoutMap : isResultsMode ? turnoutByWard : undefined}
+          comparisonTurnoutByWard={viewMode === 'TRENDS' ? shiftFromTurnoutMap : isResultsMode ? comparisonTurnoutByWard : undefined}
+          comparisonLabel={
+            viewMode === 'TRENDS'
+              ? (shiftPair?.from.electionName ?? null)
+              : isResultsMode ? (comparisonElection?.electionName ?? null) : null
+          }
+          trendsMode={viewMode === 'TRENDS'}
+          shiftByWard={viewMode === 'TRENDS' ? shiftByWard : undefined}
+          shiftLabels={viewMode === 'TRENDS' ? shiftLabels : null}
+          fitKey={
+            viewMode === 'TRENDS'
+              ? `shift|${shiftPair ? shiftPair.from.electionId + shiftPair.from.raceId + shiftPair.to.electionId + shiftPair.to.raceId : 'none'}`
+              : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}`
+          }
           onReset={() => setSelectedWard(null)}
-          focusedCandidate={viewMode !== 'SIMULATE' ? focusedCandidate : null}
+          focusedCandidate={isResultsMode ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}
           simulateMode={viewMode === 'SIMULATE'}
           projectionData={viewMode === 'SIMULATE' ? simUpdate.projectionData : undefined}
