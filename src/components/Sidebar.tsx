@@ -3,6 +3,7 @@
 import { RaceResult, PrecinctResult, Election, ElectionTurnout } from '@/lib/api';
 import { Search, Download, ExternalLink, Check } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import BenchmarkCard, { BenchmarkSelection, BenchmarkStats } from './BenchmarkCard';
 
 interface SidebarProps {
     raceResult: RaceResult | undefined;
@@ -21,6 +22,11 @@ interface SidebarProps {
     onSelectComparison?: (electionId: string | null) => void;
     // When set, precinctResults are pre-filtered to one district's wards
     scopeLabel?: string | null;
+    // Election-night benchmark (current race vs a candidate's past race)
+    isLive?: boolean;
+    benchmark?: BenchmarkSelection | null;
+    onBenchmarkChange?: (b: BenchmarkSelection | null) => void;
+    benchmarkStats?: BenchmarkStats | null;
 }
 
 // Party → tailwind / hex color
@@ -56,6 +62,7 @@ export default function Sidebar({
     electionTurnout, comparisonTurnout, comparisonElection,
     elections, selectedElectionId, onSelectComparison,
     scopeLabel,
+    isLive, benchmark, onBenchmarkChange, benchmarkStats,
 }: SidebarProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [copied, setCopied] = useState(false);
@@ -140,7 +147,8 @@ export default function Sidebar({
             const turnoutDelta = ballots !== undefined && prevBallots !== undefined && prevBallots > 0
                 ? ((ballots - prevBallots) / prevBallots) * 100
                 : null;
-            return { name, num, total, winner, winnerParty, ballots, prevBallots, turnoutDelta };
+            const reported = wardResults.some(w => w.reported);
+            return { name, num, total, winner, winnerParty, ballots, prevBallots, turnoutDelta, reported };
         })
         .sort((a, b) => {
             const nc = a.name.localeCompare(b.name);
@@ -166,6 +174,18 @@ export default function Sidebar({
     const rolloff = raceAreaBallots > 0 && totalVotes > 0 && totalVotes <= raceAreaBallots
         ? (1 - totalVotes / raceAreaBallots) * 100
         : null;
+
+    // Election night: estimate outstanding vote from unreported wards using
+    // the comparison election's turnout in those same wards
+    const unreportedWardKeys = (() => {
+        const seen = new Map<string, boolean>();
+        (precinctResults ?? []).forEach(r => {
+            const k = turnoutKey(r.precinctName, r.wardNumber);
+            seen.set(k, (seen.get(k) ?? false) || r.reported);
+        });
+        return [...seen.entries()].filter(([, rep]) => !rep).map(([k]) => k);
+    })();
+    const estOutstanding = unreportedWardKeys.reduce((s, k) => s + (comparisonWardMap[k] ?? 0), 0);
 
     // Comparison picker options: every election except the selected one
     const comparisonOptions = (elections ?? []).filter(e => e.electionId !== selectedElectionId);
@@ -382,7 +402,30 @@ export default function Sidebar({
                                 </div>
                             )}
                         </div>
+                        {/* Election night: outstanding vote from unreported wards */}
+                        {isLive && unreportedWardKeys.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between">
+                                <span className="text-xs text-slate-500">
+                                    {unreportedWardKeys.length} ward{unreportedWardKeys.length === 1 ? '' : 's'} not reported
+                                </span>
+                                <span className="text-xs font-semibold text-amber-400">
+                                    ~{estOutstanding.toLocaleString()} ballots out
+                                </span>
+                            </div>
+                        )}
                     </div>
+                )}
+
+                {/* ── Election-night benchmark vs a past race ── */}
+                {onBenchmarkChange && (
+                    <BenchmarkCard
+                        raceResult={raceResult}
+                        elections={elections}
+                        isLive={!!isLive}
+                        benchmark={benchmark ?? null}
+                        onBenchmarkChange={onBenchmarkChange}
+                        stats={benchmarkStats ?? null}
+                    />
                 )}
 
                 {/* ── Ward Results ── */}
@@ -423,17 +466,25 @@ export default function Sidebar({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1.5 shrink-0">
-                                        {ward.turnoutDelta !== null && (
-                                            <span
-                                                className="text-[10px] font-semibold leading-none"
-                                                style={{ color: ward.turnoutDelta >= 0 ? '#4ade80' : '#f87171' }}
-                                                title={`Turnout vs ${comparisonElection?.electionName ?? 'comparison'}: ${ward.prevBallots?.toLocaleString()} → ${ward.ballots?.toLocaleString()}`}
-                                            >
-                                                {ward.turnoutDelta >= 0 ? '↑' : '↓'}{Math.abs(ward.turnoutDelta).toFixed(0)}%
+                                        {!ward.reported ? (
+                                            <span className="text-[9px] font-semibold uppercase tracking-wide text-amber-400/90 bg-amber-400/10 rounded px-1.5 py-0.5">
+                                                awaiting
                                             </span>
-                                        )}
-                                        {winnerPct && (
-                                            <span className="text-xs font-mono" style={{ color: color.dot }}>{winnerPct}%</span>
+                                        ) : (
+                                            <>
+                                                {ward.turnoutDelta !== null && (
+                                                    <span
+                                                        className="text-[10px] font-semibold leading-none"
+                                                        style={{ color: ward.turnoutDelta >= 0 ? '#4ade80' : '#f87171' }}
+                                                        title={`Turnout vs ${comparisonElection?.electionName ?? 'comparison'}: ${ward.prevBallots?.toLocaleString()} → ${ward.ballots?.toLocaleString()}`}
+                                                    >
+                                                        {ward.turnoutDelta >= 0 ? '↑' : '↓'}{Math.abs(ward.turnoutDelta).toFixed(0)}%
+                                                    </span>
+                                                )}
+                                                {winnerPct && (
+                                                    <span className="text-xs font-mono" style={{ color: color.dot }}>{winnerPct}%</span>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 </button>

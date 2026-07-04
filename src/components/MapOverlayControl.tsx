@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layers, TrendingUp, Users, ChevronDown } from 'lucide-react';
+import { Layers, TrendingUp, Users, ChevronDown, Crosshair } from 'lucide-react';
 
 export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING' | 'PROJECTION' | 'CANVASS_PRIORITY' | 'PRIMARY_DROPOFF' | 'SHIFT';
 
@@ -9,6 +9,8 @@ interface MapOverlayControlProps {
     comparisonLabel?: string | null;
     turnoutReady?: boolean;
     candidateLegend?: { name: string; h: number; s: number; l: number }[];
+    benchmarkLabel?: string | null;
+    benchmarkReady?: boolean;
 }
 
 export default function MapOverlayControl({
@@ -17,6 +19,8 @@ export default function MapOverlayControl({
     comparisonLabel,
     turnoutReady,
     candidateLegend,
+    benchmarkLabel,
+    benchmarkReady,
 }: MapOverlayControlProps) {
     // Collapsed by default on mobile, expanded on desktop
     const [isCollapsed, setIsCollapsed] = useState(true);
@@ -49,6 +53,15 @@ export default function MapOverlayControl({
             label: 'Margin Intensity',
             icon: TrendingUp,
             description: 'Toss-up vs. Landslide',
+        },
+        {
+            id: 'SHIFT',
+            label: 'Benchmark',
+            icon: Crosshair,
+            description: benchmarkReady
+                ? (benchmarkLabel ?? 'vs. past race')
+                : 'Pick a benchmark in the sidebar',
+            disabled: !benchmarkReady,
         },
     ];
 
@@ -162,6 +175,25 @@ export default function MapOverlayControl({
                                             Baseline: {comparisonLabel} · change it in the sidebar
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SHIFT (benchmark) legend */}
+                        {currentMode === 'SHIFT' && (
+                            <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
+                                <div className="text-xs font-medium text-slate-400 mb-2">Legend</div>
+                                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                                    <span>−15 pts</span>
+                                    <span>Even</span>
+                                    <span>+15 pts</span>
+                                </div>
+                                <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-white to-green-500">
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
+                                </div>
+                                <div className="flex justify-between mt-1 text-[9px] text-slate-600">
+                                    <span>Running behind</span>
+                                    <span>Running ahead</span>
                                 </div>
                             </div>
                         )}

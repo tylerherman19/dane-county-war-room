@@ -156,6 +156,7 @@ export function toPrecinctResults(
                 votes: Math.round(candidate.votes * m),
                 registeredVoters: 0,
                 ballotscast: adjustedTotal,
+                reported: true,
             });
         }
     }

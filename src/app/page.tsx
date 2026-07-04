@@ -21,6 +21,7 @@ import { OverlayMode } from '@/components/MapOverlayControl';
 import DistrictFilterControl from '@/components/DistrictFilterControl';
 import { DistrictFilter, districtLabel, getWardsInDistrict } from '@/lib/districts';
 import TrendsPanel, { ShiftPair } from '@/components/TrendsPanel';
+import { BenchmarkSelection } from '@/components/BenchmarkCard';
 import { ElectionTurnout } from '@/lib/api';
 
 function buildWardMap(turnout: ElectionTurnout | undefined): Record<string, number> | undefined {
@@ -252,6 +253,56 @@ export default function Home() {
       }
     : null;
 
+  // ── Election-night benchmark: current race vs a candidate's past race ────
+  const [benchmark, setBenchmark] = useState<BenchmarkSelection | null>(null);
+  useEffect(() => { setBenchmark(null); }, [selectedRaceId, selectedElectionId]);
+
+  const { precinctResults: benchPrecincts } = usePrecinctResults(
+    isResultsMode && benchmark ? benchmark.record.electionId : null,
+    isResultsMode && benchmark ? benchmark.record.raceId : null
+  );
+
+  const benchmarkData = useMemo(() => {
+    if (!benchmark || !precinctResults?.length || !benchPrecincts?.length) return null;
+    const agg = (rows: PrecinctResult[], name: string) => {
+      const t: Record<string, number> = {};
+      const c: Record<string, number> = {};
+      const target = name.trim();
+      rows.forEach(r => {
+        const k = `${r.precinctName}|${parseInt(r.wardNumber) || 0}`;
+        t[k] = (t[k] ?? 0) + r.votes;
+        if (r.candidateName.trim() === target) c[k] = (c[k] ?? 0) + r.votes;
+      });
+      return { t, c };
+    };
+    const live = agg(precinctResults, benchmark.currentCandidate);
+    const past = agg(benchPrecincts, benchmark.record.candidateName);
+    const shift: Record<string, { from: number; to: number }> = {};
+    let lc = 0, lt = 0, pc = 0, pt = 0, n = 0;
+    // Apples-to-apples: only wards with votes counted now AND present in the
+    // benchmark race — on election night that means reported overlap wards.
+    Object.keys(live.t).forEach(k => {
+      if (live.t[k] > 0 && (past.t[k] ?? 0) > 0) {
+        shift[k] = { from: ((past.c[k] ?? 0) / past.t[k]) * 100, to: ((live.c[k] ?? 0) / live.t[k]) * 100 };
+        lc += live.c[k] ?? 0; lt += live.t[k];
+        pc += past.c[k] ?? 0; pt += past.t[k];
+        n++;
+      }
+    });
+    if (n === 0) return null;
+    return {
+      shift,
+      stats: { sharedWards: n, liveShare: (lc / lt) * 100, benchShare: (pc / pt) * 100 },
+    };
+  }, [benchmark, precinctResults, benchPrecincts]);
+
+  const benchmarkLabels = benchmark
+    ? {
+        from: `${benchmark.record.electionDate.slice(0, 4)} ${benchmark.record.raceName}`,
+        to: 'This race',
+      }
+    : null;
+
   const isLoading = isLoadingRace || isLoadingPrecincts;
   const hasError = isResultsMode && (!!electionsError || !!raceError || !!precinctError);
 
@@ -332,6 +383,10 @@ export default function Home() {
             selectedElectionId={selectedElectionId}
             onSelectComparison={setComparisonOverride}
             scopeLabel={scopeLabel}
+            isLive={viewMode === 'LIVE'}
+            benchmark={benchmark}
+            onBenchmarkChange={setBenchmark}
+            benchmarkStats={benchmarkData?.stats ?? null}
           />
         )
       }
@@ -369,8 +424,13 @@ export default function Home() {
               : isResultsMode ? (comparisonElection?.electionName ?? null) : null
           }
           trendsMode={viewMode === 'TRENDS'}
-          shiftByWard={viewMode === 'TRENDS' ? shiftByWard : undefined}
-          shiftLabels={viewMode === 'TRENDS' ? shiftLabels : null}
+          shiftByWard={viewMode === 'TRENDS' ? shiftByWard : benchmarkData?.shift}
+          shiftLabels={viewMode === 'TRENDS' ? shiftLabels : benchmarkLabels}
+          benchmarkLabel={
+            isResultsMode && benchmark
+              ? `${benchmark.currentCandidate.split(' ').slice(-1)[0]} vs ${benchmark.record.electionDate.slice(0, 4)} ${benchmark.record.raceName}`
+              : null
+          }
           fitKey={
             viewMode === 'TRENDS'
               ? `shift|${shiftPair ? shiftPair.from.electionId + shiftPair.from.raceId + shiftPair.to.electionId + shiftPair.to.raceId : 'none'}`
