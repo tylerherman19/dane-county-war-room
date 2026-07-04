@@ -54,12 +54,15 @@ export interface HoveredWard {
     comparisonBallots?: number;
 }
 
-function MapController({ geoJsonData, selectedWard, onReset }: {
+function MapController({ geoJsonData, selectedWard, onReset, raceId, coveredKeys }: {
     geoJsonData: any;
     selectedWard?: { name: string; num: string } | null;
     onReset?: () => void;
+    raceId?: string | null;
+    coveredKeys?: Set<string>;
 }) {
     const map = useMap();
+    const lastFittedRace = useRef<string | null>(null);
 
     useEffect(() => {
         if (geoJsonData) {
@@ -67,6 +70,21 @@ function MapController({ geoJsonData, selectedWard, onReset }: {
             map.fitBounds(layer.getBounds());
         }
     }, [geoJsonData, map]);
+
+    // Zoom to the selected race's territory. District races (alder, supervisor,
+    // village) cover a sliver of the county and are invisible at county zoom.
+    useEffect(() => {
+        if (!geoJsonData || !raceId || !coveredKeys || coveredKeys.size === 0) return;
+        if (lastFittedRace.current === raceId) return;
+        const layer = L.geoJSON(geoJsonData, {
+            filter: (feature: any) =>
+                coveredKeys.has(`${feature.properties.NAME}|${parseInt(feature.properties.WardNumber)}`),
+        });
+        if (layer.getLayers().length > 0) {
+            lastFittedRace.current = raceId;
+            map.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 13, animate: true });
+        }
+    }, [geoJsonData, raceId, coveredKeys, map]);
 
     useEffect(() => {
         if (selectedWard && geoJsonData) {
@@ -243,6 +261,14 @@ export default function Map({
             });
         }
         return map;
+    }, [precinctResults]);
+
+    // "City of Madison|45"-style keys for every ward this race covers,
+    // matching the geojson NAME|WardNumber format (used for auto-zoom).
+    const coveredKeys = useMemo(() => {
+        const s = new Set<string>();
+        precinctResults?.forEach(r => s.add(`${r.precinctName}|${parseInt(r.wardNumber)}`));
+        return s;
     }, [precinctResults]);
 
     useEffect(() => {
@@ -586,7 +612,7 @@ export default function Map({
                             onEachFeature={onEachFeature}
                             ref={geoJsonLayerRef}
                         />
-                        <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} />
+                        <MapController geoJsonData={geoJsonData} selectedWard={selectedWard} onReset={onReset} raceId={raceResult?.id} coveredKeys={coveredKeys} />
                         <MapClickDismiss onDismiss={() => setPinnedWard(null)} />
                     </>
                 )}
