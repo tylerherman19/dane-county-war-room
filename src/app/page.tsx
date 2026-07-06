@@ -22,7 +22,8 @@ import DistrictFilterControl from '@/components/DistrictFilterControl';
 import { DistrictFilter, districtLabel, getWardsInDistrict } from '@/lib/districts';
 import TrendsPanel, { ShiftPair } from '@/components/TrendsPanel';
 import { BenchmarkSelection } from '@/components/BenchmarkCard';
-import { ElectionTurnout } from '@/lib/api';
+import PrimaryFocusPanel from '@/components/PrimaryFocusPanel';
+import { ElectionTurnout, extractDistrictNumber } from '@/lib/api';
 
 function buildWardMap(turnout: ElectionTurnout | undefined): Record<string, number> | undefined {
   if (!turnout) return undefined;
@@ -73,8 +74,8 @@ function defaultComparisonElection(elections: Election[], selectedId: string | n
 
 export default function Home() {
   // ── Top-level mode ───────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState<'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE'>('LIVE');
-  const isResultsMode = viewMode === 'LIVE' || viewMode === 'ARCHIVE';
+  const [viewMode, setViewMode] = useState<'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE' | 'PRIMARY'>('LIVE');
+  const isResultsMode = viewMode === 'LIVE' || viewMode === 'ARCHIVE' || viewMode === 'PRIMARY';
 
   // ── LIVE / ARCHIVE state ─────────────────────────────────────────────────
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
@@ -184,6 +185,30 @@ export default function Home() {
     }
   }, [races, selectedRaceId, selectedGroupKey, viewMode]);
 
+  // ── PRIMARY mode: lock onto an Assembly District's state house race ──────
+  // Defaults to AD76; the district filter (shared with LIVE/ARCHIVE) can be
+  // changed to any other Assembly district from the map's filter control.
+  useEffect(() => {
+    if (viewMode !== 'PRIMARY') return;
+    if (!districtFilter || districtFilter.kind !== 'asm') {
+      setDistrictFilter({ kind: 'asm', num: '76' });
+    }
+  }, [viewMode, districtFilter]);
+
+  const primaryMatchingRaces: Race[] = useMemo(() => {
+    if (!races || !districtFilter || districtFilter.kind !== 'asm') return [];
+    const num = parseInt(districtFilter.num);
+    return races.filter(r => r.type === 'Assembly' && extractDistrictNumber(r.name) === num);
+  }, [races, districtFilter]);
+
+  useEffect(() => {
+    if (viewMode !== 'PRIMARY' || primaryMatchingRaces.length === 0) return;
+    if (!selectedRaceId || !primaryMatchingRaces.some(r => r.id === selectedRaceId)) {
+      setSelectedRaceId(primaryMatchingRaces[0].id);
+      setSelectedGroupKey(null);
+    }
+  }, [viewMode, primaryMatchingRaces, selectedRaceId]);
+
   const { results: raceResult, isLoading: isLoadingRace, isError: raceError } = useRaceResults(
     isResultsMode ? selectedElectionId : null,
     isResultsMode ? selectedRaceId : null
@@ -201,7 +226,7 @@ export default function Home() {
   );
   const { turnout: electionTurnout } = useElectionTurnout(
     isResultsMode ? selectedElectionId : null,
-    viewMode === 'LIVE'
+    viewMode === 'LIVE' || viewMode === 'PRIMARY'
   );
   const { turnout: comparisonTurnout } = useElectionTurnout(
     isResultsMode ? comparisonElectionId : null
@@ -359,6 +384,28 @@ export default function Home() {
           />
         ) : viewMode === 'TRENDS' ? (
           <TrendsPanel elections={elections} onShiftPair={setShiftPair} />
+        ) : viewMode === 'PRIMARY' ? (
+          <PrimaryFocusPanel
+            districtFilter={districtFilter}
+            onQuickSelectDistrict={num => setDistrictFilter({ kind: 'asm', num })}
+            matchingRaces={primaryMatchingRaces}
+            selectedRaceId={selectedRaceId}
+            onSelectRace={handleSelectRace}
+            raceResult={raceResult}
+            precinctResults={scopedPrecincts}
+            isLoading={isLoading}
+            districtWardKeys={districtWardKeys}
+            turnoutByWard={turnoutByWard}
+            comparisonTurnoutByWard={comparisonTurnoutByWard}
+            comparisonElection={comparisonElection}
+            elections={elections}
+            selectedElectionId={selectedElectionId}
+            onSelectComparison={setComparisonOverride}
+            isLive={true}
+            benchmark={benchmark}
+            onBenchmarkChange={setBenchmark}
+            benchmarkStats={benchmarkData?.stats ?? null}
+          />
         ) : showGroupSidebar ? (
           <RaceGroupSidebar
             races={groupRaces}

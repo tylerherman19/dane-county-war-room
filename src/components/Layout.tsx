@@ -12,8 +12,8 @@ interface LayoutProps {
     elections?: Election[];
     selectedElectionId?: string | null;
     onSelectElection?: (id: string) => void;
-    viewMode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE';
-    onToggleViewMode: (mode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE') => void;
+    viewMode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE' | 'PRIMARY';
+    onToggleViewMode: (mode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE' | 'PRIMARY') => void;
     hasError?: boolean;
 }
 
@@ -65,6 +65,7 @@ export default function Layout({
         ARCHIVE: { label: 'Archive', short: 'Arc', active: 'bg-blue-600 text-white shadow-lg' },
         TRENDS: { label: 'Trends', short: 'Trnd', active: 'bg-emerald-600 text-white shadow-lg' },
         SIMULATE: { label: 'Simulate', short: 'Sim', active: 'bg-violet-600 text-white shadow-lg' },
+        PRIMARY: { label: 'Primary Focus', short: 'AD76', active: 'bg-amber-600 text-white shadow-lg' },
     };
 
     return (
