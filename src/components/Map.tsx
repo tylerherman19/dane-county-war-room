@@ -204,7 +204,7 @@ function getSafeTooltipStyle(x: number, y: number): React.CSSProperties {
         left,
         top,
         transform,
-        zIndex: 9999,
+        zIndex: 2500,
         pointerEvents: 'none',
         minWidth: '220px',
         maxWidth: `${TOOLTIP_W}px`,

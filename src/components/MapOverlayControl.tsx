@@ -22,14 +22,19 @@ export default function MapOverlayControl({
     benchmarkLabel,
     benchmarkReady,
 }: MapOverlayControlProps) {
-    // Collapsed by default on mobile, expanded on desktop
+    // Collapsed by default on mobile, expanded on desktop. Track the
+    // breakpoint with matchMedia — a plain resize listener re-collapses the
+    // panel every time mobile browser chrome shows/hides during scroll.
     const [isCollapsed, setIsCollapsed] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const checkViewport = () => setIsCollapsed(window.innerWidth < 768);
-        checkViewport();
-        window.addEventListener('resize', checkViewport);
-        return () => window.removeEventListener('resize', checkViewport);
+        const mq = window.matchMedia('(max-width: 767px)');
+        const apply = (matches: boolean) => { setIsMobile(matches); setIsCollapsed(matches); };
+        apply(mq.matches);
+        const onChange = (e: MediaQueryListEvent) => apply(e.matches);
+        mq.addEventListener('change', onChange);
+        return () => mq.removeEventListener('change', onChange);
     }, []);
 
     const options: { id: OverlayMode; label: string; icon: any; description: string; disabled?: boolean }[] = [
@@ -68,8 +73,12 @@ export default function MapOverlayControl({
     const activeOption = options.find(o => o.id === currentMode);
     const ActiveIcon = activeOption?.icon ?? Layers;
 
+    // Mobile collapsed state is a compact icon pill so it doesn't collide
+    // with the race selector to its left; expanding opens the full panel.
+    const compact = isMobile && isCollapsed;
+
     return (
-        <div className="absolute top-3 md:top-4 right-3 md:right-4 z-[1000] w-auto md:w-64">
+        <div className={`absolute top-3 md:top-4 right-3 md:right-4 z-[1000] ${compact ? 'w-auto' : 'w-64'}`}>
             {/* Collapsed pill (mobile) / expanded header (desktop) */}
             <div
                 className={`bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-xl overflow-hidden ${isCollapsed ? 'rounded-xl' : 'rounded-xl'}`}
@@ -83,12 +92,16 @@ export default function MapOverlayControl({
                     <div className={`p-1 rounded-md ${currentMode !== 'NONE' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
                         <ActiveIcon className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex-1 text-left hidden md:block">
-                        Map Layers
-                    </span>
-                    <span className="text-xs font-medium text-slate-300 flex-1 text-left md:hidden">
-                        {activeOption?.label ?? 'Map Layers'}
-                    </span>
+                    {!compact && (
+                        <>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex-1 text-left hidden md:block">
+                                Map Layers
+                            </span>
+                            <span className="text-xs font-medium text-slate-300 flex-1 text-left md:hidden">
+                                {activeOption?.label ?? 'Map Layers'}
+                            </span>
+                        </>
+                    )}
                     <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
                 </button>
 

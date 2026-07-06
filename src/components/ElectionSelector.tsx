@@ -39,7 +39,7 @@ export default function ElectionSelector({ elections, selectedElectionId, onSele
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+                <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 w-72 max-w-[calc(100vw-24px)] bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
                     <div className="max-h-[80vh] overflow-y-auto">
                         {elections.map(election => (
                             <button

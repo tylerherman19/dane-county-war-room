@@ -163,3 +163,26 @@
 html, body {
   overscroll-behavior: none;
 }
+
+/* iOS Safari zooms the page when focusing inputs with font-size < 16px */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* Mobile: pinch/double-tap zoom is native — the +/− buttons only collide
+   with the race selector in the top-left corner */
+@media (max-width: 767px) {
+  .leaflet-control-zoom {
+    display: none;
+  }
+}
+
+/* Mobile results bottom sheet: dvh tracks the collapsing browser chrome,
+   safe-area padding keeps content above the iPhone home indicator */
+.mobile-sheet {
+  max-height: 82vh;
+  max-height: 82dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+}

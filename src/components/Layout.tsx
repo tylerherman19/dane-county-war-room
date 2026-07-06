@@ -132,7 +132,7 @@ export default function Layout({
 
             {/* Archive election selector — mobile second row */}
             {viewMode === 'ARCHIVE' && elections && onSelectElection && (
-                <div className="md:hidden bg-slate-900 border-b border-slate-800 px-3 py-2">
+                <div className="md:hidden bg-slate-900 border-b border-slate-800 px-3 py-2 relative z-[1500]">
                     <ElectionSelector
                         elections={elections}
                         selectedElectionId={selectedElectionId || null}
@@ -172,11 +172,10 @@ export default function Layout({
 
                 {/* Mobile sidebar bottom sheet */}
                 <aside
-                    className={`md:hidden fixed bottom-0 left-0 right-0 z-[3001] transition-transform duration-300 ease-out ${
+                    className={`mobile-sheet md:hidden fixed bottom-0 left-0 right-0 z-[3001] transition-transform duration-300 ease-out ${
                         mobileSidebarOpen ? 'translate-y-0' : 'translate-y-full'
                     }`}
                     style={{
-                        maxHeight: '82vh',
                         borderRadius: '16px 16px 0 0',
                         overflow: 'hidden',
                         display: 'flex',
@@ -203,21 +202,22 @@ export default function Layout({
                 </aside>
             </div>
 
-            {/* Mobile FAB — toggle results panel */}
-            <button
-                className="md:hidden fixed bottom-5 right-4 z-[2999] flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold text-white transition-all active:scale-95"
-                style={{
-                    background: mobileSidebarOpen ? '#475569' : '#2563eb',
-                    boxShadow: mobileSidebarOpen
-                        ? '0 4px 16px rgba(0,0,0,0.4)'
-                        : '0 4px 24px rgba(37,99,235,0.55)',
-                }}
-                onClick={() => setMobileSidebarOpen(o => !o)}
-                aria-label={mobileSidebarOpen ? 'Close results' : 'Show results'}
-            >
-                <BarChart2 className="w-4 h-4" />
-                {mobileSidebarOpen ? 'Close' : 'Results'}
-            </button>
+            {/* Mobile FAB — open results panel (the sheet has its own close) */}
+            {!mobileSidebarOpen && (
+                <button
+                    className="md:hidden fixed right-4 z-[2999] flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold text-white transition-all active:scale-95"
+                    style={{
+                        bottom: 'calc(1.25rem + env(safe-area-inset-bottom))',
+                        background: '#2563eb',
+                        boxShadow: '0 4px 24px rgba(37,99,235,0.55)',
+                    }}
+                    onClick={() => setMobileSidebarOpen(true)}
+                    aria-label="Show results"
+                >
+                    <BarChart2 className="w-4 h-4" />
+                    Results
+                </button>
+            )}
         </div>
     );
 }
