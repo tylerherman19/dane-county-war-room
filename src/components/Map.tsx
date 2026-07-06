@@ -301,10 +301,10 @@ export default function Map({
         const wardNum = parseInt(feature.properties.WardNumber).toString();
 
         let baseStyle: { fillColor: string; weight: number; opacity: number; color: string; fillOpacity: number; dashArray?: string } = {
-            fillColor: '#0f172a',
+            fillColor: '#ececec',
             weight: 1,
             opacity: 0.5,
-            color: '#1e293b',
+            color: '#e4e4e4',
             fillOpacity: 0.3
         };
 
@@ -313,24 +313,24 @@ export default function Map({
             const tk = `${municipality}|${wardNum}`;
             const s = shiftByWard?.[tk];
             if (!s) {
-                baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                baseStyle = { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
             } else {
                 const delta = s.to - s.from; // percentage points
                 let h: number, sat: number, l: number;
                 if (delta < 0) {
-                    h = 0; const intensity = Math.min(-delta / 15, 1);
+                    h = 9; const intensity = Math.min(-delta / 15, 1);
                     l = 90 - intensity * 42; sat = 10 + intensity * 80;
                 } else {
-                    h = 140; const intensity = Math.min(delta / 15, 1);
+                    h = 92; const intensity = Math.min(delta / 15, 1);
                     l = 90 - intensity * 50; sat = 10 + intensity * 90;
                 }
-                baseStyle = { fillColor: `hsl(${h}, ${sat}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.8 };
+                baseStyle = { fillColor: `hsl(${h}, ${sat}%, ${l}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.8 };
             }
         } else if (overlayMode === 'CANVASS_PRIORITY') {
             if (dormantPoolData) {
                 const normalizedKey = buildProjectionKey(municipality, wardNum);
                 if (simulateHighlightedWards && simulateHighlightedWards.size > 0 && !simulateHighlightedWards.has(normalizedKey)) {
-                    return { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                    return { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
                 }
                 const pool = dormantPoolData[normalizedKey];
                 if (pool !== undefined) {
@@ -338,19 +338,19 @@ export default function Map({
                         const intensity = Math.min(pool / maxDormantPool, 1.0);
                         const l = Math.round(90 - intensity * 54);
                         const s = Math.round(15 + intensity * 80);
-                        baseStyle = { fillColor: `hsl(243, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.85 };
+                        baseStyle = { fillColor: `hsl(200, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.85 };
                     } else {
-                        baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.4, color: '#334155', fillOpacity: 0.3 };
+                        baseStyle = { fillColor: '#e4e4e4', weight: 0.5, opacity: 0.4, color: '#ffffff', fillOpacity: 0.3 };
                     }
                 } else {
-                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                    baseStyle = { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
                 }
             }
         } else if (overlayMode === 'PRIMARY_DROPOFF') {
             if (dropoffData) {
                 const normalizedKey = buildProjectionKey(municipality, wardNum);
                 if (simulateHighlightedWards && simulateHighlightedWards.size > 0 && !simulateHighlightedWards.has(normalizedKey)) {
-                    return { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                    return { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
                 }
                 const info = dropoffData[normalizedKey];
                 if (info) {
@@ -358,12 +358,12 @@ export default function Map({
                         const intensity = Math.min(info.dropoff / maxDropoff, 1.0);
                         const l = Math.round(90 - intensity * 52);
                         const s = Math.round(15 + intensity * 85);
-                        baseStyle = { fillColor: `hsl(28, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.85 };
+                        baseStyle = { fillColor: `hsl(28, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.85 };
                     } else {
-                        baseStyle = { fillColor: '#1e293b', weight: 0.5, opacity: 0.4, color: '#334155', fillOpacity: 0.3 };
+                        baseStyle = { fillColor: '#e4e4e4', weight: 0.5, opacity: 0.4, color: '#ffffff', fillOpacity: 0.3 };
                     }
                 } else {
-                    baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                    baseStyle = { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
                 }
             }
         } else {
@@ -382,7 +382,7 @@ export default function Map({
 
                 if (isUnreported) {
                     // Election night: precinct hasn't reported — dashed outline, no fill
-                    baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.8, color: '#64748b', fillOpacity: 0.15, dashArray: '4 3' };
+                    baseStyle = { fillColor: '#e4e4e4', weight: 1, opacity: 0.8, color: '#999999', fillOpacity: 0.15, dashArray: '4 3' };
                 } else if (focusedCandidate) {
                     const candidateResult = relevantResults.find(r => r.candidateName.trim() === focusedCandidate.trim());
                     if (candidateResult && total > 0) {
@@ -396,11 +396,11 @@ export default function Map({
                             fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`,
                             weight: isWinner ? 2 : 1,
                             opacity: isWinner ? 0.9 : 1,
-                            color: isWinner ? `hsl(${baseColor.h}, 80%, 70%)` : '#334155',
+                            color: isWinner ? `hsl(${baseColor.h}, 70%, 30%)` : '#ffffff',
                             fillOpacity: 0.85,
                         };
                     } else {
-                        baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.3, color: '#1e293b', fillOpacity: 0.15 };
+                        baseStyle = { fillColor: '#e4e4e4', weight: 1, opacity: 0.3, color: '#e4e4e4', fillOpacity: 0.15 };
                     }
                 } else if (overlayMode === 'NONE') {
                     const margin = runnerUp ? (winner.votes - runnerUp.votes) / total : 1.0;
@@ -408,7 +408,7 @@ export default function Map({
                     const t = Math.min(margin / 0.45, 1.0);
                     const lightness = Math.round(82 - t * 40);
                     const saturation = Math.round(25 + t * Math.max(0, baseColor.s - 25));
-                    baseStyle = { fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.75 };
+                    baseStyle = { fillColor: `hsl(${baseColor.h}, ${saturation}%, ${lightness}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.75 };
                 } else if (overlayMode === 'TURNOUT') {
                     // Real ballots-cast comparison (from the county's BALLOTS CAST tally),
                     // falling back to the historical race baseline if turnout data is missing.
@@ -424,36 +424,36 @@ export default function Map({
                         if (historicalRef > 0 && total > 0) ratio = total / historicalRef;
                     }
                     if (ratio === null) {
-                        baseStyle = { fillColor: '#1e293b', weight: 1, opacity: 0.4, color: '#334155', fillOpacity: 0.5 };
+                        baseStyle = { fillColor: '#e4e4e4', weight: 1, opacity: 0.4, color: '#ffffff', fillOpacity: 0.5 };
                     } else {
                         let h: number, s: number, l: number;
                         if (ratio < 1.0) {
-                            h = 0; const intensity = Math.min((1.0 - ratio) / 0.5, 1);
+                            h = 9; const intensity = Math.min((1.0 - ratio) / 0.5, 1);
                             l = 90 - (intensity * 40); s = intensity * 80;
                         } else {
-                            h = 140; const intensity = Math.min((ratio - 1.0) / 0.5, 1);
+                            h = 92; const intensity = Math.min((ratio - 1.0) / 0.5, 1);
                             l = 90 - (intensity * 50); s = intensity * 100;
                         }
-                        baseStyle = { fillColor: `hsl(${h}, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.75 };
+                        baseStyle = { fillColor: `hsl(${h}, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.75 };
                     }
                 } else if (overlayMode === 'PROJECTION') {
                     if (!projectionData) {
-                        baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.1 };
+                        baseStyle = { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.1 };
                     } else {
                         const normalizedKey = buildProjectionKey(municipality, wardNum);
                         const ratio = projectionData[normalizedKey] ?? -1;
                         if (ratio < 0) {
-                            baseStyle = { fillColor: '#0f172a', weight: 0.5, opacity: 0.2, color: '#1e293b', fillOpacity: 0.08 };
+                            baseStyle = { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
                         } else {
                             let h: number, s: number, l: number;
                             if (ratio < 1.0) {
-                                h = 0; const intensity = Math.min((1.0 - ratio) / 0.6, 1);
+                                h = 9; const intensity = Math.min((1.0 - ratio) / 0.6, 1);
                                 l = 90 - intensity * 45; s = intensity * 85;
                             } else {
-                                h = 140; const intensity = Math.min((ratio - 1.0) / 0.6, 1);
+                                h = 92; const intensity = Math.min((ratio - 1.0) / 0.6, 1);
                                 l = 90 - intensity * 52; s = intensity * 100;
                             }
-                            baseStyle = { fillColor: `hsl(${h}, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.8 };
+                            baseStyle = { fillColor: `hsl(${h}, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.8 };
                         }
                     }
                 } else if (overlayMode === 'SWING') {
@@ -462,7 +462,7 @@ export default function Map({
                     const intensity = Math.min(margin / 0.4, 1);
                     baseStyle = {
                         fillColor: `hsl(${winnerColor.h}, ${Math.round(intensity * 85)}%, ${Math.round(90 - intensity * 40)}%)`,
-                        weight: 1, opacity: 1, color: '#334155', fillOpacity: 0.8
+                        weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.8
                     };
                 }
             }
@@ -476,10 +476,10 @@ export default function Map({
             if (!isSelected) {
                 baseStyle.fillOpacity = baseStyle.fillOpacity * 0.1;
                 baseStyle.opacity = 0.1;
-                baseStyle.color = '#1e293b';
+                baseStyle.color = '#e4e4e4';
             } else {
                 baseStyle.weight = 3;
-                baseStyle.color = '#ffffff';
+                baseStyle.color = '#222222';
                 baseStyle.opacity = 1;
                 baseStyle.fillOpacity = 0.9;
             }
@@ -563,7 +563,7 @@ export default function Map({
         );
 
         const hasData = relevantResults.length > 0;
-        const defaultBorderColor = hasData ? '#334155' : '#1e293b';
+        const defaultBorderColor = hasData ? '#ffffff' : '#e4e4e4';
         const defaultBorderOpacity = hasData ? 1 : 0.5;
 
         const isSimOverlay = overlayMode === 'CANVASS_PRIORITY' || overlayMode === 'PRIMARY_DROPOFF';
@@ -579,7 +579,7 @@ export default function Map({
 
         layer.on({
             mouseover: (e: any) => {
-                e.target.setStyle({ weight: 2, color: '#ffffff', opacity: 1 });
+                e.target.setStyle({ weight: 2, color: '#222222', opacity: 1 });
                 e.target.bringToFront();
 
                 if (!isInteractive) return;
@@ -647,11 +647,11 @@ export default function Map({
             <MapContainer
                 center={[43.0731, -89.4012]}
                 zoom={10}
-                className="w-full h-full bg-slate-950"
+                className="w-full h-full bg-[#f0f0f0]"
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
                 {geoJsonData && (
                     <>
@@ -671,25 +671,25 @@ export default function Map({
             {displayWard && (
                 <div style={getSafeTooltipStyle(displayWard.x, displayWard.y)}>
                     <div style={{
-                        background: '#0f172a',
-                        border: `1px solid ${pinnedWard ? '#3b82f6' : '#334155'}`,
-                        borderRadius: '10px',
+                        background: '#ffffff',
+                        border: `1px solid ${pinnedWard ? '#008fd5' : '#cccccc'}`,
+                        borderRadius: '3px',
                         overflow: 'hidden',
-                        boxShadow: pinnedWard ? '0 8px 32px rgba(59,130,246,0.3)' : '0 8px 32px rgba(0,0,0,0.65)',
-                        color: 'white',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                        color: '#222222',
                         fontSize: '13px',
-                        fontFamily: 'system-ui, sans-serif',
+                        fontFamily: 'inherit',
                     }}>
                         {/* Header */}
-                        <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #e4e4e4', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
+                                <div style={{ fontSize: '10px', color: '#999999', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
                                     {overlayMode === 'CANVASS_PRIORITY' ? 'Canvass Priority' :
                                      overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
                                      overlayMode === 'SHIFT' ? 'Gained / Lost Ground' :
                                      (raceResult?.raceName || 'Election Results')}
                                 </div>
-                                <div style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>
+                                <div style={{ fontWeight: 700, fontSize: '15px', color: '#222222' }}>
                                     {displayWard.municipality} · Wd.&nbsp;{displayWard.wardNum}
                                 </div>
                             </div>
@@ -697,7 +697,7 @@ export default function Map({
                                 <button
                                     onClick={() => setPinnedWard(null)}
                                     style={{
-                                        background: 'none', border: 'none', color: '#64748b',
+                                        background: 'none', border: 'none', color: '#999999',
                                         cursor: 'pointer', fontSize: '16px', lineHeight: 1,
                                         padding: '0 0 0 8px', pointerEvents: 'auto',
                                     }}
@@ -708,8 +708,8 @@ export default function Map({
 
                         {/* Election night: precinct hasn't reported yet */}
                         {displayWard.reported === false && (
-                            <div style={{ padding: '8px 14px', background: 'rgba(251,191,36,0.08)', borderBottom: '1px solid #1e293b', fontSize: '11px', color: '#fbbf24' }}>
-                                ⏳ Awaiting results — this precinct hasn&apos;t reported
+                            <div style={{ padding: '8px 14px', background: '#fff8e6', borderBottom: '1px solid #e0e0e0', fontSize: '11px', color: '#8a6d00' }}>
+                                Awaiting results — this precinct hasn&apos;t reported
                             </div>
                         )}
 
@@ -717,25 +717,25 @@ export default function Map({
                         {displayWard.shift !== undefined && (() => {
                             const { from, to } = displayWard.shift!;
                             const delta = to - from;
-                            const deltaColor = delta >= 0 ? '#4ade80' : '#f87171';
+                            const deltaColor = delta >= 0 ? '#567a3a' : '#c73a1d';
                             return (
                                 <div style={{ padding: '10px 14px 12px' }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                                         <div>
-                                            <div style={{ fontSize: '10px', color: '#64748b' }} title={shiftLabels?.from}>
+                                            <div style={{ fontSize: '10px', color: '#999999' }} title={shiftLabels?.from}>
                                                 {shiftLabels?.from ?? 'Earlier race'}
                                             </div>
-                                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>{from.toFixed(1)}%</div>
+                                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#222222' }}>{from.toFixed(1)}%</div>
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '10px', color: '#64748b' }} title={shiftLabels?.to}>
+                                            <div style={{ fontSize: '10px', color: '#999999' }} title={shiftLabels?.to}>
                                                 {shiftLabels?.to ?? 'Later race'}
                                             </div>
-                                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>{to.toFixed(1)}%</div>
+                                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#222222' }}>{to.toFixed(1)}%</div>
                                         </div>
                                     </div>
-                                    <div style={{ borderTop: '1px solid #1e293b', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>Share change</span>
+                                    <div style={{ borderTop: '1px solid #e4e4e4', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '11px', color: '#666666' }}>Share change</span>
                                         <span style={{ fontSize: '14px', fontWeight: 700, color: deltaColor }}>
                                             {delta >= 0 ? '▲ +' : '▼ '}{delta.toFixed(1)} pts
                                         </span>
@@ -747,11 +747,11 @@ export default function Map({
                         {/* CANVASS PRIORITY body */}
                         {displayWard.dormantPool !== undefined && (
                             <div style={{ padding: '10px 14px 12px' }}>
-                                <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>Dormant voter pool</div>
-                                <div style={{ fontSize: '22px', fontWeight: 800, color: '#818cf8' }}>
+                                <div style={{ fontSize: '11px', color: '#666666', marginBottom: '6px' }}>Dormant voter pool</div>
+                                <div style={{ fontSize: '22px', fontWeight: 800, color: '#008fd5' }}>
                                     {displayWard.dormantPool.toLocaleString()}
                                 </div>
-                                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px' }}>
+                                <div style={{ fontSize: '10px', color: '#999999', marginTop: '4px' }}>
                                     Avg voters who turn out in general elections but skip primaries
                                 </div>
                             </div>
@@ -762,21 +762,21 @@ export default function Map({
                             <div style={{ padding: '10px 14px 12px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                                     <div>
-                                        <div style={{ fontSize: '10px', color: '#64748b' }}>Spring Election</div>
-                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#f1f5f9' }}>
+                                        <div style={{ fontSize: '10px', color: '#999999' }}>Spring Election</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#222222' }}>
                                             {displayWard.dropoffInfo.general.toLocaleString()}
                                         </div>
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '10px', color: '#64748b' }}>Spring Primary</div>
-                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#f1f5f9' }}>
+                                        <div style={{ fontSize: '10px', color: '#999999' }}>Spring Primary</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#222222' }}>
                                             {displayWard.dropoffInfo.primary.toLocaleString()}
                                         </div>
                                     </div>
                                 </div>
-                                <div style={{ borderTop: '1px solid #1e293b', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>Dropoff</span>
-                                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fb923c' }}>
+                                <div style={{ borderTop: '1px solid #e4e4e4', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '11px', color: '#666666' }}>Dropoff</span>
+                                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#a16207' }}>
                                         −{displayWard.dropoffInfo.dropoff.toLocaleString()} ({displayWard.dropoffInfo.dropoffPct.toFixed(1)}%)
                                     </span>
                                 </div>
@@ -801,22 +801,22 @@ export default function Map({
                                         : displayWard.results;
                                     return visibleResults.map((r, i) => {
                                         const hsl = candidateColors[r.candidateName.trim()];
-                                        const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#64748b';
+                                        const barColor = hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : '#999999';
                                         const isWinner = i === 0;
                                         return (
                                             <div key={i} style={{ marginBottom: i < visibleResults.length - 1 ? '10px' : 0 }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                                                    <span title={r.candidateName} style={{ color: isWinner ? '#f1f5f9' : '#94a3b8', fontWeight: isWinner ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
+                                                    <span title={r.candidateName} style={{ color: isWinner ? '#222222' : '#666666', fontWeight: isWinner ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
                                                         {isWinner ? '▲ ' : '   '}{r.candidateName}
                                                     </span>
-                                                    <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#f1f5f9' : '#64748b', marginLeft: '12px' }}>
+                                                    <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: isWinner ? 700 : 400, color: isWinner ? '#222222' : '#999999', marginLeft: '12px' }}>
                                                         {r.pct.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div style={{ height: '5px', background: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
+                                                <div style={{ height: '5px', background: '#e4e4e4', borderRadius: '3px', overflow: 'hidden' }}>
                                                     <div style={{ height: '100%', width: `${r.pct}%`, background: barColor, borderRadius: '3px' }} />
                                                 </div>
-                                                <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
+                                                <div style={{ fontSize: '11px', color: '#999999', marginTop: '2px' }}>
                                                     {r.votes.toLocaleString()} votes
                                                 </div>
                                             </div>
@@ -833,12 +833,12 @@ export default function Map({
                                 ? displayWard.results[0].pct - displayWard.results[1].pct : 100;
                             const diff = currentMarginPct - Math.abs(histMarginPct);
                             const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' pts';
-                            const diffColor = diff >= 0 ? '#4ade80' : '#f87171';
+                            const diffColor = diff >= 0 ? '#567a3a' : '#c73a1d';
                             const year = displayWard.analysis!.historicalDate
                                 ? new Date(displayWard.analysis!.historicalDate).getFullYear() : '?';
                             return (
-                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '10px', color: '#475569' }}>
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #e4e4e4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#999999' }}>
                                         vs {year} {displayWard.analysis!.historicalRaceName.split(' ').slice(0, 2).join(' ')}
                                     </span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: diffColor }}>{diffStr}</span>
@@ -853,11 +853,11 @@ export default function Map({
                             const prev = displayWard.comparisonBallots!;
                             const deltaPct = ((cur - prev) / prev) * 100;
                             const isAbove = deltaPct >= 0;
-                            const deltaColor = isAbove ? '#4ade80' : '#f87171';
+                            const deltaColor = isAbove ? '#567a3a' : '#c73a1d';
                             const diffStr = (isAbove ? '+' : '') + (cur - prev).toLocaleString();
                             return (
-                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '10px', color: '#475569' }} title={comparisonLabel ?? undefined}>
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #e4e4e4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#999999' }} title={comparisonLabel ?? undefined}>
                                         Turnout: {cur.toLocaleString()} vs {prev.toLocaleString()}{comparisonLabel ? ` (${comparisonLabel})` : ''}
                                     </span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
@@ -873,15 +873,15 @@ export default function Map({
                             const deltaPct = (ratio - 1) * 100;
                             const isAbove = deltaPct >= 0;
                             const arrow = isAbove ? '↑' : '↓';
-                            const deltaColor = isAbove ? '#4ade80' : '#f87171';
+                            const deltaColor = isAbove ? '#567a3a' : '#c73a1d';
                             const year = displayWard.analysis!.historicalDate
                                 ? new Date(displayWard.analysis!.historicalDate).getFullYear() : '?';
                             const prevVotes = displayWard.analysis!.historicalVotes.toLocaleString();
                             const ballotDiff = displayWard.total - displayWard.analysis!.historicalVotes;
                             const diffStr = (isAbove ? '+' : '') + ballotDiff.toLocaleString();
                             return (
-                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '10px', color: '#475569' }}>vs {year} baseline · {prevVotes} ballots</span>
+                                <div style={{ padding: '5px 14px 6px', borderTop: '1px solid #e4e4e4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#999999' }}>vs {year} baseline · {prevVotes} ballots</span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: deltaColor }}>
                                         {arrow} {Math.abs(deltaPct).toFixed(0)}% · {diffStr} ballots
                                     </span>
@@ -891,11 +891,11 @@ export default function Map({
 
                         {/* Footer */}
                         {displayWard.results.length >= 2 && (
-                            <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '11px', color: '#475569' }}>
+                            <div style={{ padding: '7px 14px 10px', borderTop: '1px solid #e4e4e4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '11px', color: '#999999' }}>
                                     {displayWard.total.toLocaleString()} ballots cast
                                 </span>
-                                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                <span style={{ fontSize: '11px', color: '#999999' }}>
                                     +{Math.abs(displayWard.results[0].pct - displayWard.results[1].pct).toFixed(1)}% margin
                                 </span>
                             </div>
@@ -903,7 +903,7 @@ export default function Map({
 
                         {/* Tap hint on mobile when pinned */}
                         {pinnedWard && (
-                            <div style={{ padding: '4px 14px 8px', fontSize: '10px', color: '#334155', textAlign: 'center' }}>
+                            <div style={{ padding: '4px 14px 8px', fontSize: '10px', color: '#bbbbbb', textAlign: 'center' }}>
                                 Tap another ward or the × to dismiss
                             </div>
                         )}

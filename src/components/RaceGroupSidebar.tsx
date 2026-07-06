@@ -15,11 +15,11 @@ interface RaceGroupSidebarProps {
 
 function getPartyColor(party: string | undefined): string {
     const p = (party || '').toLowerCase();
-    if (p.includes('democrat')) return '#3b82f6';
-    if (p.includes('republican')) return '#ef4444';
-    if (p.includes('green')) return '#22c55e';
-    if (p.includes('libertarian')) return '#eab308';
-    return '#64748b';
+    if (p.includes('democrat')) return '#008fd5';
+    if (p.includes('republican')) return '#fc4f30';
+    if (p.includes('green')) return '#6d904f';
+    if (p.includes('libertarian')) return '#e5ae38';
+    return '#8b8b8b';
 }
 
 interface RaceGroupRowProps {
@@ -39,11 +39,11 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
         return (
             <button
                 onClick={onClick}
-                className="w-full text-left px-4 py-2 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0 animate-pulse"
+                className="w-full text-left px-4 py-2 hover:bg-[#f7f7f7] transition-colors border-b border-[#eeeeee] last:border-0 animate-pulse"
             >
                 <div className="flex items-center justify-between gap-3">
-                    <div className="h-4 bg-slate-700 rounded w-20" />
-                    <div className="h-4 bg-slate-700 rounded w-32" />
+                    <div className="h-4 bg-[#f0f0f0] w-20" />
+                    <div className="h-4 bg-[#f0f0f0] w-32" />
                 </div>
             </button>
         );
@@ -53,11 +53,11 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
         return (
             <button
                 onClick={onClick}
-                className="w-full text-left px-4 py-2 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0"
+                className="w-full text-left px-4 py-2 hover:bg-[#f7f7f7] transition-colors border-b border-[#eeeeee] last:border-0"
             >
                 <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-slate-300">{shortLabel}</span>
-                    <span className="text-xs text-slate-600">No data</span>
+                    <span className="text-sm font-bold text-[#222]">{shortLabel}</span>
+                    <span className="text-xs text-[#999]">No data</span>
                 </div>
             </button>
         );
@@ -79,12 +79,12 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
     return (
         <button
             onClick={onClick}
-            className="w-full text-left px-4 py-2 hover:bg-slate-800/60 transition-colors border-b border-slate-800/60 last:border-0 group"
+            className="w-full text-left px-4 py-2 hover:bg-[#f7f7f7] transition-colors border-b border-[#eeeeee] last:border-0 group"
         >
             <div className="flex items-center gap-3">
                 {/* District label */}
                 <div className="w-20 shrink-0">
-                    <span className="text-sm font-semibold text-slate-300">{shortLabel}</span>
+                    <span className="text-sm font-bold text-[#222]">{shortLabel}</span>
                 </div>
 
                 {/* Candidate + result */}
@@ -92,40 +92,40 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
                     {leader ? (
                         <>
                             <div className="flex items-center justify-between gap-2">
-                                <span className="text-sm font-medium truncate text-white" title={leader.candidateName}>
+                                <span className="text-sm truncate text-[#222]" title={leader.candidateName}>
                                     {leader.candidateName}
                                 </span>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                    <span className="text-[10px] text-slate-600 tabular-nums">
+                                    <span className="text-[10px] text-[#999] num">
                                         {results.precinctsReporting}/{results.totalPrecincts}p
                                     </span>
-                                    <span className="text-sm font-bold tabular-nums" style={{ color: leaderColor }}>
+                                    <span className="text-sm font-bold num" style={{ color: leaderColor }}>
                                         {leader.percentage.toFixed(1)}%
                                     </span>
                                     {margin !== null && (
-                                        <span className="text-xs text-slate-500 tabular-nums">
+                                        <span className="text-xs text-[#999] num">
                                             +{margin.toFixed(1)}
                                         </span>
                                     )}
                                     {isComplete && totalVotes > 0 && (
-                                        <span className="text-[10px] text-green-600 font-medium">Final</span>
+                                        <span className="text-[10px] text-[#567a3a] font-bold uppercase tracking-[0.04em]">Final</span>
                                     )}
                                 </div>
                             </div>
                             {/* Thin vote bar */}
-                            <div className="mt-1 h-0.5 bg-slate-700/60 rounded-full overflow-hidden">
+                            <div className="mt-1 h-0.5 bg-[#e8e8e8]">
                                 <div
-                                    className="h-full rounded-full transition-all duration-500"
+                                    className="h-full transition-all duration-500"
                                     style={{ width: `${leader.percentage}%`, background: leaderColor }}
                                 />
                             </div>
                         </>
                     ) : (
-                        <span className="text-xs text-slate-600">No candidates</span>
+                        <span className="text-xs text-[#999]">No candidates</span>
                     )}
                 </div>
 
-                <ChevronRight className="w-3.5 h-3.5 text-slate-700 group-hover:text-slate-400 shrink-0 transition-colors" />
+                <ChevronRight className="w-3.5 h-3.5 text-[#cccccc] group-hover:text-[#666] shrink-0 transition-colors" />
             </div>
         </button>
     );
@@ -135,13 +135,13 @@ export default function RaceGroupSidebar({ races, electionId, groupLabel, onSele
     const sorted = [...races].sort((a, b) => extractDistrictNumber(a.name) - extractDistrictNumber(b.name));
 
     return (
-        <div className="h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-hidden">
+        <div className="h-full bg-white flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b border-slate-800 shrink-0">
-                <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Race Group</div>
-                <div className="text-lg font-bold text-white">{groupLabel}</div>
-                <div className="text-xs text-slate-500 mt-1">
-                    {sorted.length} districts — click a row to view map detail
+            <div className="p-4 border-b border-[#e0e0e0] shrink-0">
+                <div className="kicker mb-1">Race Group</div>
+                <div className="text-lg font-bold text-[#222]">{groupLabel}</div>
+                <div className="text-xs text-[#999] mt-1">
+                    {sorted.length} districts. Click a row to view map detail.
                 </div>
             </div>
 
@@ -157,7 +157,7 @@ export default function RaceGroupSidebar({ races, electionId, groupLabel, onSele
                     />
                 ))}
                 {sorted.length === 0 && (
-                    <div className="p-6 text-center text-slate-500 text-sm">No races in this group</div>
+                    <div className="p-6 text-center text-[#999] text-sm">No races in this group</div>
                 )}
             </div>
         </div>

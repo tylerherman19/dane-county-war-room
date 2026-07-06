@@ -4,23 +4,23 @@
 
 export interface HSL { h: number; s: number; l: number; }
 
-// Standard party colors (HSL)
+// Party colors (HSL) — classic FiveThirtyEight data palette
 const PARTY_COLORS: Record<string, HSL> = {
-    'Democratic':  { h: 215, s: 90, l: 50 }, // Blue
-    'Republican':  { h: 0,   s: 90, l: 50 }, // Red
-    'Green':       { h: 140, s: 70, l: 45 }, // Green
-    'Libertarian': { h: 45,  s: 90, l: 50 }, // Gold
-    'Independent': { h: 280, s: 60, l: 60 }, // Purple
-    'Nonpartisan': { h: 200, s: 10, l: 50 }, // Grey
+    'Democratic':  { h: 200, s: 100, l: 42 }, // #008fd5 blue
+    'Republican':  { h: 9,   s: 97,  l: 59 }, // #fc4f30 red
+    'Green':       { h: 92,  s: 29,  l: 44 }, // #6d904f green
+    'Libertarian': { h: 41,  s: 77,  l: 56 }, // #e5ae38 gold
+    'Independent': { h: 90,  s: 44,  l: 47 }, // #77ab43 green
+    'Nonpartisan': { h: 0,   s: 0,   l: 55 }, // #8b8b8b gray
 };
 
 // Fallback palette for non-partisan or multiple candidates of the same party
 const FALLBACK_PALETTE: HSL[] = [
-    { h: 215, s: 80, l: 55 }, // Blue
-    { h: 160, s: 70, l: 45 }, // Teal
-    { h: 280, s: 60, l: 60 }, // Purple
-    { h: 30,  s: 90, l: 55 }, // Orange
-    { h: 330, s: 70, l: 55 }, // Pink
+    { h: 200, s: 100, l: 42 }, // blue
+    { h: 9,   s: 97,  l: 59 }, // red
+    { h: 41,  s: 77,  l: 56 }, // gold
+    { h: 92,  s: 29,  l: 44 }, // green
+    { h: 0,   s: 0,   l: 55 }, // gray
 ];
 
 /**
@@ -37,9 +37,9 @@ export function assignCandidateColors(
         const name = c.candidateName.trim();
         // Hardcoded overrides for prominent figures whose party may not be in the feed
         if (name.includes('Biden') || name.includes('Harris') || name.includes('Evers')) {
-            colors[name] = { h: 215, s: 90, l: 50 };
+            colors[name] = PARTY_COLORS['Democratic'];
         } else if (name.includes('Trump') || name.includes('Michels')) {
-            colors[name] = { h: 0, s: 90, l: 50 };
+            colors[name] = PARTY_COLORS['Republican'];
         } else if (c.party && PARTY_COLORS[c.party]) {
             colors[name] = PARTY_COLORS[c.party];
         } else {

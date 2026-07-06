@@ -67,20 +67,20 @@ export default function BenchmarkCard({
     const delta = stats ? stats.liveShare - stats.benchShare : null;
 
     return (
-        <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
-            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+        <div className="px-4 py-4 border-b border-[#e0e0e0]">
+            <h3 className="kicker mb-1 flex items-center gap-1.5">
                 <Crosshair className="w-3.5 h-3.5" /> Benchmark
             </h3>
-            <p className="text-[10px] text-slate-500 mb-3">
-                Compare {isLive ? 'incoming results' : 'this race'} against a candidate&apos;s past race —
+            <p className="text-[11px] text-[#999] mb-3">
+                Compare {isLive ? 'incoming results' : 'this race'} against a candidate&apos;s past race:
                 same wards, {isLive ? 'reported wards only' : 'head to head'}.
             </p>
 
             {/* Candidate in the current race */}
             <div className="flex items-center gap-2 mb-2">
-                <label className="text-xs text-slate-500 shrink-0 w-16">Candidate</label>
+                <label className="text-xs text-[#666] shrink-0 w-16">Candidate</label>
                 <select
-                    className="flex-1 min-w-0 bg-slate-900/60 text-slate-300 text-xs rounded-md px-2 py-1 border border-slate-700 focus:outline-none focus:border-blue-500"
+                    className="flex-1 min-w-0 bg-white text-[#222] text-xs rounded-[3px] px-2 py-1 border border-[#cccccc] focus:outline-none focus:border-[#008fd5]"
                     value={activeCandidate}
                     onChange={e => {
                         setCandidate(e.target.value);
@@ -98,18 +98,18 @@ export default function BenchmarkCard({
             {/* Benchmark chosen */}
             {benchmark ? (
                 <div className="mt-2">
-                    <div className="flex items-start justify-between gap-2 rounded-lg bg-slate-900/50 px-3 py-2 border border-slate-700/50">
+                    <div className="flex items-start justify-between gap-2 bg-[#f7f7f7] px-3 py-2 border border-[#e0e0e0] rounded-[3px]">
                         <div className="min-w-0">
-                            <div className="text-xs text-slate-300 truncate" title={benchmark.record.raceName}>
+                            <div className="text-xs text-[#222] truncate" title={benchmark.record.raceName}>
                                 {benchmark.record.electionDate.slice(0, 4)} — {benchmark.record.raceName}
                             </div>
-                            <div className="text-[10px] text-slate-500 mt-0.5">
+                            <div className="text-[11px] text-[#999] mt-0.5 num">
                                 as {benchmark.record.candidateName} · {benchmark.record.percentage.toFixed(1)}% county-wide then
                             </div>
                         </div>
                         <button
                             onClick={() => onBenchmarkChange(null)}
-                            className="shrink-0 text-slate-500 hover:text-white transition-colors"
+                            className="shrink-0 text-[#999] hover:text-[#222] transition-colors"
                             title="Clear benchmark"
                         >
                             <X className="w-3.5 h-3.5" />
@@ -120,24 +120,24 @@ export default function BenchmarkCard({
                         <div className="mt-3">
                             <div className="flex items-end justify-between">
                                 <div>
-                                    <div className="text-[10px] text-slate-500">Now</div>
-                                    <div className="text-xl font-bold text-white">{stats.liveShare.toFixed(1)}%</div>
+                                    <div className="text-[10px] uppercase tracking-[0.06em] text-[#999] font-bold">Now</div>
+                                    <div className="text-xl font-bold num text-[#222]">{stats.liveShare.toFixed(1)}%</div>
                                 </div>
-                                <div className={`text-lg font-black ${delta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                <div className={`text-lg font-bold num ${delta >= 0 ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>
                                     {delta >= 0 ? '▲ +' : '▼ '}{delta.toFixed(1)} pts
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-[10px] text-slate-500">Then</div>
-                                    <div className="text-xl font-bold text-slate-300">{stats.benchShare.toFixed(1)}%</div>
+                                    <div className="text-[10px] uppercase tracking-[0.06em] text-[#999] font-bold">Then</div>
+                                    <div className="text-xl font-bold num text-[#666]">{stats.benchShare.toFixed(1)}%</div>
                                 </div>
                             </div>
-                            <div className="mt-1.5 text-[10px] text-slate-500">
-                                Across {stats.sharedWards} overlapping{isLive ? ' reported' : ''} ward{stats.sharedWards === 1 ? '' : 's'} ·
-                                turn on the <span className="text-slate-400">Benchmark</span> map layer for ward detail
+                            <div className="mt-1.5 text-[11px] text-[#999]">
+                                Across {stats.sharedWards} overlapping{isLive ? ' reported' : ''} ward{stats.sharedWards === 1 ? '' : 's'}.
+                                Turn on the <span className="text-[#666] font-bold">Benchmark</span> map layer for ward detail.
                             </div>
                         </div>
                     ) : (
-                        <div className="mt-2 text-[10px] text-slate-600">
+                        <div className="mt-2 text-[11px] text-[#999]">
                             No overlapping wards with results yet — numbers appear as those wards report.
                         </div>
                     )}
@@ -147,11 +147,11 @@ export default function BenchmarkCard({
                     {/* Find past races */}
                     <div className="flex gap-2 mt-1">
                         <div className="relative flex-1">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#999]" />
                             <input
                                 type="text"
-                                placeholder={`Search: ${activeCandidate.trim().split(/\s+/).slice(-1)[0] ?? 'name'}…`}
-                                className="w-full bg-slate-900/60 border border-slate-700 rounded-md pl-8 pr-2 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500"
+                                placeholder={`Search: ${activeCandidate.trim().split(/\s+/).slice(-1)[0] ?? 'name'}`}
+                                className="w-full bg-white border border-[#cccccc] rounded-[3px] pl-8 pr-2 py-1.5 text-xs text-[#222] placeholder-[#999] focus:outline-none focus:border-[#008fd5]"
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') findPastRaces(); }}
@@ -160,31 +160,31 @@ export default function BenchmarkCard({
                         <button
                             onClick={findPastRaces}
                             disabled={searching}
-                            className="shrink-0 px-2.5 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition-colors disabled:opacity-40"
+                            className="shrink-0 px-2.5 py-1.5 rounded-[3px] bg-[#222] hover:bg-[#444] text-white text-xs font-bold transition-colors disabled:opacity-40"
                         >
-                            {searching ? '…' : 'Find races'}
+                            {searching ? 'Searching' : 'Find races'}
                         </button>
                     </div>
                     {searching && progress && (
-                        <div className="mt-2 h-1 bg-slate-700/50 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+                        <div className="mt-2 h-1 bg-[#e8e8e8] overflow-hidden">
+                            <div className="h-full bg-[#008fd5] transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
                         </div>
                     )}
                     {options && (
-                        <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-slate-700/50 divide-y divide-slate-800">
+                        <div className="mt-2 max-h-48 overflow-y-auto border border-[#e0e0e0] rounded-[3px] divide-y divide-[#eeeeee]">
                             {options.length === 0 && (
-                                <div className="px-3 py-2 text-[10px] text-slate-500">No past races found for that name.</div>
+                                <div className="px-3 py-2 text-[11px] text-[#999]">No past races found for that name.</div>
                             )}
                             {options.map(r => (
                                 <button
                                     key={`${r.electionId}|${r.raceId}|${r.candidateName}`}
                                     onClick={() => onBenchmarkChange({ currentCandidate: activeCandidate, record: r })}
-                                    className="w-full text-left px-3 py-2 hover:bg-slate-800 transition-colors"
+                                    className="w-full text-left px-3 py-2 hover:bg-[#f7f7f7] transition-colors"
                                 >
-                                    <div className="text-xs text-slate-200 truncate" title={r.raceName}>
+                                    <div className="text-xs text-[#222] truncate" title={r.raceName}>
                                         {r.electionDate.slice(0, 4)} — {r.raceName}
                                     </div>
-                                    <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                                    <div className="text-[11px] text-[#999] mt-0.5 truncate num">
                                         {r.candidateName} · {r.percentage.toFixed(1)}% · {r.votes.toLocaleString()} votes{r.won ? ' · won' : ''}
                                     </div>
                                 </button>
