@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PrecinctResult, RaceResult } from '@/lib/api';
 import MapOverlayControl, { OverlayMode } from './MapOverlayControl';
-import { HoveredWard } from './Map';
+import { HoveredWard, PlanningWardDatum } from './Map';
 import { isHistoricalDataLoaded, getHistoricalRaceInfo } from '@/lib/analysis-data';
 import { assignCandidateColors } from '@/lib/candidate-colors';
 import { getDormantPoolByWard, getDropoffByWard, DropoffInfo } from '@/lib/dormant-voter-data';
@@ -38,9 +38,11 @@ interface MapWrapperProps {
     shiftLabels?: { from: string; to: string } | null;
     // LIVE/ARCHIVE: benchmark overlay option (SHIFT layer selectable from the control)
     benchmarkLabel?: string | null;
+    // PRIMARY planning tab: force the PLANNING overlay (expected vote per ward)
+    planningByWard?: Record<string, PlanningWardDatum>;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -99,16 +101,19 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         if (!trendsMode && overlayMode === 'SHIFT' && !shiftByWard) setOverlayMode('NONE');
     }, [overlayMode, shiftByWard, trendsMode]);
 
-    // SIMULATE forces its own overlay; TRENDS forces the SHIFT overlay
+    // SIMULATE forces its own overlay; TRENDS forces SHIFT; PRIMARY planning forces PLANNING
+    const planningMode = !!planningByWard;
     const effectiveOverlayMode: OverlayMode = simulateMode
         ? (simulateOverlayMode ?? 'PROJECTION')
         : trendsMode
             ? 'SHIFT'
-            : overlayMode;
+            : planningMode
+                ? 'PLANNING'
+                : overlayMode;
 
     return (
         <div className="relative w-full h-full">
-            {!simulateMode && !trendsMode && (
+            {!simulateMode && !trendsMode && !planningMode && (
                 <MapOverlayControl
                     currentMode={overlayMode}
                     onChange={handleOverlayChange}
@@ -135,6 +140,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 fitKey={fitKey}
                 shiftByWard={shiftByWard}
                 shiftLabels={shiftLabels}
+                planningByWard={planningByWard}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}

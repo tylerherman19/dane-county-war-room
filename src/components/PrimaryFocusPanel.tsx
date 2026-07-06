@@ -1,14 +1,33 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Target, TrendingUp, History, Vote } from 'lucide-react';
+import { Target, TrendingUp, History, Vote, ClipboardList, Radio } from 'lucide-react';
 import { RaceResult, PrecinctResult, Race, Election } from '@/lib/api';
 import { DistrictFilter, districtLabel } from '@/lib/districts';
 import { buildPrimaryModel } from '@/lib/primary-model';
 import { useCandidateTrackRecords } from '@/hooks/useCandidateTrackRecords';
 import BenchmarkCard, { BenchmarkSelection, BenchmarkStats } from './BenchmarkCard';
+import PlanningPanel, { ScenarioId } from './PlanningPanel';
+import { PlanningData, TurnoutScenario, WardPower } from '@/lib/planning-data';
+
+export type PrimaryTab = 'PLANNING' | 'NIGHT';
+
+export interface PlanningState {
+    data: PlanningData | null;
+    isLoading: boolean;
+    isError: boolean;
+    power: WardPower | null;
+    scenarios: TurnoutScenario[];
+    scenarioId: ScenarioId;
+    onScenarioChange: (id: ScenarioId) => void;
+    numCandidates: number;
+    onNumCandidatesChange: (n: number) => void;
+}
 
 interface PrimaryFocusPanelProps {
+    primaryTab: PrimaryTab;
+    onPrimaryTabChange: (tab: PrimaryTab) => void;
+    planning: PlanningState;
     districtFilter: DistrictFilter | null;
     onQuickSelectDistrict: (num: string) => void;
     matchingRaces: Race[];
@@ -40,6 +59,7 @@ function getPartyColor(party: string | undefined): { bg: string; text: string; d
 }
 
 export default function PrimaryFocusPanel({
+    primaryTab, onPrimaryTabChange, planning,
     districtFilter, onQuickSelectDistrict,
     matchingRaces, selectedRaceId, onSelectRace,
     raceResult, precinctResults, isLoading,
@@ -90,26 +110,82 @@ export default function PrimaryFocusPanel({
         );
     }
 
+    const tabBar = (
+        <div className="flex border-b border-[#e0e0e0] shrink-0">
+            {([
+                { id: 'PLANNING' as const, label: 'Planning', icon: ClipboardList },
+                { id: 'NIGHT' as const, label: 'Election Night', icon: Radio },
+            ]).map(t => (
+                <button
+                    key={t.id}
+                    onClick={() => onPrimaryTabChange(t.id)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.06em] border-b-[3px] transition-colors ${
+                        primaryTab === t.id
+                            ? 'border-[#222] text-[#222]'
+                            : 'border-transparent text-[#999] hover:text-[#222]'
+                    }`}
+                >
+                    <t.icon className="w-3.5 h-3.5" /> {t.label}
+                </button>
+            ))}
+        </div>
+    );
+
+    if (primaryTab === 'PLANNING') {
+        // Only feed the readiness join returns from the district race itself —
+        // pre-election the selected race is an unrelated contest whose precinct
+        // rows must not read as primary returns.
+        const districtRaceSelected = matchingRaces.some(r => r.id === selectedRaceId);
+        return (
+            <div className="h-full bg-white flex flex-col overflow-hidden">
+                {tabBar}
+                <div className="flex-1 overflow-y-auto">
+                    <PlanningPanel
+                        data={planning.data}
+                        isLoading={planning.isLoading}
+                        isError={planning.isError}
+                        power={planning.power}
+                        scenarios={planning.scenarios}
+                        scenarioId={planning.scenarioId}
+                        onScenarioChange={planning.onScenarioChange}
+                        numCandidates={planning.numCandidates}
+                        onNumCandidatesChange={planning.onNumCandidatesChange}
+                        districtNum={districtFilter!.num}
+                        precinctResults={districtRaceSelected ? precinctResults : undefined}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     if (isLoading) {
         return (
-            <div className="h-full bg-white p-5 space-y-4 animate-pulse">
-                <div className="h-36 bg-[#f0f0f0]" />
-                <div className="h-48 bg-[#f0f0f0]" />
-                <div className="h-40 bg-[#f0f0f0]" />
+            <div className="h-full bg-white flex flex-col overflow-hidden">
+                {tabBar}
+                <div className="p-5 space-y-4 animate-pulse">
+                    <div className="h-36 bg-[#f0f0f0]" />
+                    <div className="h-48 bg-[#f0f0f0]" />
+                    <div className="h-40 bg-[#f0f0f0]" />
+                </div>
             </div>
         );
     }
 
     if (matchingRaces.length === 0 || !raceResult) {
         return (
-            <div className="h-full bg-white flex items-center justify-center text-[#666] text-sm text-center p-6">
-                No State Assembly race found for {districtLabel(districtFilter!)} in this election yet.
+            <div className="h-full bg-white flex flex-col overflow-hidden">
+                {tabBar}
+                <div className="flex-1 flex items-center justify-center text-[#666] text-sm text-center p-6">
+                    No State Assembly race found for {districtLabel(districtFilter!)} in this election yet.
+                    Until the county publishes it, the Planning tab has the pre-election picture.
+                </div>
             </div>
         );
     }
 
     return (
         <div className="h-full bg-white flex flex-col overflow-hidden">
+            {tabBar}
             <div className="flex-1 overflow-y-auto">
 
                 {/* ── Header ── */}

@@ -42,6 +42,16 @@ interface MapProps {
     // TRENDS mode: candidate share per ward in two races (gained/lost ground)
     shiftByWard?: Record<string, { from: number; to: number }>;
     shiftLabels?: { from: string; to: string } | null;
+    // PLANNING mode: expected primary vote per ward, keyed "City of Madison|46"
+    planningByWard?: Record<string, PlanningWardDatum>;
+}
+
+export interface PlanningWardDatum {
+    share: number;        // fraction of the district's expected vote
+    expected: number;     // expected votes at the selected turnout scenario
+    rank: number;
+    totalWards: number;
+    baselineYear: number;
 }
 
 export interface HoveredWard {
@@ -59,6 +69,7 @@ export interface HoveredWard {
     comparisonBallots?: number;
     shift?: { from: number; to: number };
     reported?: boolean;
+    planning?: PlanningWardDatum;
 }
 
 function MapController({ geoJsonData, selectedWard, onReset, fitKey, coveredKeys }: {
@@ -232,6 +243,7 @@ export default function Map({
     fitKey,
     shiftByWard,
     shiftLabels,
+    planningByWard,
 }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
@@ -261,6 +273,12 @@ export default function Map({
         return vals.length > 0 ? Math.max(...vals, 1) : 1;
     }, [dropoffData]);
 
+    const maxPlanningShare = useMemo(() => {
+        if (!planningByWard) return 1;
+        const vals = Object.values(planningByWard).map(p => p.share);
+        return vals.length > 0 ? Math.max(...vals, 0.0001) : 1;
+    }, [planningByWard]);
+
     const resultsMap = useMemo(() => {
         const map: Record<string, PrecinctResult[]> = {};
         if (precinctResults) {
@@ -280,8 +298,9 @@ export default function Map({
         const s = new Set<string>();
         precinctResults?.forEach(r => s.add(`${r.precinctName}|${parseInt(r.wardNumber)}`));
         if (s.size === 0 && shiftByWard) Object.keys(shiftByWard).forEach(k => s.add(k));
+        if (s.size === 0 && planningByWard) Object.keys(planningByWard).forEach(k => s.add(k));
         return s;
-    }, [precinctResults, shiftByWard]);
+    }, [precinctResults, shiftByWard, planningByWard]);
 
     useEffect(() => {
         if (raceResult?.candidates) {
@@ -308,7 +327,18 @@ export default function Map({
             fillOpacity: 0.3
         };
 
-        if (overlayMode === 'SHIFT') {
+        if (overlayMode === 'PLANNING') {
+            // Pre-election ward power: expected share of the district's primary vote
+            const p = planningByWard?.[`${municipality}|${wardNum}`];
+            if (!p) {
+                baseStyle = { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
+            } else {
+                const intensity = Math.min(p.share / maxPlanningShare, 1);
+                const l = Math.round(92 - intensity * 50);
+                const s = Math.round(15 + intensity * 80);
+                baseStyle = { fillColor: `hsl(200, ${s}%, ${l}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.85 };
+            }
+        } else if (overlayMode === 'SHIFT') {
             // Gained/lost ground: candidate share change between two races
             const tk = `${municipality}|${wardNum}`;
             const s = shiftByWard?.[tk];
@@ -486,11 +516,21 @@ export default function Map({
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards, turnoutByWard, comparisonTurnoutByWard, shiftByWard]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards, turnoutByWard, comparisonTurnoutByWard, shiftByWard, planningByWard, maxPlanningShare]);
 
     /** Build a HoveredWard from feature data + pointer coordinates */
     const buildWardData = useCallback((feature: { municipality: string; wardNum: string }, x: number, y: number): HoveredWard | null => {
         const { municipality, wardNum } = feature;
+
+        if (overlayMode === 'PLANNING') {
+            const p = planningByWard?.[`${municipality}|${wardNum}`];
+            if (!p) return null;
+            return {
+                municipality, wardNum,
+                results: [], total: 0, x, y, analysis: null, fillColor: '',
+                planning: p,
+            };
+        }
 
         if (overlayMode === 'SHIFT') {
             const tk = `${municipality}|${wardNum}`;
@@ -550,7 +590,7 @@ export default function Map({
             comparisonBallots: comparisonTurnoutByWard?.[tk],
             reported: relevantResults.some(r => r.reported),
         };
-    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard, shiftByWard]);
+    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard, shiftByWard, planningByWard]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -573,9 +613,10 @@ export default function Map({
             (overlayMode === 'PRIMARY_DROPOFF' && dropoffData && normalizedKey in dropoffData)
         );
         const hasShiftData = overlayMode === 'SHIFT' && !!shiftByWard && `${municipality}|${wardNum}` in shiftByWard;
+        const hasPlanningData = overlayMode === 'PLANNING' && !!planningByWard && `${municipality}|${wardNum}` in planningByWard;
 
         const isProjectionClickable = overlayMode === 'PROJECTION' && !!onWardClick;
-        const isInteractive = hasData || hasSimData || hasShiftData;
+        const isInteractive = hasData || hasSimData || hasShiftData || hasPlanningData;
 
         layer.on({
             mouseover: (e: any) => {
@@ -637,7 +678,7 @@ export default function Map({
         if (isProjectionClickable || isInteractive) {
             (layer as any).options = { ...((layer as any).options || {}), className: 'cursor-pointer' };
         }
-    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData, shiftByWard]);
+    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData, shiftByWard, planningByWard]);
 
     // Which ward to display in the tooltip: pinned takes priority
     const displayWard = pinnedWard ?? hoveredWard;
@@ -656,7 +697,7 @@ export default function Map({
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}-${shiftByWard ? Object.keys(shiftByWard).length : 0}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}-${shiftByWard ? Object.keys(shiftByWard).length : 0}-${planningByWard ? Object.values(planningByWard).reduce((s, p) => s + p.expected, 0) : 0}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}
@@ -687,6 +728,7 @@ export default function Map({
                                     {overlayMode === 'CANVASS_PRIORITY' ? 'Canvass Priority' :
                                      overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
                                      overlayMode === 'SHIFT' ? 'Gained / Lost Ground' :
+                                     overlayMode === 'PLANNING' ? 'Expected Primary Vote' :
                                      (raceResult?.raceName || 'Election Results')}
                                 </div>
                                 <div style={{ fontWeight: 700, fontSize: '15px', color: '#222222' }}>
@@ -739,6 +781,32 @@ export default function Map({
                                         <span style={{ fontSize: '14px', fontWeight: 700, color: deltaColor }}>
                                             {delta >= 0 ? '▲ +' : '▼ '}{delta.toFixed(1)} pts
                                         </span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* PLANNING body: expected vote, share, rank */}
+                        {displayWard.planning !== undefined && (() => {
+                            const p = displayWard.planning!;
+                            return (
+                                <div style={{ padding: '10px 14px 12px' }}>
+                                    <div style={{ fontSize: '11px', color: '#666666', marginBottom: '4px' }}>
+                                        Expected votes in this ward
+                                    </div>
+                                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#00729c' }}>
+                                        ~{p.expected.toLocaleString()}
+                                    </div>
+                                    <div style={{ borderTop: '1px solid #e4e4e4', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: '11px', color: '#666666' }}>Share of district vote</span>
+                                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#222222' }}>{(p.share * 100).toFixed(1)}%</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                        <span style={{ fontSize: '11px', color: '#666666' }}>Vote-power rank</span>
+                                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#222222' }}>#{p.rank} of {p.totalWards}</span>
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: '#999999', marginTop: '8px' }}>
+                                        Ward share from the {p.baselineYear} primary, scaled to the selected turnout scenario
                                     </div>
                                 </div>
                             );
