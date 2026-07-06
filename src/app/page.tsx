@@ -237,6 +237,23 @@ export default function Home() {
   const turnoutByWard = useMemo(() => buildWardMap(electionTurnout), [electionTurnout]);
   const comparisonTurnoutByWard = useMemo(() => buildWardMap(comparisonTurnout), [comparisonTurnout]);
 
+  // ── PRIMARY mode: ward-level historical allocation of outstanding votes ──
+  // Find the same-seat race in the comparison election (if one exists) so
+  // buildPrimaryModel can split each unreported ward's outstanding pool using
+  // that ward's own historical candidate shares instead of a uniform split.
+  const { races: comparisonRaces } = useRaces(
+    viewMode === 'PRIMARY' ? comparisonElectionId : null
+  );
+  const comparisonMatchingRaceId = useMemo(() => {
+    if (viewMode !== 'PRIMARY' || !comparisonRaces || !districtFilter || districtFilter.kind !== 'asm') return null;
+    const num = parseInt(districtFilter.num);
+    return comparisonRaces.find(r => r.type === 'Assembly' && extractDistrictNumber(r.name) === num)?.id ?? null;
+  }, [viewMode, comparisonRaces, districtFilter]);
+  const { precinctResults: comparisonPrecinctResults } = usePrecinctResults(
+    viewMode === 'PRIMARY' && comparisonMatchingRaceId ? comparisonElectionId : null,
+    viewMode === 'PRIMARY' ? comparisonMatchingRaceId : null
+  );
+
   // ── TRENDS mode: candidate gained/lost ground between two races ──────────
   const [shiftPair, setShiftPair] = useState<ShiftPair | null>(null);
   useEffect(() => {
@@ -397,6 +414,7 @@ export default function Home() {
             districtWardKeys={districtWardKeys}
             turnoutByWard={turnoutByWard}
             comparisonTurnoutByWard={comparisonTurnoutByWard}
+            comparisonPrecinctResults={comparisonPrecinctResults}
             comparisonElection={comparisonElection}
             elections={elections}
             selectedElectionId={selectedElectionId}

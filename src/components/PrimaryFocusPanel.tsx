@@ -20,6 +20,7 @@ interface PrimaryFocusPanelProps {
     districtWardKeys: Set<string> | null;
     turnoutByWard: Record<string, number> | undefined;
     comparisonTurnoutByWard: Record<string, number> | undefined;
+    comparisonPrecinctResults?: PrecinctResult[];
     comparisonElection?: Election;
     elections?: Election[];
     selectedElectionId?: string | null;
@@ -43,7 +44,7 @@ export default function PrimaryFocusPanel({
     districtFilter, onQuickSelectDistrict,
     matchingRaces, selectedRaceId, onSelectRace,
     raceResult, precinctResults, isLoading,
-    districtWardKeys, turnoutByWard, comparisonTurnoutByWard,
+    districtWardKeys, turnoutByWard, comparisonTurnoutByWard, comparisonPrecinctResults,
     comparisonElection, elections, selectedElectionId, onSelectComparison,
     isLive, benchmark, onBenchmarkChange, benchmarkStats,
 }: PrimaryFocusPanelProps) {
@@ -56,8 +57,8 @@ export default function PrimaryFocusPanel({
     }, [raceResult]);
 
     const model = useMemo(
-        () => buildPrimaryModel(precinctResults, districtWardKeys, turnoutByWard, comparisonTurnoutByWard, candidateParties),
-        [precinctResults, districtWardKeys, turnoutByWard, comparisonTurnoutByWard, candidateParties]
+        () => buildPrimaryModel(precinctResults, districtWardKeys, turnoutByWard, comparisonTurnoutByWard, candidateParties, comparisonPrecinctResults),
+        [precinctResults, districtWardKeys, turnoutByWard, comparisonTurnoutByWard, candidateParties, comparisonPrecinctResults]
     );
 
     const candidateNames = useMemo(
@@ -148,7 +149,7 @@ export default function PrimaryFocusPanel({
                             {model.candidates.map(c => {
                                 const color = getPartyColor(c.party);
                                 const delta = c.projectedShare - c.share;
-                                const clinched = c.progressToWin >= 1;
+                                const clinched = c.mathClinched;
                                 return (
                                     <div key={c.candidateName} className="space-y-1.5">
                                         <div className="flex justify-between items-baseline">
@@ -190,8 +191,10 @@ export default function PrimaryFocusPanel({
                                             </span>
                                             <span className={clinched ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
                                                 {clinched
-                                                    ? `+${(c.votes - c.winNumber.winNumber).toLocaleString()} over`
-                                                    : `${Math.max(0, c.winNumber.winNumber - c.votes).toLocaleString()} to go`}
+                                                    ? `unreachable — leads by ${c.leadOverRunnerUp.toLocaleString()} vs ${model.outstandingRaceVotes.toLocaleString()} left`
+                                                    : c.leadOverRunnerUp >= 0
+                                                        ? `${(model.outstandingRaceVotes - c.leadOverRunnerUp).toLocaleString()} outstanding could still flip it`
+                                                        : `${Math.abs(c.leadOverRunnerUp).toLocaleString()} behind leader`}
                                             </span>
                                         </div>
                                         <div className="h-1 bg-slate-700/30 rounded-full overflow-hidden">
@@ -249,6 +252,14 @@ export default function PrimaryFocusPanel({
                                 <div className="text-slate-300 font-semibold">{model.projectedTotalVotes.toLocaleString()}</div>
                             </div>
                         </div>
+                        {(model.wardsWithHistoricalSplit > 0 || model.wardsWithUniformFallback > 0) && (
+                            <div className="mt-3 pt-3 border-t border-slate-700/50 text-[11px] text-slate-500">
+                                <span className="text-slate-300 font-semibold">{model.wardsWithHistoricalSplit}</span> outstanding ward{model.wardsWithHistoricalSplit === 1 ? '' : 's'} allocated by that ward&apos;s own historical candidate split
+                                {model.wardsWithUniformFallback > 0 && (
+                                    <> · <span className="text-slate-300 font-semibold">{model.wardsWithUniformFallback}</span> fell back to the county-wide share (no matching candidates in the comparison race)</>
+                                )}
+                            </div>
+                        )}
                         {isLive && onSelectComparison && (
                             <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between gap-2">
                                 <label className="text-xs text-slate-500 shrink-0">Baseline for outstanding wards</label>
@@ -266,7 +277,11 @@ export default function PrimaryFocusPanel({
                         <p className="mt-3 text-[10px] text-slate-600 leading-relaxed">
                             Outstanding ballots estimated from {comparisonElection?.electionName ?? 'the comparison election'}&apos;s
                             turnout in wards not yet reported, scaled by the roll-off rate observed in reported wards.
-                            Split across candidates assuming their current share holds — a directional read, not a poll-based forecast.
+                            Each unreported ward is split using that same ward&apos;s historical candidate shares where
+                            the comparison race has a matching candidate on the ballot; otherwise it falls back to the
+                            current county-wide share. A directional read, not a poll-based forecast. &quot;Clinched&quot; means
+                            the leader&apos;s raw-vote lead over the runner-up already exceeds this entire outstanding
+                            estimate — they can&apos;t be caught even if every remaining vote went to second place.
                         </p>
                     </div>
                 )}
