@@ -42,22 +42,22 @@ export default function MapOverlayControl({
             id: 'NONE',
             label: 'Standard View',
             icon: Layers,
-            description: 'Winner & Margin',
+            description: 'Winner and margin',
         },
         {
             id: 'TURNOUT',
-            label: 'Turnout Heatmap',
+            label: 'Turnout',
             icon: Users,
             description: turnoutReady
                 ? (comparisonLabel ? `Ballots cast vs. ${comparisonLabel}` : 'Ballots cast by ward')
-                : 'Loading turnout...',
+                : 'Loading turnout data',
             disabled: !turnoutReady,
         },
         {
             id: 'SWING',
             label: 'Margin Intensity',
             icon: TrendingUp,
-            description: 'Toss-up vs. Landslide',
+            description: 'Toss-up vs. landslide',
         },
         {
             id: 'SHIFT',
@@ -73,42 +73,37 @@ export default function MapOverlayControl({
     const activeOption = options.find(o => o.id === currentMode);
     const ActiveIcon = activeOption?.icon ?? Layers;
 
-    // Mobile collapsed state is a compact icon pill so it doesn't collide
+    // Mobile collapsed state is a compact button so it doesn't collide
     // with the race selector to its left; expanding opens the full panel.
     const compact = isMobile && isCollapsed;
 
     return (
         <div className={`absolute top-3 md:top-4 right-3 md:right-4 z-[1000] ${compact ? 'w-auto' : 'w-64'}`}>
-            {/* Collapsed pill (mobile) / expanded header (desktop) */}
-            <div
-                className={`bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-xl overflow-hidden ${isCollapsed ? 'rounded-xl' : 'rounded-xl'}`}
-            >
+            <div className="bg-white border border-[#cccccc] shadow-[0_1px_6px_rgba(0,0,0,0.15)] rounded-[3px] overflow-hidden">
                 {/* Toggle header — always visible */}
                 <button
                     onClick={() => setIsCollapsed(c => !c)}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-800/60 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-[#f7f7f7] transition-colors"
                     aria-label="Toggle map layers"
                 >
-                    <div className={`p-1 rounded-md ${currentMode !== 'NONE' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
-                        <ActiveIcon className="w-3.5 h-3.5" />
-                    </div>
+                    <ActiveIcon className={`w-4 h-4 shrink-0 ${currentMode !== 'NONE' ? 'text-[#008fd5]' : 'text-[#666]'}`} />
                     {!compact && (
                         <>
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex-1 text-left hidden md:block">
+                            <span className="text-[10px] font-bold text-[#222] uppercase tracking-[0.08em] flex-1 text-left hidden md:block">
                                 Map Layers
                             </span>
-                            <span className="text-xs font-medium text-slate-300 flex-1 text-left md:hidden">
+                            <span className="text-xs font-bold text-[#222] flex-1 text-left md:hidden">
                                 {activeOption?.label ?? 'Map Layers'}
                             </span>
                         </>
                     )}
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 text-[#999] transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
                 </button>
 
                 {/* Expandable body */}
                 {!isCollapsed && (
                     <>
-                        <div className="border-t border-slate-700/50 p-1">
+                        <div className="border-t border-[#e0e0e0]">
                             {options.map((option) => {
                                 const isActive = currentMode === option.id;
                                 const isDisabled = !!option.disabled;
@@ -117,31 +112,25 @@ export default function MapOverlayControl({
                                         key={option.id}
                                         onClick={() => !isDisabled && onChange(option.id)}
                                         disabled={isDisabled}
-                                        title={isDisabled ? 'Historical baseline is loading...' : undefined}
-                                        className={`w-full text-left p-2 rounded-lg transition-all flex items-start gap-3 group ${
+                                        title={isDisabled ? 'Historical baseline is loading' : undefined}
+                                        className={`w-full text-left px-3 py-2 transition-colors flex items-start gap-2.5 border-l-2 ${
                                             isDisabled
-                                                ? 'opacity-40 cursor-not-allowed'
+                                                ? 'opacity-40 cursor-not-allowed border-transparent'
                                                 : isActive
-                                                    ? 'bg-blue-600/20 border border-blue-500/30'
-                                                    : 'hover:bg-slate-800 border border-transparent cursor-pointer'
+                                                    ? 'border-[#008fd5] bg-[#f2f9fd]'
+                                                    : 'border-transparent hover:bg-[#f7f7f7] cursor-pointer'
                                         }`}
                                     >
-                                        <div className={`mt-1 p-1.5 rounded-md ${
-                                            isDisabled
-                                                ? 'bg-slate-800 text-slate-600'
-                                                : isActive
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-slate-800 text-slate-400 group-hover:text-slate-300'
-                                        }`}>
-                                            <option.icon className="w-4 h-4" />
-                                        </div>
+                                        <option.icon className={`w-4 h-4 mt-0.5 shrink-0 ${
+                                            isDisabled ? 'text-[#cccccc]' : isActive ? 'text-[#008fd5]' : 'text-[#999]'
+                                        }`} />
                                         <div className="min-w-0 flex-1">
-                                            <div className={`text-sm font-medium ${
-                                                isDisabled ? 'text-slate-600' : isActive ? 'text-blue-400' : 'text-slate-200'
+                                            <div className={`text-[13px] font-bold ${
+                                                isDisabled ? 'text-[#999]' : 'text-[#222]'
                                             }`}>
                                                 {option.label}
                                             </div>
-                                            <div className="text-xs text-slate-500 truncate" title={option.description}>
+                                            <div className="text-[11px] text-[#999] truncate" title={option.description}>
                                                 {option.description}
                                             </div>
                                         </div>
@@ -152,40 +141,40 @@ export default function MapOverlayControl({
 
                         {/* NONE mode: candidate color legend */}
                         {currentMode === 'NONE' && candidateLegend && candidateLegend.length > 0 && (
-                            <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
-                                <div className="text-xs font-medium text-slate-400 mb-1.5">Legend</div>
+                            <div className="p-3 border-t border-[#e0e0e0] bg-[#fafafa]">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#222] mb-1.5">Legend</div>
                                 <div className="space-y-1">
                                     {candidateLegend.map(c => (
                                         <div key={c.name} className="flex items-center gap-2">
-                                            <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ background: `hsl(${c.h}, ${c.s}%, ${c.l}%)` }} />
-                                            <span className="text-[10px] text-slate-400 truncate" title={c.name}>{c.name}</span>
+                                            <div className="w-3.5 h-3.5 shrink-0" style={{ background: `hsl(${c.h}, ${c.s}%, ${c.l}%)` }} />
+                                            <span className="text-[11px] text-[#666] truncate" title={c.name}>{c.name}</span>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="text-[9px] text-slate-600 mt-1.5">Lighter shade = closer race</div>
+                                <div className="text-[10px] text-[#999] mt-1.5">Lighter shade = closer race</div>
                             </div>
                         )}
 
                         {/* TURNOUT mode: gradient legend */}
                         {currentMode === 'TURNOUT' && (
-                            <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
-                                <div className="text-xs font-medium text-slate-400 mb-2">Legend</div>
+                            <div className="p-3 border-t border-[#e0e0e0] bg-[#fafafa]">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#222] mb-2">Legend</div>
                                 <div>
-                                    <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                                    <div className="flex items-center justify-between text-[10px] text-[#666] num mb-1">
                                         <span>−50%</span>
                                         <span>Even</span>
                                         <span>+50%</span>
                                     </div>
-                                    <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-white to-green-500">
-                                        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
+                                    <div className="relative h-2" style={{ background: 'linear-gradient(to right, #fc4f30, #ffffff, #6d904f)' }}>
+                                        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#999]" />
                                     </div>
-                                    <div className="flex justify-between mt-1 text-[9px] text-slate-600">
+                                    <div className="flex justify-between mt-1 text-[10px] text-[#999]">
                                         <span>Turnout down</span>
                                         <span>Turnout up</span>
                                     </div>
                                     {comparisonLabel && (
-                                        <div className="text-[9px] text-slate-500 mt-1.5 text-center">
-                                            Baseline: {comparisonLabel} · change it in the sidebar
+                                        <div className="text-[10px] text-[#999] mt-1.5">
+                                            Baseline: {comparisonLabel}. Change it in the sidebar.
                                         </div>
                                     )}
                                 </div>
@@ -194,17 +183,17 @@ export default function MapOverlayControl({
 
                         {/* SHIFT (benchmark) legend */}
                         {currentMode === 'SHIFT' && (
-                            <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
-                                <div className="text-xs font-medium text-slate-400 mb-2">Legend</div>
-                                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                            <div className="p-3 border-t border-[#e0e0e0] bg-[#fafafa]">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#222] mb-2">Legend</div>
+                                <div className="flex items-center justify-between text-[10px] text-[#666] num mb-1">
                                     <span>−15 pts</span>
                                     <span>Even</span>
                                     <span>+15 pts</span>
                                 </div>
-                                <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-white to-green-500">
-                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
+                                <div className="relative h-2" style={{ background: 'linear-gradient(to right, #fc4f30, #ffffff, #6d904f)' }}>
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#999]" />
                                 </div>
-                                <div className="flex justify-between mt-1 text-[9px] text-slate-600">
+                                <div className="flex justify-between mt-1 text-[10px] text-[#999]">
                                     <span>Running behind</span>
                                     <span>Running ahead</span>
                                 </div>
@@ -213,27 +202,27 @@ export default function MapOverlayControl({
 
                         {/* SWING mode */}
                         {currentMode === 'SWING' && (
-                            <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
-                                <div className="text-xs font-medium text-slate-400 mb-1.5">Legend</div>
+                            <div className="p-3 border-t border-[#e0e0e0] bg-[#fafafa]">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#222] mb-1.5">Legend</div>
                                 {candidateLegend && candidateLegend.length > 0 ? (
                                     <div className="space-y-1.5">
                                         {candidateLegend.map(c => (
                                             <div key={c.name} className="flex items-center gap-2">
                                                 <div
-                                                    className="w-16 h-2 rounded-full flex-shrink-0"
-                                                    style={{ background: `linear-gradient(to right, hsl(${c.h},15%,90%), hsl(${c.h},${c.s}%,${c.l}%))` }}
+                                                    className="w-16 h-2 shrink-0"
+                                                    style={{ background: `linear-gradient(to right, hsl(${c.h},15%,92%), hsl(${c.h},${c.s}%,${c.l}%))` }}
                                                 />
-                                                <span className="text-[9px] text-slate-400 truncate" title={c.name}>{c.name}</span>
+                                                <span className="text-[11px] text-[#666] truncate" title={c.name}>{c.name}</span>
                                             </div>
                                         ))}
-                                        <div className="flex justify-between text-[8px] text-slate-600 mt-0.5">
+                                        <div className="flex justify-between text-[10px] text-[#999] mt-0.5">
                                             <span>Toss-up</span><span>Landslide</span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-between text-[10px] text-slate-500">
+                                    <div className="flex items-center justify-between text-[10px] text-[#666]">
                                         <span>Toss-up</span>
-                                        <div className="h-2 flex-1 mx-2 rounded-full bg-gradient-to-r from-slate-200 to-blue-600" />
+                                        <div className="h-2 flex-1 mx-2" style={{ background: 'linear-gradient(to right, #e8e8e8, #008fd5)' }} />
                                         <span>Landslide</span>
                                     </div>
                                 )}

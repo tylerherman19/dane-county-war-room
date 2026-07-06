@@ -152,22 +152,21 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                             bottom: '12px',
                             left: '12px',
                             zIndex: 9997,
-                            background: debugOpen ? '#1e3a5f' : '#0f172a',
-                            border: `1px solid ${debugOpen ? '#3b82f6' : '#334155'}`,
-                            borderRadius: '6px',
+                            background: '#ffffff',
+                            border: `1px solid ${debugOpen ? '#008fd5' : '#cccccc'}`,
+                            borderRadius: '3px',
                             padding: '5px 10px',
-                            color: debugOpen ? '#60a5fa' : '#64748b',
+                            color: debugOpen ? '#008fd5' : '#666666',
                             fontSize: '11px',
-                            fontFamily: 'system-ui, sans-serif',
+                            fontWeight: 700,
                             letterSpacing: '0.06em',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '5px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                            boxShadow: '0 1px 6px rgba(0,0,0,0.15)',
                         }}
                     >
-                        <span style={{ fontSize: '12px' }}>⚙</span>
                         DEBUG
                     </button>
                     {debugOpen && (

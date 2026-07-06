@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
-import { Moon, Sun, AlertTriangle, BarChart2, X } from 'lucide-react';
+import { AlertTriangle, BarChart2, X } from 'lucide-react';
 import { Election } from '@/lib/api';
 import ElectionSelector from './ElectionSelector';
 
@@ -28,13 +28,8 @@ export default function Layout({
     onToggleViewMode,
     hasError,
 }: LayoutProps) {
-    const [isDark, setIsDark] = useState(true);
     const [relativeTime, setRelativeTime] = useState<string | null>(null);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', isDark);
-    }, [isDark]);
 
     useEffect(() => {
         if (!lastUpdated) { setRelativeTime(null); return; }
@@ -60,79 +55,86 @@ export default function Layout({
     // Close mobile sidebar when switching modes
     useEffect(() => { setMobileSidebarOpen(false); }, [viewMode]);
 
-    const modeConfig = {
-        LIVE: { label: 'Live', short: 'Live', active: 'bg-red-600 text-white shadow-lg' },
-        ARCHIVE: { label: 'Archive', short: 'Arc', active: 'bg-blue-600 text-white shadow-lg' },
-        TRENDS: { label: 'Trends', short: 'Trnd', active: 'bg-emerald-600 text-white shadow-lg' },
-        SIMULATE: { label: 'Simulate', short: 'Sim', active: 'bg-violet-600 text-white shadow-lg' },
-        PRIMARY: { label: 'Primary Focus', short: 'AD76', active: 'bg-amber-600 text-white shadow-lg' },
-    };
+    const modes: Array<{ id: LayoutProps['viewMode']; label: string; short: string }> = [
+        { id: 'LIVE', label: 'Live', short: 'Live' },
+        { id: 'ARCHIVE', label: 'Archive', short: 'Archive' },
+        { id: 'TRENDS', label: 'Trends', short: 'Trends' },
+        { id: 'SIMULATE', label: 'Simulate', short: 'Simulate' },
+        { id: 'PRIMARY', label: 'AD76 Primary', short: 'AD76' },
+    ];
 
     return (
-        <div className="flex flex-col h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
+        <div className="flex flex-col h-screen bg-white text-[#222] overflow-hidden">
             {/* Header */}
-            <header className="h-14 md:h-16 bg-slate-900 border-b border-slate-800 flex items-center px-3 md:px-6 shrink-0 z-[2000] relative shadow-lg gap-3">
-
-                {/* Left: live indicator + title */}
-                <div className="flex items-center gap-2 min-w-0 flex-1 md:flex-none">
-                    {viewMode === 'LIVE' ? (
-                        <div className="relative flex h-2.5 w-2.5 shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
-                        </div>
-                    ) : (
-                        <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${viewMode === 'SIMULATE' ? 'bg-violet-500' : 'bg-slate-600'}`} />
-                    )}
-                    <h1 className="font-bold text-white tracking-tight text-base md:text-xl truncate">
-                        <span className="hidden sm:inline">Dane County </span>
-                        <span className="sm:hidden">DC </span>
-                        <span className="text-slate-400 font-normal">War Room</span>
+            <header className="bg-white border-b border-[#e0e0e0] shrink-0 z-[2000] relative">
+                {/* Top row: wordmark + live tag + timestamp */}
+                <div className="h-11 md:h-14 flex items-center px-3 md:px-6 gap-3">
+                    <h1 className="min-w-0 truncate text-base md:text-xl tracking-tight">
+                        <span className="font-bold">Dane County</span>{' '}
+                        <span className="font-normal text-[#666]">War Room</span>
                     </h1>
+                    {viewMode === 'LIVE' && (
+                        <span className="shrink-0 bg-[#fc4f30] text-white text-[10px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 leading-none rounded-[2px]">
+                            Live
+                        </span>
+                    )}
+
+                    {/* Desktop: mode tabs centered */}
+                    <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 h-full items-stretch">
+                        {modes.map(m => (
+                            <button
+                                key={m.id}
+                                onClick={() => onToggleViewMode(m.id)}
+                                className={`px-4 text-[13px] font-bold uppercase tracking-[0.05em] border-b-[3px] transition-colors ${
+                                    viewMode === m.id
+                                        ? 'border-[#222] text-[#222]'
+                                        : 'border-transparent text-[#999] hover:text-[#222]'
+                                }`}
+                            >
+                                {m.label}
+                            </button>
+                        ))}
+                    </nav>
+
+                    <div className="flex items-center gap-4 ml-auto">
+                        {viewMode === 'ARCHIVE' && elections && onSelectElection && (
+                            <div className="hidden md:block">
+                                <ElectionSelector
+                                    elections={elections}
+                                    selectedElectionId={selectedElectionId || null}
+                                    onSelectElection={onSelectElection}
+                                />
+                            </div>
+                        )}
+                        {relativeTime && (
+                            <div className="hidden lg:block text-xs text-[#999] whitespace-nowrap">
+                                Updated <span className="text-[#666] num">{relativeTime}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Center: mode toggle (absolute-centered on desktop, inline on mobile) */}
-                <div className="md:absolute md:left-1/2 md:-translate-x-1/2 flex bg-slate-950 p-1 rounded-lg border border-slate-800 shrink-0">
-                    {(Object.keys(modeConfig) as Array<keyof typeof modeConfig>).map(mode => (
+                {/* Mobile: mode tabs on their own row, full words, scrollable */}
+                <nav className="md:hidden flex items-stretch border-t border-[#e0e0e0] overflow-x-auto">
+                    {modes.map(m => (
                         <button
-                            key={mode}
-                            onClick={() => onToggleViewMode(mode)}
-                            className={`px-2.5 md:px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === mode ? modeConfig[mode].active : 'text-slate-500 hover:text-slate-300'}`}
+                            key={m.id}
+                            onClick={() => onToggleViewMode(m.id)}
+                            className={`flex-1 whitespace-nowrap px-2 py-2 text-[12px] font-bold uppercase tracking-[0.04em] border-b-[3px] transition-colors ${
+                                viewMode === m.id
+                                    ? 'border-[#222] text-[#222]'
+                                    : 'border-transparent text-[#999]'
+                            }`}
                         >
-                            <span className="hidden md:inline">{modeConfig[mode].label}</span>
-                            <span className="md:hidden">{modeConfig[mode].short}</span>
+                            {m.short}
                         </button>
                     ))}
-                </div>
-
-                {/* Right: election selector (desktop only), timestamp, dark mode */}
-                <div className="flex items-center gap-2 md:gap-4 ml-auto">
-                    {viewMode === 'ARCHIVE' && elections && onSelectElection && (
-                        <div className="hidden md:block">
-                            <ElectionSelector
-                                elections={elections}
-                                selectedElectionId={selectedElectionId || null}
-                                onSelectElection={onSelectElection}
-                            />
-                        </div>
-                    )}
-                    {relativeTime && (
-                        <div className="hidden lg:block text-xs text-slate-500 font-mono whitespace-nowrap">
-                            Updated <span className="text-slate-400">{relativeTime}</span>
-                        </div>
-                    )}
-                    <button
-                        onClick={() => setIsDark(!isDark)}
-                        className="p-1.5 md:p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors shrink-0"
-                        aria-label="Toggle dark mode"
-                    >
-                        {isDark ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
-                    </button>
-                </div>
+                </nav>
             </header>
 
             {/* Archive election selector — mobile second row */}
             {viewMode === 'ARCHIVE' && elections && onSelectElection && (
-                <div className="md:hidden bg-slate-900 border-b border-slate-800 px-3 py-2 relative z-[1500]">
+                <div className="md:hidden bg-white border-b border-[#e0e0e0] px-3 py-2 relative z-[1500]">
                     <ElectionSelector
                         elections={elections}
                         selectedElectionId={selectedElectionId || null}
@@ -143,28 +145,28 @@ export default function Layout({
 
             {/* Error Banner */}
             {hasError && (
-                <div className="bg-amber-900/80 border-b border-amber-700 px-3 md:px-6 py-2 flex items-center gap-2 text-amber-200 text-xs md:text-sm z-[1999]">
-                    <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-400 shrink-0" />
-                    <span>Unable to reach the election results API. Data may be stale. Retrying…</span>
+                <div className="bg-[#fff8e6] border-b border-[#e5ae38] px-3 md:px-6 py-2 flex items-center gap-2 text-[#7a5c00] text-xs md:text-sm z-[1999]">
+                    <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                    <span>Unable to reach the election results API. Data may be stale. Retrying.</span>
                 </div>
             )}
 
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden relative">
                 {/* Map area */}
-                <main className="flex-1 relative bg-slate-950 min-w-0">
+                <main className="flex-1 relative bg-[#f0f0f0] min-w-0">
                     {children}
                 </main>
 
                 {/* Desktop sidebar */}
-                <aside className="hidden md:block w-96 shrink-0 z-40 shadow-2xl relative overflow-hidden">
+                <aside className="hidden md:block w-96 shrink-0 z-40 relative overflow-hidden border-l border-[#e0e0e0]">
                     {sidebar}
                 </aside>
 
                 {/* Mobile sidebar backdrop */}
                 {mobileSidebarOpen && (
                     <div
-                        className="md:hidden fixed inset-0 z-[3000] bg-black/60 backdrop-blur-sm"
+                        className="md:hidden fixed inset-0 z-[3000] bg-black/40"
                         onClick={() => setMobileSidebarOpen(false)}
                         aria-hidden="true"
                     />
@@ -176,21 +178,22 @@ export default function Layout({
                         mobileSidebarOpen ? 'translate-y-0' : 'translate-y-full'
                     }`}
                     style={{
-                        borderRadius: '16px 16px 0 0',
+                        borderRadius: '8px 8px 0 0',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
-                        background: '#0f172a',
-                        boxShadow: '0 -8px 40px rgba(0,0,0,0.6)',
+                        background: '#ffffff',
+                        borderTop: '1px solid #cccccc',
+                        boxShadow: '0 -2px 16px rgba(0,0,0,0.18)',
                     }}
                     aria-label="Results panel"
                 >
                     {/* Sheet handle + close */}
-                    <div className="flex items-center justify-between px-4 pt-3 pb-2 bg-slate-900 border-b border-slate-800 shrink-0">
-                        <div className="w-12 h-1 rounded-full bg-slate-600" />
+                    <div className="flex items-center justify-between px-4 pt-3 pb-2 bg-white border-b border-[#e0e0e0] shrink-0">
+                        <div className="w-10 h-1 rounded-full bg-[#cccccc]" />
                         <button
                             onClick={() => setMobileSidebarOpen(false)}
-                            className="p-1.5 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors ml-4"
+                            className="p-1.5 text-[#666] hover:text-[#222] transition-colors ml-4"
                             aria-label="Close results panel"
                         >
                             <X className="w-4 h-4" />
@@ -202,14 +205,13 @@ export default function Layout({
                 </aside>
             </div>
 
-            {/* Mobile FAB — open results panel (the sheet has its own close) */}
+            {/* Mobile: open results panel (the sheet has its own close) */}
             {!mobileSidebarOpen && (
                 <button
-                    className="md:hidden fixed right-4 z-[2999] flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold text-white transition-all active:scale-95"
+                    className="md:hidden fixed left-1/2 -translate-x-1/2 z-[2999] flex items-center gap-2 px-5 py-2.5 rounded-[3px] text-sm font-bold text-white bg-[#222] transition-transform active:scale-95"
                     style={{
-                        bottom: 'calc(1.25rem + env(safe-area-inset-bottom))',
-                        background: '#2563eb',
-                        boxShadow: '0 4px 24px rgba(37,99,235,0.55)',
+                        bottom: 'calc(1rem + env(safe-area-inset-bottom))',
+                        boxShadow: '0 1px 6px rgba(0,0,0,0.3)',
                     }}
                     onClick={() => setMobileSidebarOpen(true)}
                     aria-label="Show results"

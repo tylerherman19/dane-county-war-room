@@ -29,17 +29,17 @@ export default function ElectionSelector({ elections, selectedElectionId, onSele
 
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative z-50 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-700 transition-colors"
+                className="relative z-50 flex items-center gap-2 bg-white hover:bg-[#f7f7f7] text-[#222] px-3 py-2 rounded-[3px] border border-[#cccccc] transition-colors"
             >
-                <Calendar className="w-4 h-4 text-slate-400" />
+                <Calendar className="w-4 h-4 text-[#999]" />
                 <span className="text-sm font-medium truncate max-w-[200px]">
                     {selectedElection?.electionName || 'Select Election'}
                 </span>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-[#999] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
-                <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 w-72 max-w-[calc(100vw-24px)] bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+                <div className="absolute top-full left-0 md:left-auto md:right-0 mt-1 w-72 max-w-[calc(100vw-24px)] bg-white border border-[#cccccc] rounded-[3px] shadow-[0_2px_12px_rgba(0,0,0,0.18)] overflow-hidden z-50">
                     <div className="max-h-[80vh] overflow-y-auto">
                         {elections.map(election => (
                             <button
@@ -48,11 +48,11 @@ export default function ElectionSelector({ elections, selectedElectionId, onSele
                                     onSelectElection(election.electionId);
                                     setIsOpen(false);
                                 }}
-                                className={`w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-0 ${selectedElectionId === election.electionId ? 'bg-slate-800/50 text-blue-400' : 'text-slate-300'
+                                className={`w-full text-left px-4 py-3 hover:bg-[#f7f7f7] transition-colors border-b border-[#eeeeee] last:border-0 ${selectedElectionId === election.electionId ? 'text-[#008fd5] font-bold' : 'text-[#222]'
                                     }`}
                             >
-                                <div className="font-medium text-sm">{election.electionName}</div>
-                                <div className="text-xs text-slate-500">{election.electionDate}</div>
+                                <div className="text-sm">{election.electionName}</div>
+                                <div className="text-xs text-[#999] num">{election.electionDate}</div>
                             </button>
                         ))}
                     </div>

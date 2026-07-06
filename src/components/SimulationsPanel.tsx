@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical, Layers, Users, TrendingDown } from 'lucide-react';
+import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical, Layers, Users, TrendingDown, BarChart3 } from 'lucide-react';
 import {
     DistrictProjection,
     SimProjectionUpdate,
@@ -243,11 +243,11 @@ export default function SimulationsPanel({
 
     if (isLoading) {
         return (
-            <div className="h-full bg-slate-900 border-l border-slate-800 p-5 space-y-4 animate-pulse">
-                <div className="h-8 bg-slate-800 rounded-lg" />
-                <div className="h-32 bg-slate-800 rounded-xl" />
-                <div className="h-24 bg-slate-800 rounded-xl" />
-                <div className="h-24 bg-slate-800 rounded-xl" />
+            <div className="h-full bg-white p-5 space-y-4 animate-pulse">
+                <div className="h-8 bg-[#f0f0f0]" />
+                <div className="h-32 bg-[#f0f0f0]" />
+                <div className="h-24 bg-[#f0f0f0]" />
+                <div className="h-24 bg-[#f0f0f0]" />
             </div>
         );
     }
@@ -256,53 +256,53 @@ export default function SimulationsPanel({
     const hasAlderData = alderDistricts.length > 0;
 
     return (
-        <div className="h-full bg-slate-900 border-l border-slate-800 flex flex-col overflow-hidden">
+        <div className="h-full bg-white flex flex-col overflow-hidden">
 
             {/* ── WIN NUMBER STICKY HEADER ── */}
             {selectedDistrict && (
-                <div className="flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-3">
+                <div className="flex-shrink-0 border-b-2 border-[#222] bg-white px-4 pt-3 pb-3">
                     <div className="grid grid-cols-3 gap-2 mb-2">
                         {/* Win Number */}
                         <div className="text-center">
-                            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Win Number</div>
-                            <div className="text-xl font-black text-violet-400 tabular-nums">
+                            <div className="text-[9px] text-[#999] font-bold uppercase tracking-[0.08em] mb-0.5">Win Number</div>
+                            <div className="text-xl font-bold num text-[#008fd5]">
                                 {winResult.winNumber.toLocaleString()}
                             </div>
                         </div>
                         {/* Your Share / Projected */}
                         <div className="text-center">
-                            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">
+                            <div className="text-[9px] text-[#999] font-bold uppercase tracking-[0.08em] mb-0.5">
                                 {whatIfOpen && whatIfRace ? 'Your Share' : 'Projected Total'}
                             </div>
-                            <div className="text-xl font-black text-white tabular-nums">
+                            <div className="text-xl font-bold num text-[#222]">
                                 {yourShareTotal.toLocaleString()}
                             </div>
                         </div>
                         {/* Gap */}
                         <div className="text-center">
-                            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Gap</div>
-                            <div className={`text-xl font-black tabular-nums ${gap >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            <div className="text-[9px] text-[#999] font-bold uppercase tracking-[0.08em] mb-0.5">Gap</div>
+                            <div className={`text-xl font-bold num ${gap >= 0 ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>
                                 {gap >= 0 ? '+' : ''}{gap.toLocaleString()}
                             </div>
                         </div>
                     </div>
                     {/* Progress bar: your share toward win number */}
-                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-2">
+                    <div className="h-1.5 bg-[#e8e8e8] overflow-hidden mb-2">
                         <div
-                            className="h-full rounded-full transition-all duration-300"
+                            className="h-full transition-all duration-300"
                             style={{
                                 width: `${winResult.winNumber > 0 ? Math.min((yourShareTotal / winResult.winNumber) * 100, 100) : 0}%`,
-                                background: gap >= 0 ? '#4ade80' : '#7c3aed',
+                                background: gap >= 0 ? '#6d904f' : '#fc4f30',
                             }}
                         />
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-slate-600">
+                        <span className="text-[10px] text-[#666] num">
                             {gap >= 0 ? '▲ On track to win' : `▼ Need ${Math.abs(gap).toLocaleString()} more votes`}
                         </span>
                         <button
                             onClick={handleReset}
-                            className="flex items-center gap-1 text-[10px] text-slate-600 hover:text-slate-300 transition-colors"
+                            className="flex items-center gap-1 text-[10px] text-[#666] hover:text-[#222] transition-colors"
                             title="Reset all simulation inputs"
                         >
                             <RotateCcw className="w-2.5 h-2.5" />
@@ -317,21 +317,21 @@ export default function SimulationsPanel({
 
                 {/* ── Header ── */}
                 <div className="flex items-center gap-2 mb-1">
-                    <FlaskConical className="w-4 h-4 text-violet-400" />
-                    <h2 className="text-sm font-bold text-white">Pre-Election Simulation</h2>
+                    <FlaskConical className="w-4 h-4 text-[#008fd5]" />
+                    <h2 className="text-sm font-bold text-[#222]">Pre-Election Simulation</h2>
                 </div>
-                <p className="text-xs text-slate-500 -mt-2">
-                    Game-plan turnout and field strategy. No live results — pure projection.
+                <p className="text-xs text-[#999] -mt-2">
+                    Game-plan turnout and field strategy. No live results, pure projection.
                 </p>
 
                 {/* ── Race Selector ── */}
-                <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
-                    <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Race</div>
+                <div className="border border-[#e0e0e0] rounded-[3px] p-3 bg-white">
+                    <div className="kicker mb-2">Race</div>
                     <div className="flex flex-wrap gap-1">
                         {hasMayorData && (
                             <button
                                 onClick={() => setSelectedKey('Mayor')}
-                                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${selectedKey === 'Mayor' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                                className={`px-2.5 py-1 rounded-[3px] text-xs font-bold transition-colors ${selectedKey === 'Mayor' ? 'bg-[#222] text-white border border-[#222]' : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'}`}
                             >
                                 Mayor
                             </button>
@@ -340,23 +340,23 @@ export default function SimulationsPanel({
                             <button
                                 key={d.districtNum}
                                 onClick={() => setSelectedKey(`Alder-${d.districtNum}`)}
-                                className={`px-2 py-1 rounded-md text-xs font-semibold transition-all ${selectedKey === `Alder-${d.districtNum}` ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                                className={`px-2 py-1 rounded-[3px] text-xs font-bold transition-colors ${selectedKey === `Alder-${d.districtNum}` ? 'bg-[#222] text-white border border-[#222]' : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'}`}
                             >
                                 D{d.districtNum}
                             </button>
                         ))}
                         {!hasMayorData && !hasAlderData && (
-                            <div className="text-xs text-amber-400 py-1">
-                                No historical data. Run <code className="font-mono bg-slate-800 px-1 rounded">npm run build:historical</code>.
+                            <div className="text-xs text-[#a16207] py-1">
+                                No historical data. Run <code className="font-mono bg-[#f0f0f0] px-1 rounded-[2px]">npm run build:historical</code>.
                             </div>
                         )}
                     </div>
                     {selectedDistrict && (
-                        <div className="mt-2 text-xs text-slate-500">
+                        <div className="mt-2 text-xs text-[#999] num">
                             {selectedDistrict.label} ·{' '}
                             {hasPrimaryData
-                                ? <>primary avg <span className="text-slate-400">{selectedDistrict.primaryHistoricalAvg.toLocaleString()}</span> votes ({selectedDistrict.primaryElectionsCount} primary{selectedDistrict.primaryElectionsCount !== 1 ? 's' : ''})</>
-                                : <>avg <span className="text-slate-400">{selectedDistrict.historicalAvg.toLocaleString()}</span> votes ({selectedDistrict.electionsCount} election{selectedDistrict.electionsCount !== 1 ? 's' : ''} averaged)</>
+                                ? <>primary avg <span className="text-[#666]">{selectedDistrict.primaryHistoricalAvg.toLocaleString()}</span> votes ({selectedDistrict.primaryElectionsCount} primary{selectedDistrict.primaryElectionsCount !== 1 ? 's' : ''})</>
+                                : <>avg <span className="text-[#666]">{selectedDistrict.historicalAvg.toLocaleString()}</span> votes ({selectedDistrict.electionsCount} election{selectedDistrict.electionsCount !== 1 ? 's' : ''} averaged)</>
                             }
                         </div>
                     )}
@@ -365,8 +365,8 @@ export default function SimulationsPanel({
                 {selectedDistrict && (
                     <>
                         {/* ── Map Layer Selector ── */}
-                        <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <div className="border border-[#e0e0e0] rounded-[3px] p-3 bg-white">
+                            <div className="kicker mb-2 flex items-center gap-1.5">
                                 <Layers className="w-3 h-3" />
                                 Map Layer
                             </div>
@@ -376,19 +376,19 @@ export default function SimulationsPanel({
                                         id: 'PROJECTION' as OverlayMode,
                                         label: 'Turnout Projection',
                                         desc: 'Historical ward turnout heat map',
-                                        icon: '📊',
+                                        icon: BarChart3,
                                     },
                                     {
                                         id: 'CANVASS_PRIORITY' as OverlayMode,
                                         label: 'Canvass Priority',
                                         desc: 'Dormant voter pool by ward',
-                                        icon: '🚪',
+                                        icon: Users,
                                     },
                                     {
                                         id: 'PRIMARY_DROPOFF' as OverlayMode,
                                         label: 'Primary Dropoff',
-                                        desc: 'General → Primary turnout gap',
-                                        icon: '📉',
+                                        desc: 'General to primary turnout gap',
+                                        icon: TrendingDown,
                                     },
                                 ].map(opt => {
                                     const isActive = simulateOverlayMode === opt.id;
@@ -396,18 +396,18 @@ export default function SimulationsPanel({
                                         <button
                                             key={opt.id}
                                             onClick={() => onSimulateOverlayModeChange(opt.id)}
-                                            className={`w-full text-left px-2.5 py-2 rounded-lg transition-all flex items-center gap-2.5 ${
+                                            className={`w-full text-left px-2.5 py-2 transition-colors flex items-center gap-2.5 border-l-2 ${
                                                 isActive
-                                                    ? 'bg-violet-600/20 border border-violet-500/40 text-violet-300'
-                                                    : 'hover:bg-slate-700/50 border border-transparent text-slate-400'
+                                                    ? 'border-[#008fd5] bg-[#f2f9fd]'
+                                                    : 'border-transparent hover:bg-[#f7f7f7]'
                                             }`}
                                         >
-                                            <span className="text-base leading-none">{opt.icon}</span>
+                                            <opt.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#008fd5]' : 'text-[#999]'}`} />
                                             <div className="min-w-0">
-                                                <div className={`text-xs font-semibold ${isActive ? 'text-violet-300' : 'text-slate-300'}`}>
+                                                <div className="text-xs font-bold text-[#222]">
                                                     {opt.label}
                                                 </div>
-                                                <div className="text-[10px] text-slate-500 truncate">{opt.desc}</div>
+                                                <div className="text-[10px] text-[#999] truncate">{opt.desc}</div>
                                             </div>
                                         </button>
                                     );
@@ -417,30 +417,30 @@ export default function SimulationsPanel({
 
                         {/* ── Canvass Priority Sidebar List ── */}
                         {simulateOverlayMode === 'CANVASS_PRIORITY' && (
-                            <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
-                                <div className="px-3 py-2.5 border-b border-slate-700/40 flex items-center gap-1.5">
-                                    <Users className="w-3 h-3 text-indigo-400" />
-                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Canvass Wards</span>
+                            <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
+                                <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center gap-1.5">
+                                    <Users className="w-3 h-3 text-[#008fd5]" />
+                                    <span className="kicker text-[10px]">Top Canvass Wards</span>
                                 </div>
                                 {topCanvassWards.length === 0 ? (
-                                    <div className="p-3 text-xs text-slate-600 text-center">Loading dormant voter data…</div>
+                                    <div className="p-3 text-xs text-[#999] text-center">Loading dormant voter data</div>
                                 ) : (
-                                    <div className="divide-y divide-slate-800/60">
+                                    <div className="divide-y divide-[#eeeeee]">
                                         {topCanvassWards.map((ward, i) => (
                                             <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
-                                                <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                <span className="text-[10px] text-[#999] num w-4 text-right flex-shrink-0">{i + 1}</span>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
-                                                    <div className="text-[10px] text-slate-500">
+                                                    <div className="text-xs text-[#222] truncate">{ward.displayName}</div>
+                                                    <div className="text-[10px] text-[#999] num">
                                                         ~{ward.dormantPool.toLocaleString()} dormant voters
                                                     </div>
                                                 </div>
-                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[2px] border flex-shrink-0 ${
                                                     ward.priority === 'HIGH'
-                                                        ? 'bg-red-500/20 text-red-400'
+                                                        ? 'border-[#fc4f30] text-[#c73a1d]'
                                                         : ward.priority === 'MEDIUM'
-                                                        ? 'bg-amber-500/20 text-amber-400'
-                                                        : 'bg-slate-700 text-slate-400'
+                                                        ? 'border-[#e5ae38] text-[#a16207]'
+                                                        : 'border-[#cccccc] text-[#666]'
                                                 }`}>
                                                     {ward.priority}
                                                 </span>
@@ -453,34 +453,34 @@ export default function SimulationsPanel({
 
                         {/* ── Primary Dropoff Ranked List ── */}
                         {simulateOverlayMode === 'PRIMARY_DROPOFF' && (
-                            <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
-                                <div className="px-3 py-2.5 border-b border-slate-700/40 flex items-center gap-1.5">
-                                    <TrendingDown className="w-3 h-3 text-amber-400" />
-                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Top Dropoff Wards</span>
+                            <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
+                                <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center gap-1.5">
+                                    <TrendingDown className="w-3 h-3 text-[#a16207]" />
+                                    <span className="kicker text-[10px]">Top Dropoff Wards</span>
                                 </div>
-                                <div className="px-3 py-2 border-b border-slate-800/60 flex items-center gap-2 text-[10px] text-slate-600">
+                                <div className="px-3 py-2 border-b border-[#eeeeee] flex items-center gap-2 text-[10px] text-[#999]">
                                     <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 15%, 90%)' }} />
                                     Low
-                                    <div className="flex-1 h-px bg-gradient-to-r from-amber-900/40 to-amber-500 opacity-60" />
+                                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, hsl(28,15%,90%), hsl(28,95%,38%))' }} />
                                     High
                                     <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 95%, 38%)' }} />
                                 </div>
                                 {topDropoffWards.length === 0 ? (
-                                    <div className="p-3 text-xs text-slate-600 text-center">Loading dropoff data…</div>
+                                    <div className="p-3 text-xs text-[#999] text-center">Loading dropoff data</div>
                                 ) : (
-                                    <div className="divide-y divide-slate-800/60">
+                                    <div className="divide-y divide-[#eeeeee]">
                                         {topDropoffWards.map((ward, i) => (
                                             <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
-                                                <span className="text-[10px] text-slate-600 w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                <span className="text-[10px] text-[#999] num w-4 text-right flex-shrink-0">{i + 1}</span>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-slate-300 truncate">{ward.displayName}</div>
-                                                    <div className="text-[10px] text-slate-500">
+                                                    <div className="text-xs text-[#222] truncate">{ward.displayName}</div>
+                                                    <div className="text-[10px] text-[#999] num">
                                                         {ward.general.toLocaleString()} gen · {ward.primary.toLocaleString()} pri
                                                     </div>
                                                 </div>
                                                 <div className="text-right flex-shrink-0">
-                                                    <div className="text-xs font-bold text-amber-400">−{ward.dropoff.toLocaleString()}</div>
-                                                    <div className="text-[10px] text-slate-500">{ward.dropoffPct.toFixed(0)}% drop</div>
+                                                    <div className="text-xs font-bold num text-[#a16207]">−{ward.dropoff.toLocaleString()}</div>
+                                                    <div className="text-[10px] text-[#999] num">{ward.dropoffPct.toFixed(0)}% drop</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -490,13 +490,13 @@ export default function SimulationsPanel({
                         )}
 
                         {/* ── Turnout Slider ── */}
-                        <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40 space-y-3">
+                        <div className="border border-[#e0e0e0] rounded-[3px] p-4 bg-white space-y-3">
                             <div className="flex items-center justify-between">
-                                <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Turnout</span>
+                                <span className="kicker">Turnout</span>
                                 <div className="flex items-center gap-1">
-                                    <span className="text-white font-bold text-sm">{turnoutPct}%</span>
+                                    <span className="text-[#222] font-bold text-sm num">{turnoutPct}%</span>
                                     {turnoutPct !== 100 && (
-                                        <button onClick={() => setTurnoutPct(100)} className="text-slate-500 hover:text-slate-300 transition-colors ml-1" title="Reset to historical avg">
+                                        <button onClick={() => setTurnoutPct(100)} className="text-[#999] hover:text-[#222] transition-colors ml-1" title="Reset to historical avg">
                                             <RotateCcw className="w-3 h-3" />
                                         </button>
                                     )}
@@ -506,18 +506,18 @@ export default function SimulationsPanel({
                                 type="range" min={50} max={200} step={5}
                                 value={turnoutPct}
                                 onChange={e => setTurnoutPct(Number(e.target.value))}
-                                className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-                                style={{ accentColor: '#7c3aed' }}
+                                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
+                                style={{ accentColor: '#008fd5' }}
                             />
-                            <div className="flex justify-between text-[10px] text-slate-600">
+                            <div className="flex justify-between text-[10px] text-[#999] num">
                                 <span>50% (low)</span>
                                 <span>100% (avg)</span>
                                 <span>200% (high)</span>
                             </div>
-                            <div className="text-xs text-slate-400">
-                                Expected: <span className="text-white font-semibold">{expectedTotal.toLocaleString()} votes</span>
+                            <div className="text-xs text-[#666] num">
+                                Expected: <span className="text-[#222] font-bold">{expectedTotal.toLocaleString()} votes</span>
                                 {turnoutPct !== 100 && (
-                                    <span className={`ml-2 font-medium ${turnoutPct > 100 ? 'text-green-400' : 'text-red-400'}`}>
+                                    <span className={`ml-2 font-bold ${turnoutPct > 100 ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>
                                         {turnoutPct > 100 ? '↑' : '↓'} {Math.abs(turnoutPct - 100)}% vs avg
                                     </span>
                                 )}
@@ -525,15 +525,15 @@ export default function SimulationsPanel({
                         </div>
 
                         {/* ── Registration Change ── */}
-                        <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40 space-y-3">
+                        <div className="border border-[#e0e0e0] rounded-[3px] p-4 bg-white space-y-3">
                             <div className="flex items-center justify-between">
-                                <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Registration Change</span>
+                                <span className="kicker">Registration Change</span>
                                 <div className="flex items-center gap-1">
-                                    <span className={`font-bold text-sm ${regDelta > 0 ? 'text-green-400' : regDelta < 0 ? 'text-red-400' : 'text-white'}`}>
+                                    <span className={`font-bold text-sm num ${regDelta > 0 ? 'text-[#567a3a]' : regDelta < 0 ? 'text-[#c73a1d]' : 'text-[#222]'}`}>
                                         {regDelta > 0 ? '+' : ''}{regDelta}%
                                     </span>
                                     {regDelta !== 0 && (
-                                        <button onClick={() => setRegDelta(0)} className="text-slate-500 hover:text-slate-300 transition-colors ml-1" title="Reset">
+                                        <button onClick={() => setRegDelta(0)} className="text-[#999] hover:text-[#222] transition-colors ml-1" title="Reset">
                                             <RotateCcw className="w-3 h-3" />
                                         </button>
                                     )}
@@ -543,72 +543,69 @@ export default function SimulationsPanel({
                                 type="range" min={-20} max={50} step={1}
                                 value={regDelta}
                                 onChange={e => setRegDelta(Number(e.target.value))}
-                                className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-                                style={{ accentColor: regDelta >= 0 ? '#22c55e' : '#ef4444' }}
+                                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
+                                style={{ accentColor: regDelta >= 0 ? '#6d904f' : '#fc4f30' }}
                             />
-                            <div className="flex justify-between text-[10px] text-slate-600">
+                            <div className="flex justify-between text-[10px] text-[#999] num">
                                 <span>−20%</span>
                                 <span>0%</span>
                                 <span>+50%</span>
                             </div>
-                            <div className="text-xs text-slate-500">
+                            <div className="text-xs text-[#999]">
                                 Models voter registration growth/decline since last comparable election.
                                 {regDelta !== 0 && (
-                                    <span className="block mt-0.5 text-slate-400">
-                                        Adds <span className="text-white font-medium">{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0) > 0 ? '+' : '')}{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0)).toLocaleString()}</span> votes vs turnout-only estimate.
+                                    <span className="block mt-0.5 text-[#666] num">
+                                        Adds <span className="text-[#222] font-bold">{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0) > 0 ? '+' : '')}{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0)).toLocaleString()}</span> votes vs turnout-only estimate.
                                     </span>
                                 )}
                             </div>
                         </div>
 
                         {/* ── Race Settings ── */}
-                        <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40 space-y-3">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Race Settings</div>
+                        <div className="border border-[#e0e0e0] rounded-[3px] p-4 bg-white space-y-3">
+                            <div className="kicker">Race Settings</div>
                             <div>
-                                <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Candidates in Race</div>
+                                <div className="text-[10px] text-[#999] font-bold uppercase tracking-[0.06em] mb-1.5">Candidates in Race</div>
                                 <div className="flex gap-1">
                                     {[2, 3].map(n => (
                                         <button
                                             key={n}
                                             onClick={() => setNumCandidates(n)}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                                            className={`px-3 py-1.5 rounded-[3px] text-xs font-bold transition-colors ${
                                                 numCandidates === n
-                                                    ? 'bg-violet-600 text-white'
-                                                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                                                    ? 'bg-[#222] text-white border border-[#222]'
+                                                    : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'
                                             }`}
                                         >
                                             {n === 2 ? '2-way' : '3-way'}
                                         </button>
                                     ))}
                                 </div>
-                                <div className="mt-1.5 text-[10px] text-slate-500">
-                                    {numCandidates === 2 ? 'Head-to-head — exact majority required' : '3-way plurality — win threshold is an estimate'}
+                                <div className="mt-1.5 text-[10px] text-[#999]">
+                                    {numCandidates === 2 ? 'Head-to-head: exact majority required' : '3-way plurality: win threshold is an estimate'}
                                 </div>
                             </div>
                         </div>
 
                         {/* ── Win Number Card ── */}
-                        <div
-                            className="rounded-xl p-4 border"
-                            style={{ background: 'linear-gradient(135deg, #4c1d9522 0%, #0f172a 100%)', borderColor: '#7c3aed44' }}
-                        >
+                        <div className="border border-[#e0e0e0] border-t-2 border-t-[#222] rounded-[3px] p-4 bg-white">
                             <div className="flex items-baseline justify-between mb-1">
-                                <span className="text-xs font-bold uppercase tracking-widest text-violet-400">
+                                <span className="kicker">
                                     Win Number{winResult.isEstimate ? ' (est.)' : ''}
                                 </span>
                             </div>
-                            <div className="text-4xl font-black text-white mb-2">
+                            <div className="text-4xl font-bold num text-[#222] mb-2">
                                 {winResult.winNumber.toLocaleString()}
                             </div>
-                            <div className="text-xs text-slate-400 leading-relaxed font-mono bg-slate-900/60 rounded-lg px-3 py-2">
+                            <div className="text-xs text-[#666] leading-relaxed font-mono bg-[#f7f7f7] rounded-[3px] px-3 py-2">
                                 {winResult.explanation}
                             </div>
                             {winResult.isEstimate && (
-                                <div className="mt-2 text-[10px] text-slate-500 leading-relaxed">
+                                <div className="mt-2 text-[10px] text-[#999] leading-relaxed">
                                     In a {numCandidates}-way plurality race, actual win threshold varies.
                                 </div>
                             )}
-                            <div className="mt-3 pt-3 border-t border-slate-700/50 flex justify-between text-xs text-slate-500">
+                            <div className="mt-3 pt-3 border-t border-[#e0e0e0] flex justify-between text-xs text-[#999] num">
                                 <span>Expected total: {expectedTotal.toLocaleString()}</span>
                                 <span>{((winResult.winNumber / expectedTotal) * 100).toFixed(1)}% of expected</span>
                             </div>
@@ -616,59 +613,59 @@ export default function SimulationsPanel({
 
                         {/* ── Map Legend (for PROJECTION mode) ── */}
                         {simulateOverlayMode === 'PROJECTION' && (
-                            <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40">
-                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Map Legend</div>
-                                <div className="space-y-1.5 text-xs text-slate-400">
+                            <div className="border border-[#e0e0e0] rounded-[3px] p-3 bg-white">
+                                <div className="kicker mb-2">Map Legend</div>
+                                <div className="space-y-1.5 text-xs text-[#666]">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-green-500" />
+                                        <div className="w-3 h-3 flex-shrink-0 bg-[#6d904f]" />
                                         High-turnout wards (historically)
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-red-500" />
+                                        <div className="w-3 h-3 flex-shrink-0 bg-[#fc4f30]" />
                                         Low-turnout wards (historically)
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-sm flex-shrink-0 bg-slate-800 border border-slate-700" />
+                                        <div className="w-3 h-3 flex-shrink-0 bg-[#ececec] border border-[#cccccc]" />
                                         Outside selected district
                                     </div>
                                 </div>
-                                <div className="mt-2 text-[10px] text-slate-600">
+                                <div className="mt-2 text-[10px] text-[#999]">
                                     Relative turnout within the district across {selectedDistrict.electionsCount} past election{selectedDistrict.electionsCount !== 1 ? 's' : ''}.
                                 </div>
                             </div>
                         )}
 
                         {/* ── What If Scenario ── */}
-                        <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 overflow-hidden">
+                        <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
                             <button
                                 onClick={() => setWhatIfOpen(o => !o)}
-                                className="w-full p-4 flex items-center justify-between hover:bg-slate-700/20 transition-colors"
+                                className="w-full p-4 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
                             >
                                 <div className="flex items-center gap-2">
-                                    <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
-                                    <span className="text-sm font-semibold text-white">What If Scenario</span>
+                                    <FlaskConical className="w-3.5 h-3.5 text-[#a16207]" />
+                                    <span className="text-sm font-bold text-[#222]">What If Scenario</span>
                                     {whatIfOpen && whatIfRace && (
-                                        <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">ACTIVE</span>
+                                        <span className="text-[10px] font-bold text-[#a16207] border border-[#e5ae38] px-1.5 py-0.5 rounded-[2px]">ACTIVE</span>
                                     )}
                                 </div>
-                                {whatIfOpen ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+                                {whatIfOpen ? <ChevronUp className="w-4 h-4 text-[#999]" /> : <ChevronDown className="w-4 h-4 text-[#999]" />}
                             </button>
 
                             {whatIfOpen && (
-                                <div className="px-4 pb-4 space-y-4 border-t border-slate-700/40 pt-3">
-                                    <p className="text-xs text-slate-500">
+                                <div className="px-4 pb-4 space-y-4 border-t border-[#e0e0e0] pt-3">
+                                    <p className="text-xs text-[#999]">
                                         Adjust ward-level turnout to see margin impact in real time. Click any ward on the map to add a per-ward slider.
                                     </p>
 
                                     {/* Past race selector */}
                                     <div>
-                                        <div className="text-xs text-slate-400 font-medium mb-1">Past race</div>
+                                        <div className="text-xs text-[#666] font-bold mb-1">Past race</div>
                                         <select
-                                            className="w-full bg-slate-800 text-slate-300 text-xs rounded-md px-2 py-2 border border-slate-600 focus:outline-none focus:border-violet-500"
+                                            className="w-full bg-white text-[#222] text-xs rounded-[3px] px-2 py-2 border border-[#cccccc] focus:outline-none focus:border-[#008fd5]"
                                             value={whatIfRaceKey}
                                             onChange={e => { setWhatIfRaceKey(e.target.value); setWardList([]); setYourCandidate(''); }}
                                         >
-                                            <option value="">Select an election…</option>
+                                            <option value="">Select an election</option>
                                             {allElections.map(e => {
                                                 const key = `${e.electionId}|${e.raceId}`;
                                                 const year = e.electionDate.slice(0, 4);
@@ -686,9 +683,9 @@ export default function SimulationsPanel({
                                         <>
                                             {/* ── Feature 3: Your Candidate picker ── */}
                                             <div>
-                                                <div className="text-xs text-slate-400 font-medium mb-1">Your candidate</div>
+                                                <div className="text-xs text-[#666] font-bold mb-1">Your candidate</div>
                                                 <select
-                                                    className="w-full bg-slate-800 text-slate-300 text-xs rounded-md px-2 py-2 border border-slate-600 focus:outline-none focus:border-violet-500"
+                                                    className="w-full bg-white text-[#222] text-xs rounded-[3px] px-2 py-2 border border-[#cccccc] focus:outline-none focus:border-[#008fd5]"
                                                     value={yourCandidate}
                                                     onChange={e => setYourCandidate(e.target.value)}
                                                 >
@@ -697,7 +694,7 @@ export default function SimulationsPanel({
                                                         <option key={name} value={name}>{name}</option>
                                                     ))}
                                                 </select>
-                                                <div className="text-[10px] text-slate-600 mt-1">
+                                                <div className="text-[10px] text-[#999] mt-1">
                                                     Used for margin impact labels on ward sliders below.
                                                 </div>
                                             </div>
@@ -705,11 +702,11 @@ export default function SimulationsPanel({
                                             {/* Global multiplier */}
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-slate-400 font-medium">Global turnout adjustment</span>
+                                                    <span className="text-xs text-[#666] font-bold">Global turnout adjustment</span>
                                                     <div className="flex items-center gap-1">
-                                                        <span className="text-white font-bold text-sm">{globalWhatIfMult}%</span>
+                                                        <span className="text-[#222] font-bold text-sm num">{globalWhatIfMult}%</span>
                                                         {globalWhatIfMult !== 100 && (
-                                                            <button onClick={() => setGlobalWhatIfMult(100)} className="text-slate-500 hover:text-slate-300 ml-1" title="Reset">
+                                                            <button onClick={() => setGlobalWhatIfMult(100)} className="text-[#999] hover:text-[#222] ml-1" title="Reset">
                                                                 <RotateCcw className="w-3 h-3" />
                                                             </button>
                                                         )}
@@ -719,10 +716,10 @@ export default function SimulationsPanel({
                                                     type="range" min={50} max={200} step={5}
                                                     value={globalWhatIfMult}
                                                     onChange={e => setGlobalWhatIfMult(Number(e.target.value))}
-                                                    className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-                                                    style={{ accentColor: '#f59e0b' }}
+                                                    className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
+                                                    style={{ accentColor: '#e5ae38' }}
                                                 />
-                                                <div className="text-[10px] text-slate-600 flex justify-between">
+                                                <div className="text-[10px] text-[#999] num flex justify-between">
                                                     <span>50%</span><span>100%</span><span>200%</span>
                                                 </div>
                                             </div>
@@ -730,11 +727,11 @@ export default function SimulationsPanel({
                                             {/* Per-ward overrides */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-xs text-slate-400 font-medium">Ward overrides</span>
+                                                    <span className="text-xs text-[#666] font-bold">Ward overrides</span>
                                                     {wardList.length > 0 && (
                                                         <button
                                                             onClick={() => setWardList([])}
-                                                            className="text-[10px] text-slate-500 hover:text-red-400 transition-colors"
+                                                            className="text-[10px] text-[#999] hover:text-[#c73a1d] transition-colors"
                                                         >
                                                             Clear all
                                                         </button>
@@ -742,7 +739,7 @@ export default function SimulationsPanel({
                                                 </div>
 
                                                 {wardList.length === 0 ? (
-                                                    <div className="text-xs text-slate-600 text-center py-3 border border-dashed border-slate-700 rounded-lg">
+                                                    <div className="text-xs text-[#999] text-center py-3 border border-dashed border-[#cccccc] rounded-[3px]">
                                                         Click any ward on the map to add it here
                                                     </div>
                                                 ) : (
@@ -772,14 +769,14 @@ export default function SimulationsPanel({
                                                             }
 
                                                             return (
-                                                                <div key={ward.wardKey} className="bg-slate-900/60 rounded-lg p-2.5">
+                                                                <div key={ward.wardKey} className="bg-[#f7f7f7] border border-[#e0e0e0] rounded-[3px] p-2.5">
                                                                     <div className="flex items-center justify-between mb-1.5">
-                                                                        <span className="text-xs text-slate-300 truncate flex-1">{ward.label}</span>
+                                                                        <span className="text-xs text-[#222] truncate flex-1">{ward.label}</span>
                                                                         <div className="flex items-center gap-1.5 ml-2 shrink-0">
-                                                                            <span className="text-xs font-bold text-amber-400">{ward.multiplier}%</span>
+                                                                            <span className="text-xs font-bold num text-[#a16207]">{ward.multiplier}%</span>
                                                                             <button
                                                                                 onClick={() => setWardList(prev => prev.filter((_, idx) => idx !== i))}
-                                                                                className="text-slate-600 hover:text-red-400 transition-colors"
+                                                                                className="text-[#999] hover:text-[#c73a1d] transition-colors"
                                                                             >
                                                                                 <X className="w-3 h-3" />
                                                                             </button>
@@ -791,13 +788,13 @@ export default function SimulationsPanel({
                                                                         onChange={e => setWardList(prev => prev.map((w, idx) =>
                                                                             idx === i ? { ...w, multiplier: Number(e.target.value) } : w
                                                                         ))}
-                                                                        className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                                                                        style={{ accentColor: '#f59e0b' }}
+                                                                        className="w-full h-1 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
+                                                                        style={{ accentColor: '#e5ae38' }}
                                                                     />
                                                                     {/* ── Feature 3: Margin impact display ── */}
                                                                     {marginLabel !== null && (
-                                                                        <div className={`mt-1.5 text-[10px] font-mono px-1.5 py-1 rounded ${
-                                                                            marginLabel.votes >= 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
+                                                                        <div className={`mt-1.5 text-[10px] font-mono px-1.5 py-1 rounded-[2px] ${
+                                                                            marginLabel.votes >= 0 ? 'bg-[#eef4e8] text-[#567a3a]' : 'bg-[#fdeae5] text-[#c73a1d]'
                                                                         }`}>
                                                                             {marginLabel.votes >= 0 ? '+' : ''}{marginLabel.votes.toLocaleString()} votes
                                                                             {' · '}margin {marginLabel.pts >= 0 ? '+' : ''}{marginLabel.pts.toFixed(1)} pts
@@ -812,33 +809,33 @@ export default function SimulationsPanel({
 
                                             {/* Adjusted results summary */}
                                             {whatIfCandidateTotals.length > 0 && (
-                                                <div className="bg-slate-900/60 rounded-lg p-3 space-y-2">
-                                                    <div className="text-xs text-slate-400 font-medium mb-2">Adjusted Result</div>
+                                                <div className="bg-[#f7f7f7] border border-[#e0e0e0] rounded-[3px] p-3 space-y-2">
+                                                    <div className="text-xs text-[#666] font-bold mb-2">Adjusted Result</div>
                                                     {whatIfCandidateTotals.map((c, i) => {
                                                         const diff = c.adjusted - c.original;
                                                         const isWinner = i === 0;
                                                         const isYours = yourCandidate && c.name.trim() === yourCandidate;
                                                         return (
-                                                            <div key={c.name} className={`${isWinner ? 'text-white' : 'text-slate-400'}`}>
+                                                            <div key={c.name} className={`${isWinner ? 'text-[#222]' : 'text-[#666]'}`}>
                                                                 <div className="flex justify-between items-baseline text-xs mb-1">
                                                                     <span className="font-medium truncate flex-1">
                                                                         {isWinner ? '▲ ' : '\u00a0\u00a0'}
                                                                         {c.name}
-                                                                        {isYours && <span className="ml-1 text-[9px] text-violet-400 bg-violet-400/10 px-1 py-0.5 rounded">YOU</span>}
+                                                                        {isYours && <span className="ml-1 text-[9px] font-bold text-[#00729c] border border-[#008fd5] px-1 py-0.5 rounded-[2px]">YOU</span>}
                                                                     </span>
                                                                     <div className="ml-2 shrink-0 flex items-baseline gap-1.5">
-                                                                        <span className="font-bold">{c.adjusted.toLocaleString()}</span>
-                                                                        <span className={`text-[10px] ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-slate-600'}`}>
+                                                                        <span className="font-bold num">{c.adjusted.toLocaleString()}</span>
+                                                                        <span className={`text-[10px] num ${diff > 0 ? 'text-[#567a3a]' : diff < 0 ? 'text-[#c73a1d]' : 'text-[#999]'}`}>
                                                                             {diff >= 0 ? '+' : ''}{diff.toLocaleString()}
                                                                         </span>
                                                                     </div>
                                                                 </div>
-                                                                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                                                                <div className="h-1 bg-[#e8e8e8] overflow-hidden">
                                                                     <div
-                                                                        className="h-full rounded-full transition-all duration-300"
+                                                                        className="h-full transition-all duration-300"
                                                                         style={{
                                                                             width: `${whatIfCandidateTotals[0].adjusted > 0 ? (c.adjusted / whatIfCandidateTotals[0].adjusted) * 100 : 0}%`,
-                                                                            background: isYours ? '#7c3aed' : isWinner ? '#4ade80' : '#475569',
+                                                                            background: isYours ? '#008fd5' : isWinner ? '#6d904f' : '#8b8b8b',
                                                                         }}
                                                                     />
                                                                 </div>
@@ -846,9 +843,9 @@ export default function SimulationsPanel({
                                                         );
                                                     })}
                                                     {whatIfCandidateTotals.length >= 2 && (
-                                                        <div className="pt-2 border-t border-slate-800 text-xs text-slate-500 flex justify-between">
+                                                        <div className="pt-2 border-t border-[#e0e0e0] text-xs text-[#999] flex justify-between">
                                                             <span>Margin (1st vs 2nd)</span>
-                                                            <span className={`font-semibold ${whatIfCandidateTotals[0].adjusted > whatIfCandidateTotals[1].adjusted ? 'text-green-400' : 'text-red-400'}`}>
+                                                            <span className={`font-bold num ${whatIfCandidateTotals[0].adjusted > whatIfCandidateTotals[1].adjusted ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>
                                                                 {(whatIfCandidateTotals[0].adjusted - whatIfCandidateTotals[1].adjusted) > 0 ? '+' : ''}
                                                                 {(whatIfCandidateTotals[0].adjusted - whatIfCandidateTotals[1].adjusted).toLocaleString()} votes
                                                             </span>
