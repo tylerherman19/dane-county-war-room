@@ -12,7 +12,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { execSync } from 'child_process';
 
 const BASE = 'https://api.danecounty.gov/api/v1/elections';
-const RELEVANT_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', 'Congress', 'Alder']);
+const RELEVANT_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', 'Congress', 'Alder', 'Assembly', 'StateSenate']);
 
 // ── Helpers (mirrors logic in src/lib/) ──────────────────────────────────────
 
@@ -212,9 +212,9 @@ for (const election of recent) {
             };
         }
 
-        // For Alder races, extract district number from race name
+        // For district-based races, extract district number from race name
         let districtNum = null;
-        if (raceType === 'Alder') {
+        if (raceType === 'Alder' || raceType === 'Assembly' || raceType === 'StateSenate') {
             const m = race.RaceName.match(/district\s+(\d+)/i);
             districtNum = m ? parseInt(m[1]) : null;
         }
