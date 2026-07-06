@@ -22,7 +22,11 @@ import DistrictFilterControl from '@/components/DistrictFilterControl';
 import { DistrictFilter, districtLabel, getWardsInDistrict } from '@/lib/districts';
 import TrendsPanel, { ShiftPair } from '@/components/TrendsPanel';
 import { BenchmarkSelection } from '@/components/BenchmarkCard';
-import PrimaryFocusPanel from '@/components/PrimaryFocusPanel';
+import PrimaryFocusPanel, { PrimaryTab, PlanningState } from '@/components/PrimaryFocusPanel';
+import { ScenarioId } from '@/components/PlanningPanel';
+import { PlanningWardDatum } from '@/components/Map';
+import { fetchPlanningData, computeWardPower, buildScenarios } from '@/lib/planning-data';
+import useSWR from 'swr';
 import { ElectionTurnout, extractDistrictNumber } from '@/lib/api';
 
 function buildWardMap(turnout: ElectionTurnout | undefined): Record<string, number> | undefined {
@@ -353,6 +357,61 @@ export default function Home() {
   }, [effectivePrecincts, districtWardKeys, viewMode]);
   const scopeLabel = districtFilter && viewMode !== 'SIMULATE' ? districtLabel(districtFilter) : null;
 
+  // ── PRIMARY mode: pre-election planning (baked AD76 primary history) ─────
+  const [primaryTabOverride, setPrimaryTabOverride] = useState<PrimaryTab | null>(null);
+  const [planningScenarioId, setPlanningScenarioId] = useState<ScenarioId>('MID');
+  const [planningNumCandidates, setPlanningNumCandidates] = useState(4);
+  useEffect(() => {
+    if (viewMode !== 'PRIMARY') setPrimaryTabOverride(null);
+  }, [viewMode]);
+
+  const { data: planningData, error: planningError, isLoading: planningLoading } = useSWR(
+    viewMode === 'PRIMARY' ? 'ad76-planning' : null,
+    fetchPlanningData
+  );
+  const planningPower = useMemo(
+    () => (planningData && districtWardKeys ? computeWardPower(planningData, districtWardKeys) : null),
+    [planningData, districtWardKeys]
+  );
+  const planningScenarios = useMemo(
+    () => (planningData ? buildScenarios(planningData) : []),
+    [planningData]
+  );
+  const planningScenario = planningScenarios.find(s => s.id === planningScenarioId) ?? planningScenarios[0];
+
+  // Default to Planning until the district race exists and has votes counted;
+  // the user's explicit tab choice always wins.
+  const primaryHasReturns = primaryMatchingRaces.length > 0 && (raceResult?.totalVotes ?? 0) > 0;
+  const primaryTab: PrimaryTab = primaryTabOverride ?? (primaryHasReturns ? 'NIGHT' : 'PLANNING');
+
+  const planningState: PlanningState = {
+    data: planningData ?? null,
+    isLoading: planningLoading,
+    isError: !!planningError,
+    power: planningPower,
+    scenarios: planningScenarios,
+    scenarioId: planningScenario?.id ?? 'MID',
+    onScenarioChange: setPlanningScenarioId,
+    numCandidates: planningNumCandidates,
+    onNumCandidatesChange: setPlanningNumCandidates,
+  };
+
+  // Map overlay data: expected vote per ward at the selected scenario
+  const planningByWard = useMemo(() => {
+    if (viewMode !== 'PRIMARY' || primaryTab !== 'PLANNING' || !planningPower || !planningScenario) return undefined;
+    const out: Record<string, PlanningWardDatum> = {};
+    planningPower.rows.forEach(r => {
+      out[r.wardKey] = {
+        share: r.share,
+        expected: Math.round(r.share * planningScenario.totalVotes),
+        rank: r.rank,
+        totalWards: planningPower.rows.length,
+        baselineYear: planningPower.baselineYear,
+      };
+    });
+    return out;
+  }, [viewMode, primaryTab, planningPower, planningScenario]);
+
   function handleSelectRace(raceId: string) {
     setSelectedRaceId(raceId);
     setSelectedGroupKey(null);
@@ -386,6 +445,9 @@ export default function Home() {
           <TrendsPanel elections={elections} onShiftPair={setShiftPair} />
         ) : viewMode === 'PRIMARY' ? (
           <PrimaryFocusPanel
+            primaryTab={primaryTab}
+            onPrimaryTabChange={setPrimaryTabOverride}
+            planning={planningState}
             districtFilter={districtFilter}
             onQuickSelectDistrict={num => setDistrictFilter({ kind: 'asm', num })}
             matchingRaces={primaryMatchingRaces}
@@ -481,8 +543,9 @@ export default function Home() {
           fitKey={
             viewMode === 'TRENDS'
               ? `shift|${shiftPair ? shiftPair.from.electionId + shiftPair.from.raceId + shiftPair.to.electionId + shiftPair.to.raceId : 'none'}`
-              : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}`
+              : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}${viewMode === 'PRIMARY' ? `|${primaryTab}` : ''}`
           }
+          planningByWard={planningByWard}
           onReset={() => setSelectedWard(null)}
           focusedCandidate={isResultsMode ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}

@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/build-historical-data.mjs",
+    "prebuild": "node scripts/build-historical-data.mjs && node scripts/build-ad76-planning-data.mjs",
     "build": "next build",
     "build:historical": "node scripts/build-historical-data.mjs",
+    "build:planning": "node scripts/build-ad76-planning-data.mjs",
     "start": "next start",
     "lint": "eslint"
   },
