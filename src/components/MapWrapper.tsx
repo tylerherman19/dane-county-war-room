@@ -40,9 +40,13 @@ interface MapWrapperProps {
     benchmarkLabel?: string | null;
     // PRIMARY planning tab: force the PLANNING overlay (expected vote per ward)
     planningByWard?: Record<string, PlanningWardDatum>;
+    // COALITION mode: combined slate support (0-100) per ward
+    coalitionMode?: boolean;
+    coalitionByWard?: Record<string, number>;
+    coalitionLabel?: string | null;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard, coalitionMode, coalitionByWard, coalitionLabel }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -101,7 +105,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         if (!trendsMode && overlayMode === 'SHIFT' && !shiftByWard) setOverlayMode('NONE');
     }, [overlayMode, shiftByWard, trendsMode]);
 
-    // SIMULATE forces its own overlay; TRENDS forces SHIFT; PRIMARY planning forces PLANNING
+    // SIMULATE forces its own overlay; TRENDS forces SHIFT; PRIMARY planning forces
+    // PLANNING; COALITION forces COALITION
     const planningMode = !!planningByWard;
     const effectiveOverlayMode: OverlayMode = simulateMode
         ? (simulateOverlayMode ?? 'PROJECTION')
@@ -109,11 +114,31 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
             ? 'SHIFT'
             : planningMode
                 ? 'PLANNING'
-                : overlayMode;
+                : coalitionMode
+                    ? 'COALITION'
+                    : overlayMode;
 
     return (
         <div className="relative w-full h-full">
-            {!simulateMode && !trendsMode && !planningMode && (
+            {coalitionMode && (
+                <div className="absolute top-3 md:top-4 right-3 md:right-4 z-[1000] w-56 bg-white border border-[#cccccc] shadow-[0_1px_6px_rgba(0,0,0,0.15)] rounded-[3px] p-3">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#222] mb-1.5 truncate">{coalitionLabel || 'Coalition'}</div>
+                    {coalitionByWard && Object.keys(coalitionByWard).length > 0 ? (
+                        <>
+                            <div className="flex items-center justify-between text-[10px] text-[#999] mb-1">
+                                <span>Weak</span><span>50%</span><span>Strong</span>
+                            </div>
+                            <div className="relative h-2 rounded-full" style={{ background: 'linear-gradient(to right, #fc4f30, #f0f0f0, #6d904f)' }}>
+                                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#999] opacity-60" />
+                            </div>
+                            <div className="text-[9px] text-[#999] mt-1.5">Combined slate vote share by ward</div>
+                        </>
+                    ) : (
+                        <div className="text-[11px] text-[#999]">Add candidates in the panel to build a coalition.</div>
+                    )}
+                </div>
+            )}
+            {!simulateMode && !trendsMode && !planningMode && !coalitionMode && (
                 <MapOverlayControl
                     currentMode={overlayMode}
                     onChange={handleOverlayChange}
@@ -141,6 +166,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 shiftByWard={shiftByWard}
                 shiftLabels={shiftLabels}
                 planningByWard={planningByWard}
+                coalitionByWard={coalitionMode ? coalitionByWard : undefined}
+                coalitionLabel={coalitionMode ? coalitionLabel : undefined}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}

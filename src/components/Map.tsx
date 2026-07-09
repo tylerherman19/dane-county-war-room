@@ -44,6 +44,9 @@ interface MapProps {
     shiftLabels?: { from: string; to: string } | null;
     // PLANNING mode: expected primary vote per ward, keyed "City of Madison|46"
     planningByWard?: Record<string, PlanningWardDatum>;
+    // COALITION mode: combined slate support (0-100) per ward, keyed "City of Madison|46"
+    coalitionByWard?: Record<string, number>;
+    coalitionLabel?: string | null;
 }
 
 export interface PlanningWardDatum {
@@ -70,6 +73,7 @@ export interface HoveredWard {
     shift?: { from: number; to: number };
     reported?: boolean;
     planning?: PlanningWardDatum;
+    coalitionShare?: number;
 }
 
 function MapController({ geoJsonData, selectedWard, onReset, fitKey, coveredKeys }: {
@@ -244,6 +248,8 @@ export default function Map({
     shiftByWard,
     shiftLabels,
     planningByWard,
+    coalitionByWard,
+    coalitionLabel,
 }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
@@ -260,6 +266,39 @@ export default function Map({
 
     // Clear pinned ward when race changes
     useEffect(() => { setPinnedWard(null); }, [raceResult?.id, overlayMode]);
+
+    // Live "ward flash": pulse wards the moment they newly report. We track the
+    // set of reported ward keys between refreshes and animate only the additions.
+    const prevReportedRef = useRef<Set<string> | null>(null);
+    useEffect(() => { prevReportedRef.current = null; }, [raceResult?.id]);
+    useEffect(() => {
+        if (!precinctResults || !geoJsonData) return;
+        const nowReported = new Set<string>();
+        precinctResults.forEach(r => {
+            if (r.reported) nowReported.add(`${r.precinctName}|${parseInt(r.wardNumber)}`);
+        });
+        const prev = prevReportedRef.current;
+        prevReportedRef.current = nowReported;
+        if (!prev) return; // first load after a race change: set baseline, no flash
+        const newly = new Set([...nowReported].filter(k => !prev.has(k)));
+        if (newly.size === 0) return;
+        const layer = geoJsonLayerRef.current;
+        if (!layer) return;
+        const timers: ReturnType<typeof setTimeout>[] = [];
+        layer.eachLayer((l: any) => {
+            const f = l.feature;
+            if (!f?.properties) return;
+            const key = `${f.properties.NAME}|${parseInt(f.properties.WardNumber)}`;
+            if (newly.has(key) && l.getElement) {
+                const el = l.getElement();
+                if (el) {
+                    el.classList.add('ward-pulse');
+                    timers.push(setTimeout(() => el.classList.remove('ward-pulse'), 4000));
+                }
+            }
+        });
+        return () => timers.forEach(clearTimeout);
+    }, [precinctResults, geoJsonData]);
 
     const maxDormantPool = useMemo(() => {
         if (!dormantPoolData) return 1;
@@ -299,8 +338,9 @@ export default function Map({
         precinctResults?.forEach(r => s.add(`${r.precinctName}|${parseInt(r.wardNumber)}`));
         if (s.size === 0 && shiftByWard) Object.keys(shiftByWard).forEach(k => s.add(k));
         if (s.size === 0 && planningByWard) Object.keys(planningByWard).forEach(k => s.add(k));
+        if (s.size === 0 && coalitionByWard) Object.keys(coalitionByWard).forEach(k => s.add(k));
         return s;
-    }, [precinctResults, shiftByWard, planningByWard]);
+    }, [precinctResults, shiftByWard, planningByWard, coalitionByWard]);
 
     useEffect(() => {
         if (raceResult?.candidates) {
@@ -327,7 +367,23 @@ export default function Map({
             fillOpacity: 0.3
         };
 
-        if (overlayMode === 'PLANNING') {
+        if (overlayMode === 'COALITION') {
+            // Combined slate support (0-100) per ward: red weak → green strong, 50 neutral
+            const share = coalitionByWard?.[`${municipality}|${wardNum}`];
+            if (share === undefined) {
+                baseStyle = { fillColor: '#ececec', weight: 0.5, opacity: 0.2, color: '#e4e4e4', fillOpacity: 0.08 };
+            } else {
+                let h: number, sat: number, l: number;
+                if (share < 50) {
+                    h = 9; const intensity = Math.min((50 - share) / 40, 1);
+                    l = 92 - intensity * 44; sat = 10 + intensity * 80;
+                } else {
+                    h = 92; const intensity = Math.min((share - 50) / 40, 1);
+                    l = 92 - intensity * 52; sat = 10 + intensity * 90;
+                }
+                baseStyle = { fillColor: `hsl(${h}, ${sat}%, ${l}%)`, weight: 1, opacity: 1, color: '#ffffff', fillOpacity: 0.82 };
+            }
+        } else if (overlayMode === 'PLANNING') {
             // Pre-election ward power: expected share of the district's primary vote
             const p = planningByWard?.[`${municipality}|${wardNum}`];
             if (!p) {
@@ -516,11 +572,21 @@ export default function Map({
         }
 
         return baseStyle;
-    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards, turnoutByWard, comparisonTurnoutByWard, shiftByWard, planningByWard, maxPlanningShare]);
+    }, [resultsMap, candidateColors, overlayMode, focusedCandidate, projectionData, dormantPoolData, dropoffData, maxDormantPool, maxDropoff, simulateHighlightedWards, turnoutByWard, comparisonTurnoutByWard, shiftByWard, planningByWard, maxPlanningShare, coalitionByWard]);
 
     /** Build a HoveredWard from feature data + pointer coordinates */
     const buildWardData = useCallback((feature: { municipality: string; wardNum: string }, x: number, y: number): HoveredWard | null => {
         const { municipality, wardNum } = feature;
+
+        if (overlayMode === 'COALITION') {
+            const share = coalitionByWard?.[`${municipality}|${wardNum}`];
+            if (share === undefined) return null;
+            return {
+                municipality, wardNum,
+                results: [], total: 0, x, y, analysis: null, fillColor: '',
+                coalitionShare: share,
+            };
+        }
 
         if (overlayMode === 'PLANNING') {
             const p = planningByWard?.[`${municipality}|${wardNum}`];
@@ -590,7 +656,7 @@ export default function Map({
             comparisonBallots: comparisonTurnoutByWard?.[tk],
             reported: relevantResults.some(r => r.reported),
         };
-    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard, shiftByWard, planningByWard]);
+    }, [resultsMap, candidateColors, overlayMode, dormantPoolData, dropoffData, turnoutByWard, comparisonTurnoutByWard, shiftByWard, planningByWard, coalitionByWard]);
 
     const onEachFeature = useCallback((feature: any, layer: L.Layer) => {
         const municipality = feature.properties.NAME;
@@ -614,9 +680,10 @@ export default function Map({
         );
         const hasShiftData = overlayMode === 'SHIFT' && !!shiftByWard && `${municipality}|${wardNum}` in shiftByWard;
         const hasPlanningData = overlayMode === 'PLANNING' && !!planningByWard && `${municipality}|${wardNum}` in planningByWard;
+        const hasCoalitionData = overlayMode === 'COALITION' && !!coalitionByWard && `${municipality}|${wardNum}` in coalitionByWard;
 
         const isProjectionClickable = overlayMode === 'PROJECTION' && !!onWardClick;
-        const isInteractive = hasData || hasSimData || hasShiftData || hasPlanningData;
+        const isInteractive = hasData || hasSimData || hasShiftData || hasPlanningData || hasCoalitionData;
 
         layer.on({
             mouseover: (e: any) => {
@@ -678,7 +745,7 @@ export default function Map({
         if (isProjectionClickable || isInteractive) {
             (layer as any).options = { ...((layer as any).options || {}), className: 'cursor-pointer' };
         }
-    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData, shiftByWard, planningByWard]);
+    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData, shiftByWard, planningByWard, coalitionByWard]);
 
     // Which ward to display in the tooltip: pinned takes priority
     const displayWard = pinnedWard ?? hoveredWard;
@@ -697,7 +764,7 @@ export default function Map({
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}-${shiftByWard ? Object.keys(shiftByWard).length : 0}-${planningByWard ? Object.values(planningByWard).reduce((s, p) => s + p.expected, 0) : 0}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}-${shiftByWard ? Object.keys(shiftByWard).length : 0}-${planningByWard ? Object.values(planningByWard).reduce((s, p) => s + p.expected, 0) : 0}-${coalitionByWard ? Object.keys(coalitionByWard).length : 0}`}
                             data={geoJsonData}
                             style={(feature) => style(feature, selectedWard)}
                             onEachFeature={onEachFeature}
@@ -729,6 +796,7 @@ export default function Map({
                                      overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
                                      overlayMode === 'SHIFT' ? 'Gained / Lost Ground' :
                                      overlayMode === 'PLANNING' ? 'Expected Primary Vote' :
+                                     overlayMode === 'COALITION' ? (coalitionLabel || 'Coalition Support') :
                                      (raceResult?.raceName || 'Election Results')}
                                 </div>
                                 <div style={{ fontWeight: 700, fontSize: '15px', color: '#222222' }}>
@@ -807,6 +875,28 @@ export default function Map({
                                     </div>
                                     <div style={{ fontSize: '10px', color: '#999999', marginTop: '8px' }}>
                                         Ward share from the {p.baselineYear} primary, scaled to the selected turnout scenario
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* COALITION body: combined slate support */}
+                        {displayWard.coalitionShare !== undefined && (() => {
+                            const share = displayWard.coalitionShare!;
+                            const strong = share >= 50;
+                            return (
+                                <div style={{ padding: '10px 14px 12px' }}>
+                                    <div style={{ fontSize: '11px', color: '#666666', marginBottom: '4px' }}>
+                                        Combined slate support
+                                    </div>
+                                    <div style={{ fontSize: '24px', fontWeight: 800, color: strong ? '#567a3a' : '#c73a1d' }}>
+                                        {share.toFixed(1)}%
+                                    </div>
+                                    <div style={{ height: '6px', background: '#e4e4e4', borderRadius: '3px', overflow: 'hidden', marginTop: '6px' }}>
+                                        <div style={{ height: '100%', width: `${Math.min(share, 100)}%`, background: strong ? '#6d904f' : '#fc4f30', borderRadius: '3px' }} />
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: '#999999', marginTop: '8px' }}>
+                                        Average vote share across the slate&apos;s candidates in this ward
                                     </div>
                                 </div>
                             );

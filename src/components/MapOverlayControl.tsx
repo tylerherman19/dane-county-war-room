@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Layers, TrendingUp, Users, ChevronDown, Crosshair } from 'lucide-react';
 
-export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING' | 'PROJECTION' | 'CANVASS_PRIORITY' | 'PRIMARY_DROPOFF' | 'SHIFT' | 'PLANNING';
+export type OverlayMode = 'NONE' | 'TURNOUT' | 'SWING' | 'PROJECTION' | 'CANVASS_PRIORITY' | 'PRIMARY_DROPOFF' | 'SHIFT' | 'PLANNING' | 'COALITION';
 
 interface MapOverlayControlProps {
     currentMode: OverlayMode;

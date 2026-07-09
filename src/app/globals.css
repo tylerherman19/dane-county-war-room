@@ -139,6 +139,22 @@
   animation: pulse-highlight 1s infinite;
 }
 
+/* Watchboard: flash a race card when its result changes on refresh */
+@keyframes board-flash-anim {
+  0% {
+    background-color: rgba(109, 144, 79, 0.22);
+    box-shadow: 0 0 0 1px rgba(109, 144, 79, 0.7);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 rgba(109, 144, 79, 0);
+  }
+}
+
+.board-flash {
+  animation: board-flash-anim 2.2s ease-out;
+}
+
 /* Prevent rubber-band scroll on iOS from moving the map accidentally */
 html, body {
   overscroll-behavior: none;

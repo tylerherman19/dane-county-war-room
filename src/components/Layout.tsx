@@ -12,8 +12,8 @@ interface LayoutProps {
     elections?: Election[];
     selectedElectionId?: string | null;
     onSelectElection?: (id: string) => void;
-    viewMode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE' | 'PRIMARY';
-    onToggleViewMode: (mode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE' | 'PRIMARY') => void;
+    viewMode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE' | 'PRIMARY';
+    onToggleViewMode: (mode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE' | 'PRIMARY') => void;
     hasError?: boolean;
 }
 
@@ -30,6 +30,16 @@ export default function Layout({
 }: LayoutProps) {
     const [relativeTime, setRelativeTime] = useState<string | null>(null);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [countdown, setCountdown] = useState(30);
+
+    // Countdown to the next auto-refresh (data polls every 30s in live views)
+    const isLiveView = viewMode === 'LIVE' || viewMode === 'BOARD';
+    useEffect(() => {
+        if (!isLiveView) return;
+        setCountdown(30);
+        const id = setInterval(() => setCountdown(c => (c <= 1 ? 30 : c - 1)), 1000);
+        return () => clearInterval(id);
+    }, [isLiveView]);
 
     useEffect(() => {
         if (!lastUpdated) { setRelativeTime(null); return; }
@@ -57,9 +67,11 @@ export default function Layout({
 
     const modes: Array<{ id: LayoutProps['viewMode']; label: string; short: string }> = [
         { id: 'LIVE', label: 'Live', short: 'Live' },
+        { id: 'BOARD', label: 'Board', short: 'Board' },
         { id: 'ARCHIVE', label: 'Archive', short: 'Archive' },
         { id: 'TRENDS', label: 'Trends', short: 'Trends' },
-        { id: 'SIMULATE', label: 'Simulate', short: 'Simulate' },
+        { id: 'COALITION', label: 'Coalition', short: 'Coal' },
+        { id: 'SIMULATE', label: 'Simulate', short: 'Sim' },
         { id: 'PRIMARY', label: 'AD76 Primary', short: 'AD76' },
     ];
 
@@ -111,6 +123,12 @@ export default function Layout({
                                 Updated <span className="text-[#666] num">{relativeTime}</span>
                             </div>
                         )}
+                        {isLiveView && (
+                            <div className="hidden md:flex items-center gap-1.5 text-xs whitespace-nowrap" title="Next automatic refresh">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#6d904f]" />
+                                <span className="text-[#999]">refresh <span className="text-[#567a3a] num">{countdown}s</span></span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -159,12 +177,14 @@ export default function Layout({
                 </main>
 
                 {/* Desktop sidebar */}
-                <aside className="hidden md:block w-96 shrink-0 z-40 relative overflow-hidden border-l border-[#e0e0e0]">
-                    {sidebar}
-                </aside>
+                {sidebar && (
+                    <aside className="hidden md:block w-96 shrink-0 z-40 relative overflow-hidden border-l border-[#e0e0e0]">
+                        {sidebar}
+                    </aside>
+                )}
 
                 {/* Mobile sidebar backdrop */}
-                {mobileSidebarOpen && (
+                {sidebar && mobileSidebarOpen && (
                     <div
                         className="md:hidden fixed inset-0 z-[3000] bg-black/40"
                         onClick={() => setMobileSidebarOpen(false)}
@@ -173,6 +193,7 @@ export default function Layout({
                 )}
 
                 {/* Mobile sidebar bottom sheet */}
+                {sidebar && (
                 <aside
                     className={`mobile-sheet md:hidden fixed bottom-0 left-0 right-0 z-[3001] transition-transform duration-300 ease-out ${
                         mobileSidebarOpen ? 'translate-y-0' : 'translate-y-full'
@@ -203,10 +224,11 @@ export default function Layout({
                         {sidebar}
                     </div>
                 </aside>
+                )}
             </div>
 
             {/* Mobile: open results panel (the sheet has its own close) */}
-            {!mobileSidebarOpen && (
+            {sidebar && !mobileSidebarOpen && (
                 <button
                     className="md:hidden fixed left-1/2 -translate-x-1/2 z-[2999] flex items-center gap-2 px-5 py-2.5 rounded-[3px] text-sm font-bold text-white bg-[#222] transition-transform active:scale-95"
                     style={{

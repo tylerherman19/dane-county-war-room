@@ -358,6 +358,90 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
     return results;
 }
 
+// --- Board (all races at once, from the bulk results endpoint) ---
+
+export interface BoardCandidate {
+    candidateName: string;
+    votes: number;
+    percentage: number;
+    party?: string;
+}
+
+export interface BoardRace {
+    raceId: string;
+    raceName: string;
+    type: RaceType;
+    groupKey: string | null;
+    totalVotes: number;
+    totalPrecincts: number;
+    precinctsReporting: number;
+    candidates: BoardCandidate[]; // sorted, most votes first
+}
+
+interface ApiBoardCandidate {
+    Name: string;
+    Votes: number;
+    Percentage: number;
+    PartyName: string;
+}
+
+interface ApiBoardRace {
+    RaceName: string;
+    RaceNumber: string;
+    Candidates: ApiBoardCandidate[];
+    TotalPrecincts: number;
+    PrecinctsReported: number;
+}
+
+interface ApiBoardElection {
+    ElectionId: number;
+    Races: ApiBoardRace[];
+}
+
+/**
+ * Fetches every real race for an election in one bulk call, shaped for the
+ * multi-race watchboard: leader, margin, and reporting progress per race.
+ */
+export async function getElectionBoard(electionId: string): Promise<BoardRace[]> {
+    const data = await fetchAPI<ApiBoardElection>(`/electionresults/${electionId}`);
+    if (!data?.Races) return [];
+
+    return data.Races
+        .filter(r => !isAdminRace(r.RaceName))
+        .map(r => {
+            const raceName = r.RaceName.replace(/\s*-\s*Official Canvass\s*$/i, '').trim();
+            const candidates: BoardCandidate[] = r.Candidates
+                .map(c => ({
+                    candidateName: c.Name.trim(),
+                    votes: c.Votes,
+                    percentage: c.Percentage,
+                    party: c.PartyName?.trim() || undefined,
+                }))
+                .sort((a, b) => b.votes - a.votes);
+            const totalVotes = candidates.reduce((s, c) => s + c.votes, 0);
+            const race: Race = {
+                id: r.RaceNumber,
+                electionId,
+                name: raceName,
+                type: detectRaceType(raceName),
+                totalPrecincts: r.TotalPrecincts,
+                precinctsReporting: r.PrecinctsReported,
+                candidates: [],
+                lastUpdated: new Date().toISOString(),
+            };
+            return {
+                raceId: r.RaceNumber,
+                raceName,
+                type: race.type,
+                groupKey: getRaceGroupKey(race),
+                totalVotes,
+                totalPrecincts: r.TotalPrecincts,
+                precinctsReporting: r.PrecinctsReported,
+                candidates,
+            };
+        });
+}
+
 // --- Turnout (from the county's BALLOTS CAST - TOTAL tally race) ---
 
 export interface WardTurnout {

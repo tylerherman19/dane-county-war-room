@@ -7,13 +7,16 @@ import Sidebar from '@/components/Sidebar';
 import SimulationsPanel from '@/components/SimulationsPanel';
 import RaceSelector from '@/components/RaceSelector';
 import RaceGroupSidebar from '@/components/RaceGroupSidebar';
+import Watchboard from '@/components/Watchboard';
+import CoalitionPanel, { CoalitionUpdate } from '@/components/CoalitionPanel';
 import {
   useElections,
   useRaces,
   useRaceResults,
   usePrecinctResults,
   useElectionTurnout,
-  useLastPublished
+  useLastPublished,
+  useElectionBoard
 } from '@/hooks/useElectionData';
 import { SimProjectionUpdate } from '@/lib/projections-data';
 import { Election, PrecinctResult, Race, getRaceGroupKey } from '@/lib/api';
@@ -78,8 +81,11 @@ function defaultComparisonElection(elections: Election[], selectedId: string | n
 
 export default function Home() {
   // ── Top-level mode ───────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState<'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE' | 'PRIMARY'>('LIVE');
+  const [viewMode, setViewMode] = useState<'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE' | 'PRIMARY'>('LIVE');
   const isResultsMode = viewMode === 'LIVE' || viewMode === 'ARCHIVE' || viewMode === 'PRIMARY';
+  // BOARD pins the newest election like LIVE and needs an election selected.
+  const needsElection = isResultsMode || viewMode === 'BOARD';
+  const boardPinsLatest = viewMode === 'BOARD';
 
   // ── LIVE / ARCHIVE state ─────────────────────────────────────────────────
   const [selectedElectionId, setSelectedElectionId] = useState<string | null>(null);
@@ -119,11 +125,11 @@ export default function Home() {
   const { elections, isError: electionsError } = useElections();
 
   useEffect(() => {
-    if (!isResultsMode) return;
+    if (!needsElection) return;
     if (!elections || elections.length === 0) return;
 
     // Apply shared-link state (?e=&r=) once, before the LIVE pin below
-    if (!urlStateApplied.current) {
+    if (isResultsMode && !urlStateApplied.current) {
       urlStateApplied.current = true;
       const params = new URLSearchParams(window.location.search);
       const e = params.get('e');
@@ -136,7 +142,7 @@ export default function Home() {
       }
     }
 
-    if (viewMode === 'LIVE') {
+    if (viewMode === 'LIVE' || boardPinsLatest) {
       if (selectedElectionId !== elections[0].electionId) {
         setSelectedElectionId(elections[0].electionId);
       }
@@ -221,7 +227,29 @@ export default function Home() {
     isResultsMode ? selectedElectionId : null,
     isResultsMode ? selectedRaceId : null
   );
-  const { lastPublished } = useLastPublished(isResultsMode ? selectedElectionId : null);
+  const { lastPublished } = useLastPublished(needsElection ? selectedElectionId : null);
+
+  // ── BOARD mode: every race at once ───────────────────────────────────────
+  const { board, isLoading: boardLoading } = useElectionBoard(
+    viewMode === 'BOARD' ? selectedElectionId : null,
+    viewMode === 'BOARD'
+  );
+  const selectedElectionName = elections?.find(e => e.electionId === selectedElectionId)?.electionName;
+
+  function handleSelectBoardRace(raceId: string) {
+    const isLatest = !!elections && selectedElectionId === elections[0]?.electionId;
+    setViewMode(isLatest ? 'LIVE' : 'ARCHIVE');
+    setSelectedRaceId(raceId);
+    setSelectedGroupKey(null);
+    setSelectedWard(null);
+    setFocusedCandidate(null);
+  }
+
+  // ── COALITION mode: combined slate support by ward ───────────────────────
+  const [coalition, setCoalition] = useState<CoalitionUpdate>({ coalitionByWard: null, label: null });
+  useEffect(() => {
+    if (viewMode !== 'COALITION') setCoalition({ coalitionByWard: null, label: null });
+  }, [viewMode]);
 
   // ── Real turnout: selected election + comparison baseline ────────────────
   const comparisonElectionId = useMemo(
@@ -433,7 +461,10 @@ export default function Home() {
   return (
     <Layout
       sidebar={
-        viewMode === 'SIMULATE' ? (
+        viewMode === 'BOARD' ? null :
+        viewMode === 'COALITION' ? (
+          <CoalitionPanel elections={elections} onCoalitionUpdate={setCoalition} />
+        ) : viewMode === 'SIMULATE' ? (
           <SimulationsPanel
             whatIfClickedWard={simClickedWard}
             onClearWhatIfClickedWard={() => setSimClickedWard(null)}
@@ -508,6 +539,16 @@ export default function Home() {
       hasError={hasError}
     >
       <div className="relative w-full h-full">
+        {viewMode === 'BOARD' ? (
+          <Watchboard
+            board={board}
+            isLoading={boardLoading}
+            isLive={!!elections && selectedElectionId === elections[0]?.electionId}
+            electionName={selectedElectionName}
+            onSelectRace={handleSelectBoardRace}
+          />
+        ) : (
+        <>
         {isResultsMode && (
           <>
             <RaceSelector
@@ -543,9 +584,14 @@ export default function Home() {
           fitKey={
             viewMode === 'TRENDS'
               ? `shift|${shiftPair ? shiftPair.from.electionId + shiftPair.from.raceId + shiftPair.to.electionId + shiftPair.to.raceId : 'none'}`
-              : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}${viewMode === 'PRIMARY' ? `|${primaryTab}` : ''}`
+              : viewMode === 'COALITION'
+                ? `coalition|${coalition.coalitionByWard ? Object.keys(coalition.coalitionByWard).length : 0}`
+                : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}${viewMode === 'PRIMARY' ? `|${primaryTab}` : ''}`
           }
           planningByWard={planningByWard}
+          coalitionMode={viewMode === 'COALITION'}
+          coalitionByWard={viewMode === 'COALITION' ? (coalition.coalitionByWard ?? undefined) : undefined}
+          coalitionLabel={viewMode === 'COALITION' ? coalition.label : undefined}
           onReset={() => setSelectedWard(null)}
           focusedCandidate={isResultsMode ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}
@@ -555,6 +601,8 @@ export default function Home() {
           onWardClick={viewMode === 'SIMULATE' ? setSimClickedWard : undefined}
           simulateOverlayMode={viewMode === 'SIMULATE' ? simulateOverlayMode : undefined}
         />
+        </>
+        )}
       </div>
     </Layout>
   );
