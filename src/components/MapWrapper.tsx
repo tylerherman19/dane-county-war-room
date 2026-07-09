@@ -44,9 +44,11 @@ interface MapWrapperProps {
     coalitionMode?: boolean;
     coalitionByWard?: Record<string, number>;
     coalitionLabel?: string | null;
+    // Subtext under the coalition/target legend swatch (defaults to the slate copy)
+    coalitionSubtext?: string;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard, coalitionMode, coalitionByWard, coalitionLabel }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard, coalitionMode, coalitionByWard, coalitionLabel, coalitionSubtext }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -131,7 +133,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                             <div className="relative h-2 rounded-full" style={{ background: 'linear-gradient(to right, #fc4f30, #f0f0f0, #6d904f)' }}>
                                 <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#999] opacity-60" />
                             </div>
-                            <div className="text-[9px] text-[#999] mt-1.5">Combined slate vote share by ward</div>
+                            <div className="text-[9px] text-[#999] mt-1.5">{coalitionSubtext || 'Combined slate vote share by ward'}</div>
                         </>
                     ) : (
                         <div className="text-[11px] text-[#999]">Add candidates in the panel to build a coalition.</div>

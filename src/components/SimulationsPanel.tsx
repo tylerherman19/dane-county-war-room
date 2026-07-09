@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical, Layers, Users, TrendingDown, BarChart3 } from 'lucide-react';
+import { RotateCcw, ChevronDown, ChevronUp, X, FlaskConical, Layers, Users, TrendingDown, BarChart3, Download } from 'lucide-react';
 import {
     DistrictProjection,
     SimProjectionUpdate,
@@ -15,6 +15,7 @@ import {
 import { HistoricalRaceData } from '@/lib/historical-api-data';
 import { OverlayMode } from './MapOverlayControl';
 import { getDormantPoolByWard, rankCanvassWards, CanvassWard, getDropoffByWard, rankDropoffWards, DropoffWard, DropoffInfo } from '@/lib/dormant-voter-data';
+import { toCsv, downloadCsv, fileSlug } from '@/lib/csv';
 
 interface SimulationsPanelProps {
     whatIfClickedWard: { name: string; num: string } | null;
@@ -195,6 +196,40 @@ export default function SimulationsPanel({
             : dropoffData;
         return rankDropoffWards(filtered, 15);
     }, [dropoffData, selectedDistrict]);
+
+    // ── CSV export of the full (not just top-15) district-scoped lists ─────
+    const scopeName = selectedDistrict?.label ?? 'district';
+    const stamp = () => new Date().toISOString().slice(0, 10);
+
+    function exportCanvass() {
+        if (!dormantPoolData) return;
+        const districtWards = selectedDistrict?.wardKeys;
+        const filtered = districtWards
+            ? Object.fromEntries(Object.entries(dormantPoolData).filter(([k]) => districtWards.includes(k)))
+            : dormantPoolData;
+        const all = rankCanvassWards(filtered, Number.MAX_SAFE_INTEGER);
+        if (all.length === 0) return;
+        const csv = toCsv(
+            ['Rank', 'Ward', 'Ward #', 'Dormant voters', 'Priority'],
+            all.map((w, i) => [i + 1, w.displayName, w.wardNumber, w.dormantPool, w.priority]),
+        );
+        downloadCsv(`canvass-priority-${fileSlug(scopeName)}-${stamp()}`, csv);
+    }
+
+    function exportDropoff() {
+        if (!dropoffData) return;
+        const districtWards = selectedDistrict?.wardKeys;
+        const filtered = districtWards
+            ? Object.fromEntries(Object.entries(dropoffData).filter(([k]) => districtWards.includes(k)))
+            : dropoffData;
+        const all = rankDropoffWards(filtered, Number.MAX_SAFE_INTEGER);
+        if (all.length === 0) return;
+        const csv = toCsv(
+            ['Rank', 'Ward', 'Ward #', 'General turnout', 'Primary turnout', 'Dropoff', 'Dropoff %'],
+            all.map((w, i) => [i + 1, w.displayName, w.wardNumber, w.general, w.primary, w.dropoff, w.dropoffPct.toFixed(1)]),
+        );
+        downloadCsv(`primary-dropoff-${fileSlug(scopeName)}-${stamp()}`, csv);
+    }
 
     // ── Map projection update ──────────────────────────────────────────────
     const buildUpdate = useCallback((): SimProjectionUpdate => {
@@ -428,6 +463,15 @@ export default function SimulationsPanel({
                                 <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center gap-1.5">
                                     <Users className="w-3 h-3 text-[#008fd5]" />
                                     <span className="kicker text-[10px]">Top Canvass Wards</span>
+                                    {topCanvassWards.length > 0 && (
+                                        <button
+                                            onClick={exportCanvass}
+                                            className="ml-auto flex items-center gap-1 text-[10px] text-[#666] hover:text-[#222] transition-colors"
+                                            title="Download the full ranked list as CSV"
+                                        >
+                                            <Download className="w-3 h-3" /> CSV
+                                        </button>
+                                    )}
                                 </div>
                                 {topCanvassWards.length === 0 ? (
                                     <div className="p-3 text-xs text-[#999] text-center">Loading dormant voter data</div>
@@ -464,6 +508,15 @@ export default function SimulationsPanel({
                                 <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center gap-1.5">
                                     <TrendingDown className="w-3 h-3 text-[#a16207]" />
                                     <span className="kicker text-[10px]">Top Dropoff Wards</span>
+                                    {topDropoffWards.length > 0 && (
+                                        <button
+                                            onClick={exportDropoff}
+                                            className="ml-auto flex items-center gap-1 text-[10px] text-[#666] hover:text-[#222] transition-colors"
+                                            title="Download the full ranked list as CSV"
+                                        >
+                                            <Download className="w-3 h-3" /> CSV
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="px-3 py-2 border-b border-[#eeeeee] flex items-center gap-2 text-[10px] text-[#999]">
                                     <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 15%, 90%)' }} />

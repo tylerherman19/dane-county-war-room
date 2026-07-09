@@ -12,8 +12,8 @@ interface LayoutProps {
     elections?: Election[];
     selectedElectionId?: string | null;
     onSelectElection?: (id: string) => void;
-    viewMode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE' | 'PRIMARY';
-    onToggleViewMode: (mode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE' | 'PRIMARY') => void;
+    viewMode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'TARGET' | 'SIMULATE' | 'PRIMARY';
+    onToggleViewMode: (mode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'TARGET' | 'SIMULATE' | 'PRIMARY') => void;
     hasError?: boolean;
 }
 
@@ -71,6 +71,7 @@ export default function Layout({
         { id: 'ARCHIVE', label: 'Archive', short: 'Archive' },
         { id: 'TRENDS', label: 'Trends', short: 'Trends' },
         { id: 'COALITION', label: 'Coalition', short: 'Coal' },
+        { id: 'TARGET', label: 'Target', short: 'Target' },
         { id: 'SIMULATE', label: 'Simulate', short: 'Sim' },
         { id: 'PRIMARY', label: 'AD76 Primary', short: 'AD76' },
     ];

@@ -9,6 +9,7 @@ import RaceSelector from '@/components/RaceSelector';
 import RaceGroupSidebar from '@/components/RaceGroupSidebar';
 import Watchboard from '@/components/Watchboard';
 import CoalitionPanel, { CoalitionUpdate } from '@/components/CoalitionPanel';
+import TargetPanel, { TargetUpdate } from '@/components/TargetPanel';
 import {
   useElections,
   useRaces,
@@ -81,7 +82,7 @@ function defaultComparisonElection(elections: Election[], selectedId: string | n
 
 export default function Home() {
   // ── Top-level mode ───────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState<'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE' | 'PRIMARY'>('LIVE');
+  const [viewMode, setViewMode] = useState<'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'TARGET' | 'SIMULATE' | 'PRIMARY'>('LIVE');
   const isResultsMode = viewMode === 'LIVE' || viewMode === 'ARCHIVE' || viewMode === 'PRIMARY';
   // BOARD pins the newest election like LIVE and needs an election selected.
   const needsElection = isResultsMode || viewMode === 'BOARD';
@@ -249,6 +250,19 @@ export default function Home() {
   const [coalition, setCoalition] = useState<CoalitionUpdate>({ coalitionByWard: null, label: null });
   useEffect(() => {
     if (viewMode !== 'COALITION') setCoalition({ coalitionByWard: null, label: null });
+  }, [viewMode]);
+
+  // ── TARGET mode: bridge the last-built coalition into turf targeting ──────
+  // The CoalitionPanel unmounts (and clears `coalition`) when leaving COALITION,
+  // so we retain the most recent non-empty slate here as the base-strength input.
+  const [baseCoalition, setBaseCoalition] = useState<CoalitionUpdate>({ coalitionByWard: null, label: null });
+  useEffect(() => {
+    if (coalition.coalitionByWard) setBaseCoalition(coalition);
+  }, [coalition]);
+
+  const [targetUpdate, setTargetUpdate] = useState<TargetUpdate>({ scoreByWard: null, label: null });
+  useEffect(() => {
+    if (viewMode !== 'TARGET') setTargetUpdate({ scoreByWard: null, label: null });
   }, [viewMode]);
 
   // ── Real turnout: selected election + comparison baseline ────────────────
@@ -464,6 +478,13 @@ export default function Home() {
         viewMode === 'BOARD' ? null :
         viewMode === 'COALITION' ? (
           <CoalitionPanel elections={elections} onCoalitionUpdate={setCoalition} />
+        ) : viewMode === 'TARGET' ? (
+          <TargetPanel
+            coalition={baseCoalition}
+            districtFilter={districtFilter}
+            onDistrictChange={setDistrictFilter}
+            onTargetUpdate={setTargetUpdate}
+          />
         ) : viewMode === 'SIMULATE' ? (
           <SimulationsPanel
             whatIfClickedWard={simClickedWard}
@@ -586,14 +607,29 @@ export default function Home() {
               ? `shift|${shiftPair ? shiftPair.from.electionId + shiftPair.from.raceId + shiftPair.to.electionId + shiftPair.to.raceId : 'none'}`
               : viewMode === 'COALITION'
                 ? `coalition|${coalition.coalitionByWard ? Object.keys(coalition.coalitionByWard).length : 0}`
+                : viewMode === 'TARGET'
+                ? `target|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}|${targetUpdate.scoreByWard ? Object.keys(targetUpdate.scoreByWard).length : 0}`
                 : viewMode === 'SIMULATE'
                   ? `sim|${simUpdate.highlightedWardKeys.size}|${[...simUpdate.highlightedWardKeys].sort()[0] ?? 'none'}`
                   : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}${viewMode === 'PRIMARY' ? `|${primaryTab}` : ''}`
           }
           planningByWard={planningByWard}
-          coalitionMode={viewMode === 'COALITION'}
-          coalitionByWard={viewMode === 'COALITION' ? (coalition.coalitionByWard ?? undefined) : undefined}
-          coalitionLabel={viewMode === 'COALITION' ? coalition.label : undefined}
+          coalitionMode={viewMode === 'COALITION' || viewMode === 'TARGET'}
+          coalitionByWard={
+            viewMode === 'COALITION'
+              ? (coalition.coalitionByWard ?? undefined)
+              : viewMode === 'TARGET'
+                ? (targetUpdate.scoreByWard ?? undefined)
+                : undefined
+          }
+          coalitionLabel={
+            viewMode === 'COALITION'
+              ? coalition.label
+              : viewMode === 'TARGET'
+                ? targetUpdate.label
+                : undefined
+          }
+          coalitionSubtext={viewMode === 'TARGET' ? 'Higher = better targeting turf' : undefined}
           onReset={() => setSelectedWard(null)}
           focusedCandidate={isResultsMode ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}
