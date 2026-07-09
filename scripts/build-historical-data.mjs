@@ -135,8 +135,11 @@ for (const election of recent) {
     for (const race of relevant) {
         const raceType = detectRaceType(race.RaceName);
 
-        // For Alder races: only keep City of Madison aldermanic seats
-        if (raceType === 'Alder' && !race.RaceName.toLowerCase().includes('madison')) continue;
+        // Alder and Mayor projections are Madison-specific — the war room covers
+        // the City of Madison, so drop other municipalities' aldermanic and
+        // mayoral races (otherwise "Mayor of Madison" blends in Fitchburg,
+        // Middleton, Sun Prairie, etc. and understates Madison turnout).
+        if ((raceType === 'Alder' || raceType === 'Mayor') && !race.RaceName.toLowerCase().includes('madison')) continue;
 
         // Fetch party info from race-level results so we can sign the historical margin
         // (positive = Dem lead, negative = GOP lead) to match Map.tsx overlay logic.

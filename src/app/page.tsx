@@ -586,7 +586,9 @@ export default function Home() {
               ? `shift|${shiftPair ? shiftPair.from.electionId + shiftPair.from.raceId + shiftPair.to.electionId + shiftPair.to.raceId : 'none'}`
               : viewMode === 'COALITION'
                 ? `coalition|${coalition.coalitionByWard ? Object.keys(coalition.coalitionByWard).length : 0}`
-                : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}${viewMode === 'PRIMARY' ? `|${primaryTab}` : ''}`
+                : viewMode === 'SIMULATE'
+                  ? `sim|${simUpdate.highlightedWardKeys.size}|${[...simUpdate.highlightedWardKeys].sort()[0] ?? 'none'}`
+                  : `${selectedRaceId ?? 'none'}|${districtFilter ? districtFilter.kind + districtFilter.num : 'all'}${viewMode === 'PRIMARY' ? `|${primaryTab}` : ''}`
           }
           planningByWard={planningByWard}
           coalitionMode={viewMode === 'COALITION'}

@@ -221,12 +221,19 @@ export default function SimulationsPanel({
         onProjectionUpdate(buildUpdate());
     }, [buildUpdate]);
 
-    // Reset What If when race changes
+    // Reset What If when the race changes, and point it at the newly selected
+    // district's most recent race. The projection overlay renders through
+    // whatIfPrecinctResults, so clearing the key to '' (and relying on the
+    // length-keyed auto-select effect) blanks the map whenever two districts
+    // have the same election count — e.g. switching between alder districts.
     useEffect(() => {
         setWardList([]);
-        setWhatIfRaceKey('');
         setGlobalWhatIfMult(100);
         setYourCandidate('');
+        setWhatIfRaceKey(
+            allElections.length > 0 ? `${allElections[0].electionId}|${allElections[0].raceId}` : ''
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedKey]);
 
     // ── Full simulation reset ──────────────────────────────────────────────
