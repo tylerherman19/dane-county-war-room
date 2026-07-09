@@ -38,9 +38,13 @@ interface MapWrapperProps {
     shiftLabels?: { from: string; to: string } | null;
     // LIVE/ARCHIVE: benchmark overlay option (SHIFT layer selectable from the control)
     benchmarkLabel?: string | null;
+    // COALITION mode: combined slate support (0-100) per ward
+    coalitionMode?: boolean;
+    coalitionByWard?: Record<string, number>;
+    coalitionLabel?: string | null;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, coalitionMode, coalitionByWard, coalitionLabel }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -99,16 +103,36 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         if (!trendsMode && overlayMode === 'SHIFT' && !shiftByWard) setOverlayMode('NONE');
     }, [overlayMode, shiftByWard, trendsMode]);
 
-    // SIMULATE forces its own overlay; TRENDS forces the SHIFT overlay
+    // SIMULATE forces its own overlay; TRENDS forces SHIFT; COALITION forces COALITION
     const effectiveOverlayMode: OverlayMode = simulateMode
         ? (simulateOverlayMode ?? 'PROJECTION')
         : trendsMode
             ? 'SHIFT'
-            : overlayMode;
+            : coalitionMode
+                ? 'COALITION'
+                : overlayMode;
 
     return (
         <div className="relative w-full h-full">
-            {!simulateMode && !trendsMode && (
+            {coalitionMode && (
+                <div className="absolute top-3 md:top-4 right-3 md:right-4 z-[1000] w-56 bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-xl rounded-xl p-3">
+                    <div className="text-xs font-bold text-slate-300 mb-1 truncate">{coalitionLabel || 'Coalition'}</div>
+                    {coalitionByWard && Object.keys(coalitionByWard).length > 0 ? (
+                        <>
+                            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                                <span>Weak</span><span>50%</span><span>Strong</span>
+                            </div>
+                            <div className="relative h-2 rounded-full bg-gradient-to-r from-red-500 via-slate-200 to-green-500">
+                                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400 opacity-60" />
+                            </div>
+                            <div className="text-[9px] text-slate-500 mt-1.5">Combined slate vote share by ward</div>
+                        </>
+                    ) : (
+                        <div className="text-[11px] text-slate-500">Add candidates in the panel to build a coalition.</div>
+                    )}
+                </div>
+            )}
+            {!simulateMode && !trendsMode && !coalitionMode && (
                 <MapOverlayControl
                     currentMode={overlayMode}
                     onChange={handleOverlayChange}
@@ -135,6 +159,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 fitKey={fitKey}
                 shiftByWard={shiftByWard}
                 shiftLabels={shiftLabels}
+                coalitionByWard={coalitionMode ? coalitionByWard : undefined}
+                coalitionLabel={coalitionMode ? coalitionLabel : undefined}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}

@@ -7,12 +7,14 @@ import {
     getRaceResults,
     getPrecinctResults,
     getElectionTurnout,
+    getElectionBoard,
     Election,
     Race,
     RaceResult,
     PrecinctResult,
     LastPublished,
-    ElectionTurnout
+    ElectionTurnout,
+    BoardRace
 } from '@/lib/api';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -74,6 +76,23 @@ export function usePrecinctResults(electionId: string | null, raceId: string | n
     );
     return {
         precinctResults: data,
+        isLoading,
+        isError: error
+    };
+}
+
+/**
+ * All races for an election in one bulk call, for the multi-race watchboard.
+ * `live` enables the 30s refresh so the board updates on election night.
+ */
+export function useElectionBoard(electionId: string | null, live = false) {
+    const { data, error, isLoading } = useSWR<BoardRace[]>(
+        electionId ? ['electionBoard', electionId] : null,
+        ([_, id]) => getElectionBoard(id as string),
+        live ? { refreshInterval: REFRESH_INTERVAL } : { revalidateOnFocus: false }
+    );
+    return {
+        board: data,
         isLoading,
         isError: error
     };

@@ -12,8 +12,8 @@ interface LayoutProps {
     elections?: Election[];
     selectedElectionId?: string | null;
     onSelectElection?: (id: string) => void;
-    viewMode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE';
-    onToggleViewMode: (mode: 'LIVE' | 'ARCHIVE' | 'TRENDS' | 'SIMULATE') => void;
+    viewMode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE';
+    onToggleViewMode: (mode: 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'COALITION' | 'SIMULATE') => void;
     hasError?: boolean;
 }
 
@@ -31,6 +31,16 @@ export default function Layout({
     const [isDark, setIsDark] = useState(true);
     const [relativeTime, setRelativeTime] = useState<string | null>(null);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [countdown, setCountdown] = useState(30);
+
+    // Countdown to the next auto-refresh (data polls every 30s in live views)
+    const isLiveView = viewMode === 'LIVE' || viewMode === 'BOARD';
+    useEffect(() => {
+        if (!isLiveView) return;
+        setCountdown(30);
+        const id = setInterval(() => setCountdown(c => (c <= 1 ? 30 : c - 1)), 1000);
+        return () => clearInterval(id);
+    }, [isLiveView]);
 
     useEffect(() => {
         document.documentElement.classList.toggle('dark', isDark);
@@ -62,8 +72,10 @@ export default function Layout({
 
     const modeConfig = {
         LIVE: { label: 'Live', short: 'Live', active: 'bg-red-600 text-white shadow-lg' },
+        BOARD: { label: 'Board', short: 'Brd', active: 'bg-amber-600 text-white shadow-lg' },
         ARCHIVE: { label: 'Archive', short: 'Arc', active: 'bg-blue-600 text-white shadow-lg' },
         TRENDS: { label: 'Trends', short: 'Trnd', active: 'bg-emerald-600 text-white shadow-lg' },
+        COALITION: { label: 'Coalition', short: 'Coal', active: 'bg-fuchsia-600 text-white shadow-lg' },
         SIMULATE: { label: 'Simulate', short: 'Sim', active: 'bg-violet-600 text-white shadow-lg' },
     };
 
@@ -119,6 +131,15 @@ export default function Layout({
                             Updated <span className="text-slate-400">{relativeTime}</span>
                         </div>
                     )}
+                    {isLiveView && (
+                        <div className="hidden md:flex items-center gap-1.5 text-xs font-mono whitespace-nowrap" title="Next automatic refresh">
+                            <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                            </span>
+                            <span className="text-slate-500">refresh <span className="text-emerald-400 tabular-nums">{countdown}s</span></span>
+                        </div>
+                    )}
                     <button
                         onClick={() => setIsDark(!isDark)}
                         className="p-1.5 md:p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors shrink-0"
@@ -156,12 +177,14 @@ export default function Layout({
                 </main>
 
                 {/* Desktop sidebar */}
-                <aside className="hidden md:block w-96 shrink-0 z-40 shadow-2xl relative overflow-hidden">
-                    {sidebar}
-                </aside>
+                {sidebar && (
+                    <aside className="hidden md:block w-96 shrink-0 z-40 shadow-2xl relative overflow-hidden">
+                        {sidebar}
+                    </aside>
+                )}
 
                 {/* Mobile sidebar backdrop */}
-                {mobileSidebarOpen && (
+                {sidebar && mobileSidebarOpen && (
                     <div
                         className="md:hidden fixed inset-0 z-[3000] bg-black/60 backdrop-blur-sm"
                         onClick={() => setMobileSidebarOpen(false)}
@@ -170,6 +193,7 @@ export default function Layout({
                 )}
 
                 {/* Mobile sidebar bottom sheet */}
+                {sidebar && (
                 <aside
                     className={`md:hidden fixed bottom-0 left-0 right-0 z-[3001] transition-transform duration-300 ease-out ${
                         mobileSidebarOpen ? 'translate-y-0' : 'translate-y-full'
@@ -200,9 +224,11 @@ export default function Layout({
                         {sidebar}
                     </div>
                 </aside>
+                )}
             </div>
 
             {/* Mobile FAB — toggle results panel */}
+            {sidebar && (
             <button
                 className="md:hidden fixed bottom-5 right-4 z-[2999] flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold text-white transition-all active:scale-95"
                 style={{
@@ -217,6 +243,7 @@ export default function Layout({
                 <BarChart2 className="w-4 h-4" />
                 {mobileSidebarOpen ? 'Close' : 'Results'}
             </button>
+            )}
         </div>
     );
 }

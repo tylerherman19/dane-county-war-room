@@ -53,6 +53,22 @@
   animation: pulse-highlight 1s infinite;
 }
 
+/* Watchboard: flash a race card when its result changes on refresh */
+@keyframes board-flash-anim {
+  0% {
+    background-color: rgba(16, 185, 129, 0.28);
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.7), 0 0 22px rgba(16, 185, 129, 0.35);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.board-flash {
+  animation: board-flash-anim 2.2s ease-out;
+}
+
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
