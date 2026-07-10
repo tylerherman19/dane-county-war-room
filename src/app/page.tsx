@@ -484,6 +484,7 @@ export default function Home() {
             districtFilter={districtFilter}
             onDistrictChange={setDistrictFilter}
             onTargetUpdate={setTargetUpdate}
+            onClearCoalition={() => setBaseCoalition({ coalitionByWard: null, label: null })}
           />
         ) : viewMode === 'SIMULATE' ? (
           <SimulationsPanel

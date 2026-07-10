@@ -18,6 +18,8 @@ interface TargetPanelProps {
     districtFilter: DistrictFilter | null;
     onDistrictChange: (f: DistrictFilter | null) => void;
     onTargetUpdate: (u: TargetUpdate) => void;
+    /** Drop the retained coalition, returning to raw-dormant Canvass ranking. */
+    onClearCoalition: () => void;
 }
 
 const TIER_STYLE: Record<TargetTier, string> = {
@@ -33,6 +35,7 @@ export default function TargetPanel({
     districtFilter,
     onDistrictChange,
     onTargetUpdate,
+    onClearCoalition,
 }: TargetPanelProps) {
     const [dormantPool, setDormantPool] = useState<Record<string, number> | null>(null);
     const [loadError, setLoadError] = useState(false);
@@ -125,8 +128,17 @@ export default function TargetPanel({
                     <div className="flex items-start gap-2">
                         <Users className={`w-4 h-4 shrink-0 mt-0.5 ${result?.mode === 'MOBILIZE' ? 'text-[#008fd5]' : 'text-[#999]'}`} />
                         {result?.mode === 'MOBILIZE' ? (
-                            <div className="min-w-0">
-                                <div className="text-xs font-bold text-[#222]">Mobilize mode</div>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="text-xs font-bold text-[#222]">Mobilize mode</div>
+                                    <button
+                                        onClick={onClearCoalition}
+                                        className="shrink-0 text-[10px] text-[#666] hover:text-[#c73a1d] transition-colors"
+                                        title="Drop the coalition weighting and rank by raw dormant pool"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
                                 <div className="text-[11px] text-[#666] mt-0.5">
                                     Weighting by <span className="font-semibold">{coalition.label ?? 'your coalition'}</span>.
                                     Score = dormant pool × base support. Top wards are your softest turnout.

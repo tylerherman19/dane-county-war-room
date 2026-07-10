@@ -22,7 +22,7 @@ export function toCsv(headers: string[], rows: Cell[][]): string {
 /** Trigger a browser download of `csv` as `filename`. No-op outside the browser. */
 export function downloadCsv(filename: string, csv: string): void {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    // Prepend a BOM so Excel opens UTF-8 correctly.
+    // Prepend a UTF-8 BOM (U+FEFF) so Excel opens the file as UTF-8.
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
