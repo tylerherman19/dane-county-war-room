@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Target, Download, MapPin, Info } from 'lucide-react';
-import { fetchHistoricalData, HistoricalRaceData } from '@/lib/historical-api-data';
-import { buildTurnoutProfile, TurnoutTier } from '@/lib/target-data';
+import { Election, ElectionTurnout, getElectionTurnout } from '@/lib/api';
+import { buildTurnoutProfile, pickTurnoutElections, TurnoutTier } from '@/lib/target-data';
 import { DistrictFilter, DistrictKind, getDistrictOptions, getWardsInDistrict, districtLabel } from '@/lib/districts';
 import { toCsv, downloadCsv, fileSlug } from '@/lib/csv';
 
@@ -13,6 +13,7 @@ export interface TargetUpdate {
 }
 
 interface TargetPanelProps {
+    elections: Election[] | undefined;
     districtFilter: DistrictFilter | null;
     onDistrictChange: (f: DistrictFilter | null) => void;
     onTargetUpdate: (u: TargetUpdate) => void;
@@ -31,23 +32,53 @@ const TIER_STYLE: Record<TurnoutTier, string> = {
 
 const DISTRICT_VALUE_SEP = ':';
 
+/** ElectionTurnout → ballots cast by pipe-form ward key ("City of Madison|46"). */
+function toWardMap(t: ElectionTurnout | null): Record<string, number> {
+    const m: Record<string, number> = {};
+    if (!t) return m;
+    t.byWard.forEach(w => {
+        const k = `${w.precinctName}|${parseInt(w.wardNumber) || 0}`;
+        m[k] = (m[k] ?? 0) + w.ballotsCast;
+    });
+    return m;
+}
+
 export default function TargetPanel({
+    elections,
     districtFilter,
     onDistrictChange,
     onTargetUpdate,
 }: TargetPanelProps) {
-    const [data, setData] = useState<Map<string, HistoricalRaceData[]> | null>(null);
-    const [loadError, setLoadError] = useState(false);
+    const [peakTurnout, setPeakTurnout] = useState<Record<string, number> | null>(null);
+    const [offTurnout, setOffTurnout] = useState<Record<string, number> | null>(null);
     const [sort, setSort] = useState<'CONSISTENT' | 'FALLOFF'>('CONSISTENT');
+    const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
+    // Which elections anchor the comparison.
+    const picked = useMemo(
+        () => (elections ? pickTurnoutElections(elections) : { peak: null, offCycle: null }),
+        [elections]
+    );
+
+    // Fetch real ballots-cast turnout for both anchor elections.
     useEffect(() => {
-        fetchHistoricalData()
-            .then(d => {
-                if (d.size === 0) setLoadError(true);
-                else setData(d);
+        if (!elections) return;
+        if (!picked.peak || !picked.offCycle) {
+            setStatus('error');
+            return;
+        }
+        let cancelled = false;
+        setStatus('loading');
+        Promise.all([getElectionTurnout(picked.peak.electionId), getElectionTurnout(picked.offCycle.electionId)])
+            .then(([peak, off]) => {
+                if (cancelled) return;
+                setPeakTurnout(toWardMap(peak));
+                setOffTurnout(toWardMap(off));
+                setStatus(peak && off ? 'ready' : 'error');
             })
-            .catch(() => setLoadError(true));
-    }, []);
+            .catch(() => { if (!cancelled) setStatus('error'); });
+        return () => { cancelled = true; };
+    }, [elections, picked.peak, picked.offCycle]);
 
     const districtWardKeys = useMemo(
         () => (districtFilter ? getWardsInDistrict(districtFilter) : null),
@@ -55,13 +86,18 @@ export default function TargetPanel({
     );
 
     const profile = useMemo(() => {
-        if (!data) return null;
-        return buildTurnoutProfile(data, districtWardKeys);
-    }, [data, districtWardKeys]);
+        if (!peakTurnout || !offTurnout || !picked.peak || !picked.offCycle) return null;
+        return buildTurnoutProfile({
+            peakByWard: peakTurnout,
+            offByWard: offTurnout,
+            peakLabel: picked.peak.electionName,
+            offCycleLabel: picked.offCycle.electionName,
+            districtWardKeys,
+        });
+    }, [peakTurnout, offTurnout, picked.peak, picked.offCycle, districtWardKeys]);
 
     const scopeLabel = districtFilter ? districtLabel(districtFilter) : 'All wards (county)';
 
-    // Ranked either most-consistent-first or biggest-falloff-first.
     const rankedWards = useMemo(() => {
         if (!profile) return [];
         return sort === 'CONSISTENT' ? profile.wards : [...profile.wards].reverse();
@@ -79,10 +115,7 @@ export default function TargetPanel({
     const districtOptions = useMemo(() => getDistrictOptions(), []);
 
     function handleDistrictSelect(value: string) {
-        if (value === '') {
-            onDistrictChange(null);
-            return;
-        }
+        if (value === '') { onDistrictChange(null); return; }
         const [kind, num] = value.split(DISTRICT_VALUE_SEP);
         onDistrictChange({ kind: kind as DistrictKind, num });
     }
@@ -91,14 +124,7 @@ export default function TargetPanel({
         if (!profile || profile.wards.length === 0) return;
         const headers = ['Rank', 'Ward', 'Ward #', `${profile.peakLabel} ballots`, `${profile.offCycleLabel} ballots`, 'Consistency %', 'Falloff %', 'Tier'];
         const rows = rankedWards.map((w, i) => [
-            i + 1,
-            w.displayName,
-            w.wardNumber,
-            w.presidential,
-            w.offCycle,
-            w.consistency,
-            w.falloff,
-            TIER_LABEL[w.tier],
+            i + 1, w.displayName, w.wardNumber, w.presidential, w.offCycle, w.consistency, w.falloff, TIER_LABEL[w.tier],
         ]);
         const csv = toCsv(headers, rows);
         const stamp = new Date().toISOString().slice(0, 10);
@@ -117,13 +143,13 @@ export default function TargetPanel({
                         <Target className="w-3.5 h-3.5" /> Turnout Targeting
                     </h3>
                     <p className="text-xs text-[#666]">
-                        How consistently each ward votes: off-cycle turnout as a share of its presidential
-                        turnout. High = reliable base that votes in every election. Low = shows up only for
-                        president and falls off in primaries.
+                        How consistently each ward votes: total ballots cast off-cycle as a share of its
+                        presidential turnout. High = reliable base that votes in every election. Low = shows
+                        up only for president and falls off in primaries.
                     </p>
                     {profile && profile.wards.length > 0 && (
                         <p className="text-[10px] text-[#999] mt-1.5">
-                            {profile.offCycleLabel} ÷ {profile.peakLabel}, per ward.
+                            {profile.offCycleLabel} ÷ {profile.peakLabel} ballots cast, per ward.
                         </p>
                     )}
                 </div>
@@ -208,8 +234,8 @@ export default function TargetPanel({
                         <div className="px-3 py-2 border-b border-[#e0e0e0] bg-[#fafafa] flex items-center text-[10px] font-bold uppercase tracking-[0.06em] text-[#999]">
                             <span className="w-5 text-right shrink-0">#</span>
                             <span className="flex-1 pl-2">Ward</span>
-                            <span className="w-12 text-right shrink-0" title={profile.peakLabel}>Pres</span>
-                            <span className="w-12 text-right shrink-0" title={profile.offCycleLabel}>Spring</span>
+                            <span className="w-12 text-right shrink-0">Pres</span>
+                            <span className="w-12 text-right shrink-0">Spring</span>
                             <span className="w-12 text-right shrink-0">Cons.</span>
                         </div>
                         <div className="divide-y divide-[#eeeeee] max-h-[420px] overflow-y-auto">
@@ -222,35 +248,28 @@ export default function TargetPanel({
                                             {TIER_LABEL[w.tier]}
                                         </span>
                                     </div>
-                                    <span className="w-12 text-right shrink-0 text-[11px] text-[#666] num">
-                                        {w.presidential.toLocaleString()}
-                                    </span>
-                                    <span className="w-12 text-right shrink-0 text-[11px] text-[#666] num">
-                                        {w.offCycle.toLocaleString()}
-                                    </span>
-                                    <span className="w-12 text-right shrink-0 text-xs font-bold num text-[#008fd5]">
-                                        {w.consistency}%
-                                    </span>
+                                    <span className="w-12 text-right shrink-0 text-[11px] text-[#666] num">{w.presidential.toLocaleString()}</span>
+                                    <span className="w-12 text-right shrink-0 text-[11px] text-[#666] num">{w.offCycle.toLocaleString()}</span>
+                                    <span className="w-12 text-right shrink-0 text-xs font-bold num text-[#008fd5]">{w.consistency}%</span>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* Empty / loading / error states */}
-                {loadError && (
+                {/* Loading / error / empty states */}
+                {status === 'loading' && !profile && (
+                    <div className="text-center text-[#999] text-xs px-6 py-6">Loading turnout…</div>
+                )}
+                {status === 'error' && (
                     <div className="text-center text-[#c73a1d] text-xs px-6 py-6">
-                        Couldn&apos;t load historical turnout data.
+                        Couldn&apos;t load ballots-cast turnout for the anchor elections.
                     </div>
                 )}
-                {!loadError && !data && (
-                    <div className="text-center text-[#999] text-xs px-6 py-6">Loading turnout history…</div>
-                )}
-                {!loadError && data && profile && profile.wards.length === 0 && (
+                {status === 'ready' && profile && profile.wards.length === 0 && (
                     <div className="text-center text-[#999] text-xs px-6 py-8 leading-relaxed flex flex-col items-center gap-2">
                         <Info className="w-4 h-4" />
-                        No wards with both presidential and spring turnout in this scope. Turnout history
-                        currently covers Madison wards — try a Madison district or county-wide.
+                        No wards with ballots cast in both elections in this scope.
                     </div>
                 )}
             </div>

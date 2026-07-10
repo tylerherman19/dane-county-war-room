@@ -473,6 +473,7 @@ export default function Home() {
           <CoalitionPanel elections={elections} onCoalitionUpdate={setCoalition} />
         ) : viewMode === 'TARGET' ? (
           <TargetPanel
+            elections={elections}
             districtFilter={districtFilter}
             onDistrictChange={setDistrictFilter}
             onTargetUpdate={setTargetUpdate}

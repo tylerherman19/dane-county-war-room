@@ -1,26 +1,22 @@
 // Turnout targeting model — how consistently each ward votes.
 //
-// Campaigns want to know which wards vote at a high rate across ALL elections
-// vs. which only show up for president and fall off in lower-profile races
-// (primaries, spring elections). We measure that per ward as:
+// consistency % = off-cycle ballots cast ÷ presidential ballots cast, per ward
 //
-//   consistency % = off-cycle turnout ÷ presidential turnout
+//   • Peak      = total ballots cast in the most recent presidential general.
+//   • Off-cycle = total ballots cast in the most recent regular Spring Election.
 //
-//   • Peak      = ballots in the most recent presidential general (the ceiling
-//                 of who's registered and votes).
-//   • Off-cycle = ballots in the most recent regular Spring Election (who
-//                 actually shows up when there's no presidential race on top).
+// Both come from the county's "BALLOTS CAST - TOTAL" tally (getElectionTurnout),
+// so it's true ballots cast — every voter counted once, regardless of which
+// races they voted in — not a single down-ballot race's votes. That measures
+// real turnout falloff, and because ballots-cast covers every ward it works
+// county-wide, not just where a local race happened to be contested.
 //
-// High % = consistent voters (reliable base, vote even in off-cycle races).
-// Low  % = presidential-only (big falloff, untapped in a primary/spring race).
+// High % = reliable base that votes in every election.
+// Low  % = presidential-only (big falloff in primaries / spring elections).
 //
-// The data is ballot counts only — there is no registration denominator — so
-// this is a relative rate (share of a ward's own presidential turnout), not a
-// share of registered voters. Ward keys arrive slug-form ("madison-city-1")
-// and are emitted pipe-form ("City of Madison|1") to match the map/districts.
-
-import { fetchHistoricalData, HistoricalRaceData } from './historical-api-data';
-import { wardKeyToPrecinctInfo } from './projections-data';
+// There is no registration denominator in the county data, so this is a
+// presidential-relative rate, not turnout as a share of registered voters.
+// Ward keys are pipe-form ("City of Madison|1") to match the map and districts.
 
 export type TurnoutTier = 'CONSISTENT' | 'MIXED' | 'PRESIDENTIAL_ONLY';
 
@@ -28,8 +24,8 @@ export interface TurnoutWard {
     wardKey: string;       // pipe form: "City of Madison|46"
     displayName: string;   // "City of Madison Ward 46"
     wardNumber: string;
-    presidential: number;  // peak ballots
-    offCycle: number;      // off-cycle (spring) ballots
+    presidential: number;  // peak ballots cast
+    offCycle: number;      // off-cycle ballots cast
     consistency: number;   // 0–100, off-cycle as % of presidential (capped 100)
     falloff: number;       // 100 − consistency
     tier: TurnoutTier;
@@ -38,33 +34,24 @@ export interface TurnoutWard {
 export interface TurnoutProfile {
     wards: TurnoutWard[];                  // sorted by consistency, highest first
     scoreByWard: Record<string, number>;   // pipe key → consistency, for the map overlay
-    peakLabel: string;                     // e.g. "2024 Presidential"
+    peakLabel: string;                     // e.g. "2024 General Election"
     offCycleLabel: string;                 // e.g. "2025 Spring Election"
     avgConsistency: number;                // mean consistency across wards
 }
 
-// A ward whose presidential turnout is below this is almost always a boundary
-// sliver or a renumbering artifact across cycles — excluded to keep ratios sane.
+export interface BuildTurnoutInput {
+    /** ballots cast by pipe-form ward key in the presidential general. */
+    peakByWard: Record<string, number>;
+    /** ballots cast by pipe-form ward key in the off-cycle spring election. */
+    offByWard: Record<string, number>;
+    peakLabel: string;
+    offCycleLabel: string;
+    districtWardKeys?: Set<string> | null;
+}
+
+// A ward whose presidential ballots are below this is a boundary sliver or a
+// split/merged precinct we can't reconcile — excluded to keep ratios sane.
 const MIN_PEAK_BALLOTS = 50;
-
-// Prefer the newest spring election covering at least this many peak wards, so
-// the off-cycle map lines up with the presidential map's ward numbering.
-const MIN_OFFCYCLE_COVERAGE = 100;
-
-/** Aggregate per-ward ballots (max across the election's races) for one election. */
-function aggregateElection(races: HistoricalRaceData[]): Record<string, number> {
-    const out: Record<string, number> = {};
-    for (const race of races) {
-        for (const [wardKey, wr] of race.wardResults) {
-            out[wardKey] = Math.max(out[wardKey] ?? 0, wr.totalVotes);
-        }
-    }
-    return out;
-}
-
-function yearOf(name: string): string {
-    return name.match(/\b(19|20)\d{2}\b/)?.[0] ?? '';
-}
 
 function tierForRank(index: number, total: number): TurnoutTier {
     if (index < total / 3) return 'CONSISTENT';
@@ -72,88 +59,39 @@ function tierForRank(index: number, total: number): TurnoutTier {
     return 'PRESIDENTIAL_ONLY';
 }
 
+/** "City of Madison|46" → "City of Madison Ward 46". */
+function displayFromKey(wardKey: string): { displayName: string; wardNumber: string } {
+    const [muni, ward] = wardKey.split('|');
+    return { displayName: `${muni} Ward ${ward}`, wardNumber: ward ?? '' };
+}
+
 /**
- * Build the turnout-consistency profile for every ward we can measure.
- * Pure aside from the cached historical fetch the caller passes in.
+ * Build the turnout-consistency profile from two ballots-cast maps.
+ * Pure — safe to call in a useMemo.
  */
-export function buildTurnoutProfile(
-    data: Map<string, HistoricalRaceData[]>,
-    districtWardKeys?: Set<string> | null,
-): TurnoutProfile {
-    const empty: TurnoutProfile = { wards: [], scoreByWard: {}, peakLabel: '', offCycleLabel: '', avgConsistency: 0 };
+export function buildTurnoutProfile({
+    peakByWard,
+    offByWard,
+    peakLabel,
+    offCycleLabel,
+    districtWardKeys,
+}: BuildTurnoutInput): TurnoutProfile {
+    const empty: TurnoutProfile = { wards: [], scoreByWard: {}, peakLabel, offCycleLabel, avgConsistency: 0 };
 
-    const allRaces = Array.from(data.values()).flat();
-
-    // Peak: most recent presidential general.
-    const presidentials = (data.get('Presidential') ?? [])
-        .filter(r => /General Election/.test(r.electionName))
-        .sort((a, b) => b.electionDate.localeCompare(a.electionDate));
-    const peakRace = presidentials[0] ?? (data.get('Presidential') ?? [])[0];
-    if (!peakRace) return empty;
-    const peakByWard: Record<string, number> = {};
-    for (const [wk, wr] of peakRace.wardResults) peakByWard[wk] = wr.totalVotes;
-
-    // Off-cycle: a plain Spring Election (no presidential preference on the
-    // ballot). Ward numbering drifts across redistricting cycles, so match the
-    // presidential to the NEWEST spring with solid coverage (nearest numbering)
-    // rather than the biggest — an old county-wide spring has more ward rows but
-    // a stale ward map, which produces garbage ratios.
-    const peakYear = parseInt(yearOf(peakRace.electionName)) || 0;
-    const springNames = Array.from(
-        new Set(
-            allRaces
-                .map(r => r.electionName)
-                .filter(n => /^\d{4} Spring Election$/.test(n)),
-        ),
-    )
-        .sort((a, b) => yearOf(b).localeCompare(yearOf(a)))
-        .filter(n => Math.abs((parseInt(yearOf(n)) || 0) - peakYear) <= 3);
-
-    const overlapFor = (agg: Record<string, number>) =>
-        Object.keys(agg).filter(wk => (peakByWard[wk] ?? 0) >= MIN_PEAK_BALLOTS).length;
-
-    let bestOff: Record<string, number> | null = null;
-    let bestName = '';
-    let fallbackOff: Record<string, number> | null = null;
-    let fallbackName = '';
-    let fallbackOverlap = -1;
-    for (const name of springNames) {
-        const agg = aggregateElection(allRaces.filter(r => r.electionName === name));
-        const overlap = overlapFor(agg);
-        // Track the best-covered spring as a fallback if none clear the floor.
-        if (overlap > fallbackOverlap) {
-            fallbackOverlap = overlap;
-            fallbackOff = agg;
-            fallbackName = name;
-        }
-        // Newest-first: take the first spring that covers enough wards.
-        if (overlap >= MIN_OFFCYCLE_COVERAGE) {
-            bestOff = agg;
-            bestName = name;
-            break;
-        }
-    }
-    if (!bestOff) { bestOff = fallbackOff; bestName = fallbackName; }
-    if (!bestOff) return empty;
-
-    // Compute consistency per ward, dropping artifacts.
     type Row = { wardKey: string; displayName: string; wardNumber: string; presidential: number; offCycle: number; consistency: number };
     const rows: Row[] = [];
-    for (const [slug, off] of Object.entries(bestOff)) {
-        const peak = peakByWard[slug] ?? 0;
+    for (const [wardKey, off] of Object.entries(offByWard)) {
+        const peak = peakByWard[wardKey] ?? 0;
         if (peak < MIN_PEAK_BALLOTS || off <= 0) continue;
-        // Off-cycle turnout should never exceed presidential in the same era;
-        // when it does it's a cross-cycle ward-key mismatch, so drop it.
+        // Off-cycle turnout above presidential means the two elections split the
+        // ward differently (merge/split); drop it rather than show a bad ratio.
         if (off > peak * 1.05) continue;
-
-        const { precinctName, wardNumber } = wardKeyToPrecinctInfo(slug);
-        const num = parseInt(wardNumber);
-        const wardKey = `${precinctName}|${isNaN(num) ? 0 : num}`;
         if (districtWardKeys && !districtWardKeys.has(wardKey)) continue;
 
+        const { displayName, wardNumber } = displayFromKey(wardKey);
         rows.push({
             wardKey,
-            displayName: `${precinctName} Ward ${wardNumber}`,
+            displayName,
             wardNumber,
             presidential: peak,
             offCycle: off,
@@ -180,11 +118,17 @@ export function buildTurnoutProfile(
     wards.forEach(w => { scoreByWard[w.wardKey] = w.consistency; });
     const avgConsistency = wards.reduce((s, w) => s + w.consistency, 0) / wards.length;
 
-    return {
-        wards,
-        scoreByWard,
-        peakLabel: `${yearOf(peakRace.electionName)} Presidential`,
-        offCycleLabel: bestName,
-        avgConsistency,
-    };
+    return { wards, scoreByWard, peakLabel, offCycleLabel, avgConsistency };
+}
+
+/** Pick the newest presidential general and newest plain Spring Election. */
+export function pickTurnoutElections(
+    elections: { electionId: string; electionName: string }[],
+): { peak: { electionId: string; electionName: string } | null; offCycle: { electionId: string; electionName: string } | null } {
+    const year = (n: string) => parseInt(n.match(/\b(19|20)\d{2}\b/)?.[0] ?? '0');
+    // Elections are newest-first; be order-independent anyway by sorting on year.
+    const byYearDesc = [...elections].sort((a, b) => year(b.electionName) - year(a.electionName));
+    const peak = byYearDesc.find(e => /general election/i.test(e.electionName) && year(e.electionName) % 4 === 0) ?? null;
+    const offCycle = byYearDesc.find(e => /^\d{4} Spring Election$/.test(e.electionName.trim())) ?? null;
+    return { peak, offCycle };
 }
