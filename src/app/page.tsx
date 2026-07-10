@@ -252,14 +252,7 @@ export default function Home() {
     if (viewMode !== 'COALITION') setCoalition({ coalitionByWard: null, label: null });
   }, [viewMode]);
 
-  // ── TARGET mode: bridge the last-built coalition into turf targeting ──────
-  // The CoalitionPanel unmounts (and clears `coalition`) when leaving COALITION,
-  // so we retain the most recent non-empty slate here as the base-strength input.
-  const [baseCoalition, setBaseCoalition] = useState<CoalitionUpdate>({ coalitionByWard: null, label: null });
-  useEffect(() => {
-    if (coalition.coalitionByWard) setBaseCoalition(coalition);
-  }, [coalition]);
-
+  // ── TARGET mode: ward turnout-consistency overlay ────────────────────────
   const [targetUpdate, setTargetUpdate] = useState<TargetUpdate>({ scoreByWard: null, label: null });
   useEffect(() => {
     if (viewMode !== 'TARGET') setTargetUpdate({ scoreByWard: null, label: null });
@@ -480,11 +473,9 @@ export default function Home() {
           <CoalitionPanel elections={elections} onCoalitionUpdate={setCoalition} />
         ) : viewMode === 'TARGET' ? (
           <TargetPanel
-            coalition={baseCoalition}
             districtFilter={districtFilter}
             onDistrictChange={setDistrictFilter}
             onTargetUpdate={setTargetUpdate}
-            onClearCoalition={() => setBaseCoalition({ coalitionByWard: null, label: null })}
           />
         ) : viewMode === 'SIMULATE' ? (
           <SimulationsPanel
@@ -630,7 +621,7 @@ export default function Home() {
                 ? targetUpdate.label
                 : undefined
           }
-          coalitionSubtext={viewMode === 'TARGET' ? 'Higher = better targeting turf' : undefined}
+          coalitionSubtext={viewMode === 'TARGET' ? 'Green votes consistently · red is presidential-only' : undefined}
           onReset={() => setSelectedWard(null)}
           focusedCandidate={isResultsMode ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}
