@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Layout from '@/components/Layout';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import MapWrapper from '@/components/MapWrapper';
 import Sidebar from '@/components/Sidebar';
 import SimulationsPanel from '@/components/SimulationsPanel';
@@ -468,8 +469,9 @@ export default function Home() {
   return (
     <Layout
       sidebar={
-        viewMode === 'BOARD' ? null :
-        viewMode === 'COALITION' ? (
+        viewMode === 'BOARD' ? null : (
+        <ErrorBoundary key={viewMode} label="Sidebar">
+        {viewMode === 'COALITION' ? (
           <CoalitionPanel elections={elections} onCoalitionUpdate={setCoalition} />
         ) : viewMode === 'TARGET' ? (
           <TargetPanel
@@ -542,6 +544,8 @@ export default function Home() {
             onBenchmarkChange={setBenchmark}
             benchmarkStats={benchmarkData?.stats ?? null}
           />
+        )}
+        </ErrorBoundary>
         )
       }
       lastUpdated={lastPublished?.lastPublished}
@@ -553,6 +557,7 @@ export default function Home() {
       hasError={hasError}
     >
       <div className="relative w-full h-full">
+        <ErrorBoundary key={viewMode} label="Map / Board">
         {viewMode === 'BOARD' ? (
           <Watchboard
             board={board}
@@ -634,6 +639,7 @@ export default function Home() {
         />
         </>
         )}
+        </ErrorBoundary>
       </div>
     </Layout>
   );

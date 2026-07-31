@@ -138,6 +138,7 @@ export default function Sidebar({
             const total = wardResults[0]?.ballotscast || 0;
             const sorted = [...wardResults].sort((a, b) => b.votes - a.votes);
             const winner = sorted[0];
+            const runnerUpResult = sorted[1];
             const winnerParty = raceResult.candidates.find(
                 c => c.candidateName === winner?.candidateName
             )?.party;
@@ -148,9 +149,22 @@ export default function Sidebar({
                 ? ((ballots - prevBallots) / prevBallots) * 100
                 : null;
             const reported = wardResults.some(w => w.reported);
-            return { name, num, total, winner, winnerParty, ballots, prevBallots, turnoutDelta, reported };
+            // Margin as a share of ballots cast, used only for sort priority —
+            // unopposed/no-runner-up wards sort to the back of their group.
+            const marginPct = reported && winner && runnerUpResult && total > 0
+                ? ((winner.votes - runnerUpResult.votes) / total) * 100
+                : Infinity;
+            return { name, num, total, winner, winnerParty, ballots, prevBallots, turnoutDelta, reported, marginPct };
         })
         .sort((a, b) => {
+            // Under election-night time pressure, alphabetical order buries the
+            // wards that actually need attention. Unreported wards ("still
+            // out") float to the top; within each group the tightest margin
+            // sorts first — same priority order as the multi-race Watchboard.
+            const aDone = a.reported ? 1 : 0;
+            const bDone = b.reported ? 1 : 0;
+            if (aDone !== bDone) return aDone - bDone;
+            if (a.marginPct !== b.marginPct) return a.marginPct - b.marginPct;
             const nc = a.name.localeCompare(b.name);
             return nc !== 0 ? nc : parseInt(a.num) - parseInt(b.num);
         });

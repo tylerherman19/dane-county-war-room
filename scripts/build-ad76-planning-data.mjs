@@ -10,8 +10,21 @@
  * Can also be run manually: node scripts/build-ad76-planning-data.mjs
  */
 
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
+
+const OUTPUT_PATH = 'public/ad76-planning.json';
+
+/** True if OUTPUT_PATH already holds real (non-stub) planning data from a prior successful run. */
+function hasExistingGoodData() {
+    if (!existsSync(OUTPUT_PATH)) return false;
+    try {
+        const prev = JSON.parse(readFileSync(OUTPUT_PATH, 'utf8'));
+        return Array.isArray(prev.years) && prev.years.length > 0;
+    } catch {
+        return false;
+    }
+}
 
 const BASE = 'https://api.danecounty.gov/api/v1/elections';
 const DISTRICT = 76;
@@ -146,17 +159,29 @@ async function main() {
         years,
     };
 
+    if (years.length === 0 && hasExistingGoodData()) {
+        // Nothing usable came back this run, but a prior successful run left good
+        // data in place — keep it rather than deploying an empty Planning view.
+        console.warn('\n[build-ad76-planning] WARNING: no years fetched this run — keeping existing public/ad76-planning.json.');
+        return;
+    }
+
     mkdirSync('public', { recursive: true });
     const json = JSON.stringify(output);
-    writeFileSync('public/ad76-planning.json', json);
+    writeFileSync(OUTPUT_PATH, json);
     console.log(`\n[build-ad76-planning] Done. ${years.length} cycles | ${(json.length / 1024).toFixed(0)} KB`);
 }
 
 main().catch(err => {
-    // Network failure — write an empty stub so the build still succeeds.
     console.warn(`\n[build-ad76-planning] WARNING: ${err.message}`);
-    console.warn('[build-ad76-planning] Writing empty stub — run `npm run build:planning` with network access.');
+    if (hasExistingGoodData()) {
+        // Network failure with prior good data on disk — leave it alone instead of
+        // clobbering it with an empty stub. A stale Planning view beats a blank one.
+        console.warn('[build-ad76-planning] Keeping existing public/ad76-planning.json from a prior successful run.');
+        process.exit(0);
+    }
+    console.warn('[build-ad76-planning] No prior data on disk — writing empty stub. Run `npm run build:planning` with network access before deploying.');
     mkdirSync('public', { recursive: true });
-    writeFileSync('public/ad76-planning.json', JSON.stringify({ generatedAt: new Date().toISOString(), district: DISTRICT, party: 'DEM', years: [] }));
+    writeFileSync(OUTPUT_PATH, JSON.stringify({ generatedAt: new Date().toISOString(), district: DISTRICT, party: 'DEM', years: [] }));
     process.exit(0);
 });

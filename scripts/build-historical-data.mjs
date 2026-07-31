@@ -8,11 +8,23 @@
  * All data is sourced directly from https://api.danecounty.gov — zero hardcoded values.
  */
 
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 
 const BASE = 'https://api.danecounty.gov/api/v1/elections';
 const RELEVANT_TYPES = new Set(['Presidential', 'Mayor', 'Governor', 'Senate', 'Congress', 'Alder', 'Assembly', 'StateSenate']);
+const OUTPUT_PATH = 'public/historical-ward-data.json';
+
+/** True if OUTPUT_PATH already holds real (non-stub) data from a prior successful run. */
+function hasExistingGoodData() {
+    if (!existsSync(OUTPUT_PATH)) return false;
+    try {
+        const prev = JSON.parse(readFileSync(OUTPUT_PATH, 'utf8'));
+        return prev.data && Object.keys(prev.data).length > 0;
+    } catch {
+        return false;
+    }
+}
 
 // ── Helpers (mirrors logic in src/lib/) ──────────────────────────────────────
 
@@ -245,22 +257,31 @@ for (const arr of Object.values(output.data)) {
     arr.sort((a, b) => new Date(b.electionDate) - new Date(a.electionDate));
 }
 
-mkdirSync('public', { recursive: true });
-const json = JSON.stringify(output);
-writeFileSync('public/historical-ward-data.json', json);
-
-console.log(`\n[build-historical-data] Done.`);
-console.log(`  Races: ${totalRaces}  |  Ward entries: ${totalWards}  |  File: ${(json.length / 1024).toFixed(0)} KB`);
+if (totalRaces === 0 && hasExistingGoodData()) {
+    // Nothing usable came back this run, but a prior successful run left good
+    // data in place — keep it rather than deploying an empty historical dataset.
+    console.warn('\n[build-historical-data] WARNING: no races fetched this run — keeping existing public/historical-ward-data.json.');
+} else {
+    mkdirSync('public', { recursive: true });
+    const json = JSON.stringify(output);
+    writeFileSync(OUTPUT_PATH, json);
+    console.log(`\n[build-historical-data] Done.`);
+    console.log(`  Races: ${totalRaces}  |  Ward entries: ${totalWards}  |  File: ${(json.length / 1024).toFixed(0)} KB`);
+}
 
 } // end main()
 
 main().catch(err => {
-    // Network failure or API unavailability — write an empty stub so the build still succeeds.
-    // The app will fall back to the static turnout estimate until the JSON is populated.
     console.warn(`\n[build-historical-data] WARNING: Could not fetch historical data: ${err.message}`);
-    console.warn('[build-historical-data] Writing empty stub — run `npm run build:historical` with network access.');
+    if (hasExistingGoodData()) {
+        // Network failure with prior good data on disk — leave it alone instead of
+        // clobbering it with an empty stub.
+        console.warn('[build-historical-data] Keeping existing public/historical-ward-data.json from a prior successful run.');
+        process.exit(0);
+    }
+    console.warn('[build-historical-data] No prior data on disk — writing empty stub. The app will fall back to the static turnout estimate until this is populated. Run `npm run build:historical` with network access before deploying.');
     mkdirSync('public', { recursive: true });
     const stub = JSON.stringify({ generatedAt: new Date().toISOString(), data: {} });
-    writeFileSync('public/historical-ward-data.json', stub);
+    writeFileSync(OUTPUT_PATH, stub);
     process.exit(0); // Don't fail the build
 });

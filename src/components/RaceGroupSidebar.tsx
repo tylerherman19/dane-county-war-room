@@ -1,8 +1,8 @@
 'use client';
 
-import { Race } from '@/lib/api';
+import { BoardRace, Race } from '@/lib/api';
 import { extractDistrictNumber } from '@/lib/api';
-import { useRaceResults } from '@/hooks/useElectionData';
+import { useElectionBoard } from '@/hooks/useElectionData';
 import { ChevronRight } from 'lucide-react';
 
 interface RaceGroupSidebarProps {
@@ -24,14 +24,13 @@ function getPartyColor(party: string | undefined): string {
 
 interface RaceGroupRowProps {
     race: Race;
-    electionId: string;
+    boardRace: BoardRace | undefined;
+    isLoading: boolean;
     isArchive?: boolean;
     onClick: () => void;
 }
 
-function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProps) {
-    const { results, isLoading } = useRaceResults(electionId, race.id);
-
+function RaceGroupRow({ race, boardRace, isLoading, isArchive, onClick }: RaceGroupRowProps) {
     const districtNum = extractDistrictNumber(race.name);
     const shortLabel = districtNum > 0 ? `District ${districtNum}` : race.name;
 
@@ -49,7 +48,7 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
         );
     }
 
-    if (!results) {
+    if (!boardRace) {
         return (
             <button
                 onClick={onClick}
@@ -63,15 +62,15 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
         );
     }
 
-    const sorted = [...results.candidates].sort((a, b) => b.votes - a.votes);
-    const leader = sorted[0];
-    const runnerUp = sorted[1];
-    const totalVotes = results.totalVotes;
+    // BoardRace.candidates already arrives sorted most-votes-first.
+    const leader = boardRace.candidates[0];
+    const runnerUp = boardRace.candidates[1];
+    const totalVotes = boardRace.totalVotes;
     const margin = leader && runnerUp && totalVotes > 0
         ? ((leader.votes - runnerUp.votes) / totalVotes * 100)
         : null;
-    const reportingPct = results.totalPrecincts > 0
-        ? Math.round((results.precinctsReporting / results.totalPrecincts) * 100)
+    const reportingPct = boardRace.totalPrecincts > 0
+        ? Math.round((boardRace.precinctsReporting / boardRace.totalPrecincts) * 100)
         : 0;
     const leaderColor = getPartyColor(leader?.party);
     const isComplete = isArchive || reportingPct === 100;
@@ -97,7 +96,7 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
                                 </span>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                     <span className="text-[10px] text-[#999] num">
-                                        {results.precinctsReporting}/{results.totalPrecincts}p
+                                        {boardRace.precinctsReporting}/{boardRace.totalPrecincts}p
                                     </span>
                                     <span className="text-sm font-bold num" style={{ color: leaderColor }}>
                                         {leader.percentage.toFixed(1)}%
@@ -134,6 +133,12 @@ function RaceGroupRow({ race, electionId, isArchive, onClick }: RaceGroupRowProp
 export default function RaceGroupSidebar({ races, electionId, groupLabel, onSelectRace, isArchive }: RaceGroupSidebarProps) {
     const sorted = [...races].sort((a, b) => extractDistrictNumber(a.name) - extractDistrictNumber(b.name));
 
+    // One bulk request for every district's results, instead of each row
+    // polling its own race individually — a "Madison Alder" group can be 20
+    // districts, which was 20 separate 30s-polled requests before this.
+    const { board, isLoading: boardLoading } = useElectionBoard(electionId, !isArchive);
+    const boardByRaceId = new Map<string, BoardRace>((board ?? []).map(r => [r.raceId, r]));
+
     return (
         <div className="h-full bg-white flex flex-col overflow-hidden">
             {/* Header */}
@@ -151,7 +156,8 @@ export default function RaceGroupSidebar({ races, electionId, groupLabel, onSele
                     <RaceGroupRow
                         key={race.id}
                         race={race}
-                        electionId={electionId}
+                        boardRace={boardByRaceId.get(race.id)}
+                        isLoading={boardLoading && !board}
                         isArchive={isArchive}
                         onClick={() => onSelectRace(race.id)}
                     />

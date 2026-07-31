@@ -269,14 +269,6 @@
       "ald": "1"
     },
     {
-      "ward": "120",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": "20"
-    },
-    {
       "ward": "136",
       "asm": "80",
       "sen": "27",
@@ -453,14 +445,6 @@
       "ald": "12"
     },
     {
-      "ward": "123",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "16",
-      "ald": "3"
-    },
-    {
       "ward": "23",
       "asm": "42",
       "sen": "14",
@@ -490,14 +474,6 @@
       "sen": "26",
       "cong": "2",
       "sup": "24",
-      "ald": "16"
-    },
-    {
-      "ward": "2",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "34",
       "ald": "16"
     },
     {
@@ -627,14 +603,6 @@
       "cong": "2",
       "sup": "6",
       "ald": "6"
-    },
-    {
-      "ward": "30",
-      "asm": "76",
-      "sen": "26",
-      "cong": "2",
-      "sup": "2",
-      "ald": "12"
     },
     {
       "ward": "44",
@@ -1261,14 +1229,6 @@
       "ald": "18"
     },
     {
-      "ward": "129",
-      "asm": "42",
-      "sen": "14",
-      "cong": "2",
-      "sup": "21",
-      "ald": "18"
-    },
-    {
       "ward": "131",
       "asm": "81",
       "sen": "27",
@@ -1299,14 +1259,6 @@
       "cong": "2",
       "sup": "29",
       "ald": "9"
-    },
-    {
-      "ward": "120",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": "20"
     },
     {
       "ward": "125",
@@ -1471,14 +1423,6 @@
       "ald": "6"
     },
     {
-      "ward": "18",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "26",
-      "ald": "8"
-    },
-    {
       "ward": "17",
       "asm": "81",
       "sen": "27",
@@ -1569,14 +1513,6 @@
       "ald": null
     },
     {
-      "ward": "8",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "24",
-      "ald": null
-    },
-    {
       "ward": "1",
       "asm": "78",
       "sen": "26",
@@ -1602,14 +1538,6 @@
     },
     {
       "ward": "6",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "24",
-      "ald": null
-    },
-    {
-      "ward": "10",
       "asm": "78",
       "sen": "26",
       "cong": "2",
@@ -2133,46 +2061,6 @@
       "cong": "2",
       "sup": "20",
       "ald": null
-    },
-    {
-      "ward": "5",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "20",
-      "ald": null
-    },
-    {
-      "ward": "5",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "20",
-      "ald": null
-    },
-    {
-      "ward": "5",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "20",
-      "ald": null
-    },
-    {
-      "ward": "5",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "20",
-      "ald": null
-    },
-    {
-      "ward": "5",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "20",
-      "ald": null
     }
   ],
   "Town of Christiana": [
@@ -2185,31 +2073,7 @@
       "ald": null
     },
     {
-      "ward": "1",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
-    },
-    {
       "ward": "2",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
-    },
-    {
-      "ward": "1",
       "asm": "46",
       "sen": "16",
       "cong": "2",
@@ -2220,22 +2084,6 @@
   "Town of Cross Plains": [
     {
       "ward": "2",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "1",
       "asm": "80",
       "sen": "27",
       "cong": "2",
@@ -2277,14 +2125,6 @@
       "cong": "2",
       "sup": "37",
       "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
     }
   ],
   "Town of Mazomanie": [
@@ -2297,71 +2137,7 @@
       "ald": null
     },
     {
-      "ward": "1",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
       "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
-    },
-    {
-      "ward": "1",
       "asm": "81",
       "sen": "27",
       "cong": "2",
@@ -2397,14 +2173,6 @@
       "ald": null
     },
     {
-      "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
       "ward": "4A",
       "asm": "81",
       "sen": "27",
@@ -2421,94 +2189,6 @@
       "ald": null
     },
     {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
       "ward": "8",
       "asm": "80",
       "sen": "27",
@@ -2519,126 +2199,6 @@
     {
       "ward": "8A",
       "asm": "79",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8A",
-      "asm": "79",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8A",
-      "asm": "79",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "80",
       "sen": "27",
       "cong": "2",
       "sup": "29",
@@ -2654,22 +2214,6 @@
     },
     {
       "ward": "1",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
       "asm": "80",
       "sen": "27",
       "cong": "2",
@@ -2694,30 +2238,6 @@
     },
     {
       "ward": "5",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "4A",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "8",
       "asm": "80",
       "sen": "27",
       "cong": "2",
@@ -2762,22 +2282,6 @@
     },
     {
       "ward": "3",
-      "asm": "50",
-      "sen": "17",
-      "cong": "2",
-      "sup": "31",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "50",
-      "sen": "17",
-      "cong": "2",
-      "sup": "31",
-      "ald": null
-    },
-    {
-      "ward": "1",
       "asm": "50",
       "sen": "17",
       "cong": "2",
@@ -2889,14 +2393,6 @@
       "cong": "2",
       "sup": "29",
       "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
     }
   ],
   "Town of Vermont": [
@@ -2912,118 +2408,6 @@
   "Town of Verona": [
     {
       "ward": "3",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "80",
-      "sen": "27",
-      "cong": "2",
-      "sup": "32",
-      "ald": null
-    },
-    {
-      "ward": "2",
       "asm": "80",
       "sen": "27",
       "cong": "2",
@@ -3057,14 +2441,6 @@
       "ald": null
     },
     {
-      "ward": "2",
-      "asm": "42",
-      "sen": "14",
-      "cong": "2",
-      "sup": "29",
-      "ald": null
-    },
-    {
       "ward": "1",
       "asm": "42",
       "sen": "14",
@@ -3083,63 +2459,7 @@
       "ald": null
     },
     {
-      "ward": "1",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
       "ward": "3",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "1",
       "asm": "81",
       "sen": "27",
       "cong": "2",
@@ -3163,23 +2483,7 @@
       "ald": null
     },
     {
-      "ward": "3",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
       "ward": "2",
-      "asm": "81",
-      "sen": "27",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "1",
       "asm": "81",
       "sen": "27",
       "cong": "2",
@@ -3241,14 +2545,6 @@
       "cong": "2",
       "sup": "28",
       "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "51",
-      "sen": "17",
-      "cong": "2",
-      "sup": "28",
-      "ald": null
     }
   ],
   "Village of Brooklyn": [
@@ -3288,14 +2584,6 @@
     },
     {
       "ward": "3",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
-    },
-    {
-      "ward": "2",
       "asm": "46",
       "sen": "16",
       "cong": "2",
@@ -3390,14 +2678,6 @@
     },
     {
       "ward": "1",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
-    },
-    {
-      "ward": "3",
       "asm": "46",
       "sen": "16",
       "cong": "2",
@@ -3594,22 +2874,6 @@
     },
     {
       "ward": "2",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "20",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "20",
-      "ald": null
-    },
-    {
-      "ward": "4",
       "asm": "46",
       "sen": "16",
       "cong": "2",
@@ -4153,14 +3417,6 @@
       "ald": null
     },
     {
-      "ward": "6",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
       "ward": "2",
       "asm": "46",
       "sen": "16",
@@ -4185,31 +3441,7 @@
       "ald": null
     },
     {
-      "ward": "6",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
-      "ward": "6",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
       "ward": "1",
-      "asm": "46",
-      "sen": "16",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
-      "ward": "4",
       "asm": "46",
       "sen": "16",
       "cong": "2",
@@ -4333,35 +3565,11 @@
       "ald": null
     },
     {
-      "ward": "3",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
       "ward": "1",
       "asm": "48",
       "sen": "16",
       "cong": "2",
       "sup": "20",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "36",
       "ald": null
     },
     {
@@ -4545,14 +3753,6 @@
       "ald": "3"
     },
     {
-      "ward": "4",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
-      "ald": "2"
-    },
-    {
       "ward": "9",
       "asm": "47",
       "sen": "16",
@@ -4579,35 +3779,11 @@
       "ald": null
     },
     {
-      "ward": "1",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
-      "ald": null
-    },
-    {
       "ward": "6",
       "asm": "47",
       "sen": "16",
       "cong": "2",
       "sup": "37",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
       "ald": null
     },
     {
@@ -4628,38 +3804,6 @@
     },
     {
       "ward": "4",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
-      "ald": null
-    },
-    {
-      "ward": "3",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "35",
-      "ald": null
-    },
-    {
-      "ward": "1",
       "asm": "47",
       "sen": "16",
       "cong": "2",
@@ -4757,14 +3901,6 @@
       "cong": "2",
       "sup": "34",
       "ald": null
-    },
-    {
-      "ward": "7",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "34",
-      "ald": null
     }
   ],
   "Town of Rutland": [
@@ -4777,25 +3913,9 @@
       "ald": null
     },
     {
-      "ward": "1",
-      "asm": "47",
-      "sen": "16",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
-    },
-    {
       "ward": "2",
       "asm": "50",
       "sen": "17",
-      "cong": "2",
-      "sup": "37",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "47",
-      "sen": "16",
       "cong": "2",
       "sup": "37",
       "ald": null
@@ -4859,75 +3979,11 @@
       "ald": null
     },
     {
-      "ward": "5",
-      "asm": "42",
-      "sen": "14",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "6",
-      "asm": "42",
-      "sen": "14",
-      "cong": "2",
-      "sup": "12",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "16",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "16",
-      "ald": null
-    },
-    {
       "ward": "1",
       "asm": "48",
       "sen": "16",
       "cong": "2",
       "sup": "12",
-      "ald": null
-    },
-    {
-      "ward": "1",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "12",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "16",
-      "ald": null
-    },
-    {
-      "ward": "5",
-      "asm": "42",
-      "sen": "14",
-      "cong": "2",
-      "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "21",
       "ald": null
     },
     {
@@ -4944,14 +4000,6 @@
       "sen": "16",
       "cong": "2",
       "sup": "21",
-      "ald": null
-    },
-    {
-      "ward": "2",
-      "asm": "48",
-      "sen": "16",
-      "cong": "2",
-      "sup": "16",
       "ald": null
     }
   ],
@@ -4989,70 +4037,6 @@
       "ald": null
     },
     {
-      "ward": "4",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
-      "ward": "6",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "24",
-      "ald": null
-    },
-    {
-      "ward": "6",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "24",
-      "ald": null
-    },
-    {
-      "ward": "6",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "24",
-      "ald": null
-    },
-    {
-      "ward": "6",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "24",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "36",
-      "ald": null
-    },
-    {
       "ward": "6",
       "asm": "78",
       "sen": "26",
@@ -5066,22 +4050,6 @@
       "sen": "26",
       "cong": "2",
       "sup": "23",
-      "ald": null
-    },
-    {
-      "ward": "7",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "23",
-      "ald": null
-    },
-    {
-      "ward": "4",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "36",
       "ald": null
     },
     {
@@ -5090,22 +4058,6 @@
       "sen": "26",
       "cong": "2",
       "sup": "34",
-      "ald": null
-    },
-    {
-      "ward": "5",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "34",
-      "ald": null
-    },
-    {
-      "ward": "7",
-      "asm": "78",
-      "sen": "26",
-      "cong": "2",
-      "sup": "23",
       "ald": null
     }
   ],

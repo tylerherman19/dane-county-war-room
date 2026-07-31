@@ -169,6 +169,23 @@ function MapClickDismiss({ onDismiss }: { onDismiss: () => void }) {
 export { assignCandidateColors };
 export type { HSL };
 
+/** Sum of a ward-keyed numeric map's values — cheap fingerprint that changes
+ *  whenever underlying vote/ballot counts change, even if the set of wards
+ *  (and thus Object.keys().length) stays the same. */
+function sumValues(m?: Record<string, number>): number {
+    if (!m) return 0;
+    let s = 0;
+    for (const k in m) s += m[k];
+    return s;
+}
+
+function sumShiftValues(m?: Record<string, { from: number; to: number }>): number {
+    if (!m) return 0;
+    let s = 0;
+    for (const k in m) s += m[k].to;
+    return s;
+}
+
 function buildProjectionKey(municipality: string, wardNum: string): string {
     let s = municipality.toLowerCase();
     let type = '';
@@ -750,6 +767,30 @@ export default function Map({
     // Which ward to display in the tooltip: pinned takes priority
     const displayWard = pinnedWard ?? hoveredWard;
 
+    // Memoized so identity only changes when styling actually needs to change —
+    // an inline arrow here would give react-leaflet a new function on every
+    // render (e.g. every pixel of mousemove while hovering the map), forcing
+    // a full layer.setStyle() pass over every ward on the map each time.
+    const styleForFeature = useCallback(
+        (feature: any) => style(feature, selectedWard),
+        [style, selectedWard]
+    );
+
+    // Forces the GeoJSON layer to remount (rebinding onEachFeature/hover data,
+    // which react-leaflet does not update reactively) whenever the underlying
+    // vote/ballot data actually changes — not just when the set of reporting
+    // wards changes size. Without this, hover tooltips can freeze at whatever
+    // numbers were current at the last remount and silently stop reflecting
+    // new results as they come in on election night.
+    const dataFingerprint = [
+        raceResult?.totalVotes ?? 0,
+        raceResult?.precinctsReporting ?? 0,
+        sumValues(turnoutByWard),
+        sumValues(comparisonTurnoutByWard),
+        sumShiftValues(shiftByWard),
+        sumValues(coalitionByWard),
+    ].join('-');
+
     return (
         <>
             <MapContainer
@@ -764,9 +805,9 @@ export default function Map({
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${turnoutByWard ? Object.keys(turnoutByWard).length : 0}-${comparisonTurnoutByWard ? Object.keys(comparisonTurnoutByWard).length : 0}-${shiftByWard ? Object.keys(shiftByWard).length : 0}-${planningByWard ? Object.values(planningByWard).reduce((s, p) => s + p.expected, 0) : 0}-${coalitionByWard ? Object.keys(coalitionByWard).length : 0}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${planningByWard ? Object.values(planningByWard).reduce((s, p) => s + p.expected, 0) : 0}-${dataFingerprint}`}
                             data={geoJsonData}
-                            style={(feature) => style(feature, selectedWard)}
+                            style={styleForFeature}
                             onEachFeature={onEachFeature}
                             ref={geoJsonLayerRef}
                         />

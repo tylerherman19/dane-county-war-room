@@ -196,12 +196,18 @@ function expandWardRanges(precinctName: string): number[] {
 
 // --- Fetch Helper ---
 
+// A hung request against a 30s poll interval would otherwise sit open
+// indefinitely, silently piling up in-flight requests all night.
+const FETCH_TIMEOUT_MS = 15000;
+
 async function fetchAPI<T>(path: string): Promise<T> {
     const url = `${BASE_PATH}${path}`;
     const t0 = Date.now();
     addLog('info', 'API', `→ ${path}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
         if (!response.ok) {
             addLog('error', 'API', `✗ ${path} (${response.status} ${response.statusText})`);
             throw new Error(`API error: ${response.status} ${response.statusText}`);
@@ -210,8 +216,11 @@ async function fetchAPI<T>(path: string): Promise<T> {
         addLog('success', 'API', `✓ ${path}`, undefined, Date.now() - t0);
         return data;
     } catch (error) {
-        addLog('error', 'API', `✗ ${path}: ${String(error)}`);
-        throw error;
+        const timedOut = error instanceof DOMException && error.name === 'AbortError';
+        addLog('error', 'API', `✗ ${path}: ${timedOut ? `timed out after ${FETCH_TIMEOUT_MS}ms` : String(error)}`);
+        throw timedOut ? new Error(`API timeout: ${path}`) : error;
+    } finally {
+        clearTimeout(timeout);
     }
 }
 

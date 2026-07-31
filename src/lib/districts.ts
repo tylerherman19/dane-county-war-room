@@ -37,6 +37,21 @@ export function districtLabel(filter: DistrictFilter): string {
     return `${DISTRICT_KIND_LABELS[filter.kind]} District ${filter.num}`;
 }
 
+/**
+ * KNOWN DATA LIMITATION: 5 wards outside AD76 (Town of Sun Prairie Wds 2 & 3,
+ * Town of Rutland Wd 2, Town of Burke Wds 2 & 7) have two rows in
+ * ward-districts.json with different `asm` values for the same ward — these
+ * are almost certainly genuine post-redistricting split wards (part of the
+ * ward in one Assembly district, part in another), not data entry errors.
+ * There's no split-percentage source to divide them, so both rows are kept
+ * and a filter on EITHER district includes the ward — meaning a district
+ * total that includes one of these wards may be very slightly inflated
+ * (double-counted) if you filter to one of the two districts it straddles.
+ * AD76 itself has no such conflicts. Do not "fix" this by arbitrarily
+ * dropping one row — that would silently exclude real voters from whichever
+ * district loses the coin flip.
+ */
+
 /** All ward keys ("City of Madison|46") belonging to a district. */
 export function getWardsInDistrict(filter: DistrictFilter): Set<string> {
     const keys = new Set<string>();
