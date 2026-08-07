@@ -49,6 +49,15 @@ export default function SimulationsPanel({
     const [regDelta, setRegDelta] = useState(0);
     const [selectedKey, setSelectedKey] = useState<string>('Mayor');
 
+    // ── Collapsible section states ─────────────────────────────────────────
+    const [racePickerOpen, setRacePickerOpen] = useState(true);
+    const [topCanvassWardsOpen, setTopCanvassWardsOpen] = useState(false);
+    const [topDropoffWardsOpen, setTopDropoffWardsOpen] = useState(false);
+    const [turnoutOpen, setTurnoutOpen] = useState(true);
+    const [regChangeOpen, setRegChangeOpen] = useState(true);
+    const [raceSettingsOpen, setRaceSettingsOpen] = useState(true);
+    const [mapLegendOpen, setMapLegendOpen] = useState(false);
+
     // ── What If state ──────────────────────────────────────────────────────
     const [whatIfOpen, setWhatIfOpen] = useState(true);
     const [whatIfRaceKey, setWhatIfRaceKey] = useState<string>('');
@@ -367,39 +376,49 @@ export default function SimulationsPanel({
                 </p>
 
                 {/* ── Race Selector ── */}
-                <div className="border border-[#e0e0e0] rounded-[3px] p-3 bg-white">
-                    <div className="kicker mb-2">Race</div>
-                    <div className="flex flex-wrap gap-1">
-                        {hasMayorData && (
-                            <button
-                                onClick={() => setSelectedKey('Mayor')}
-                                className={`px-2.5 py-1 rounded-[3px] text-xs font-bold transition-colors ${selectedKey === 'Mayor' ? 'bg-[#222] text-white border border-[#222]' : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'}`}
-                            >
-                                Mayor
-                            </button>
-                        )}
-                        {hasAlderData && alderDistricts.map(d => (
-                            <button
-                                key={d.districtNum}
-                                onClick={() => setSelectedKey(`Alder-${d.districtNum}`)}
-                                className={`px-2 py-1 rounded-[3px] text-xs font-bold transition-colors ${selectedKey === `Alder-${d.districtNum}` ? 'bg-[#222] text-white border border-[#222]' : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'}`}
-                            >
-                                D{d.districtNum}
-                            </button>
-                        ))}
-                        {!hasMayorData && !hasAlderData && (
-                            <div className="text-xs text-[#a16207] py-1">
-                                No historical data. Run <code className="font-mono bg-[#f0f0f0] px-1 rounded-[2px]">npm run build:historical</code>.
+                <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
+                    <button
+                        onClick={() => setRacePickerOpen(o => !o)}
+                        className="w-full p-3 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
+                    >
+                        <div className="kicker">Race</div>
+                        {racePickerOpen ? <ChevronUp className="w-4 h-4 text-[#999]" /> : <ChevronDown className="w-4 h-4 text-[#999]" />}
+                    </button>
+                    {racePickerOpen && (
+                        <div className="px-3 pb-3 border-t border-[#e0e0e0] pt-2 space-y-2">
+                            <div className="flex flex-wrap gap-1">
+                                {hasMayorData && (
+                                    <button
+                                        onClick={() => setSelectedKey('Mayor')}
+                                        className={`px-2.5 py-1 rounded-[3px] text-xs font-bold transition-colors ${selectedKey === 'Mayor' ? 'bg-[#222] text-white border border-[#222]' : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'}`}
+                                    >
+                                        Mayor
+                                    </button>
+                                )}
+                                {hasAlderData && alderDistricts.map(d => (
+                                    <button
+                                        key={d.districtNum}
+                                        onClick={() => setSelectedKey(`Alder-${d.districtNum}`)}
+                                        className={`px-2 py-1 rounded-[3px] text-xs font-bold transition-colors ${selectedKey === `Alder-${d.districtNum}` ? 'bg-[#222] text-white border border-[#222]' : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'}`}
+                                    >
+                                        D{d.districtNum}
+                                    </button>
+                                ))}
+                                {!hasMayorData && !hasAlderData && (
+                                    <div className="text-xs text-[#a16207] py-1">
+                                        No historical data. Run <code className="font-mono bg-[#f0f0f0] px-1 rounded-[2px]">npm run build:historical</code>.
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-                    {selectedDistrict && (
-                        <div className="mt-2 text-xs text-[#999] num">
-                            {selectedDistrict.label} ·{' '}
-                            {hasPrimaryData
-                                ? <>primary avg <span className="text-[#666]">{selectedDistrict.primaryHistoricalAvg.toLocaleString()}</span> votes ({selectedDistrict.primaryElectionsCount} primary{selectedDistrict.primaryElectionsCount !== 1 ? 's' : ''})</>
-                                : <>avg <span className="text-[#666]">{selectedDistrict.historicalAvg.toLocaleString()}</span> votes ({selectedDistrict.electionsCount} election{selectedDistrict.electionsCount !== 1 ? 's' : ''} averaged)</>
-                            }
+                            {selectedDistrict && (
+                                <div className="text-xs text-[#999] num">
+                                    {selectedDistrict.label} ·{' '}
+                                    {hasPrimaryData
+                                        ? <>primary avg <span className="text-[#666]">{selectedDistrict.primaryHistoricalAvg.toLocaleString()}</span> votes ({selectedDistrict.primaryElectionsCount} primary{selectedDistrict.primaryElectionsCount !== 1 ? 's' : ''})</>
+                                        : <>avg <span className="text-[#666]">{selectedDistrict.historicalAvg.toLocaleString()}</span> votes ({selectedDistrict.electionsCount} election{selectedDistrict.electionsCount !== 1 ? 's' : ''} averaged)</>
+                                    }
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -460,43 +479,55 @@ export default function SimulationsPanel({
                         {/* ── Canvass Priority Sidebar List ── */}
                         {simulateOverlayMode === 'CANVASS_PRIORITY' && (
                             <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
-                                <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center gap-1.5">
-                                    <Users className="w-3 h-3 text-[#008fd5]" />
-                                    <span className="kicker text-[10px]">Top Canvass Wards</span>
-                                    {topCanvassWards.length > 0 && (
-                                        <button
-                                            onClick={exportCanvass}
-                                            className="ml-auto flex items-center gap-1 text-[10px] text-[#666] hover:text-[#222] transition-colors"
-                                            title="Download the full ranked list as CSV"
-                                        >
-                                            <Download className="w-3 h-3" /> CSV
-                                        </button>
-                                    )}
-                                </div>
-                                {topCanvassWards.length === 0 ? (
-                                    <div className="p-3 text-xs text-[#999] text-center">Loading dormant voter data</div>
-                                ) : (
-                                    <div className="divide-y divide-[#eeeeee]">
-                                        {topCanvassWards.map((ward, i) => (
-                                            <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
-                                                <span className="text-[10px] text-[#999] num w-4 text-right flex-shrink-0">{i + 1}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-[#222] truncate">{ward.displayName}</div>
-                                                    <div className="text-[10px] text-[#999] num">
-                                                        ~{ward.dormantPool.toLocaleString()} dormant voters
-                                                    </div>
-                                                </div>
-                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[2px] border flex-shrink-0 ${
-                                                    ward.priority === 'HIGH'
-                                                        ? 'border-[#fc4f30] text-[#c73a1d]'
-                                                        : ward.priority === 'MEDIUM'
-                                                        ? 'border-[#e5ae38] text-[#a16207]'
-                                                        : 'border-[#cccccc] text-[#666]'
-                                                }`}>
-                                                    {ward.priority}
-                                                </span>
+                                <button
+                                    onClick={() => setTopCanvassWardsOpen(o => !o)}
+                                    className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <Users className="w-3 h-3 text-[#008fd5]" />
+                                        <span className="kicker text-[10px]">Top Canvass Wards</span>
+                                    </div>
+                                    {topCanvassWardsOpen ? <ChevronUp className="w-4 h-4 text-[#999]" /> : <ChevronDown className="w-4 h-4 text-[#999]" />}
+                                </button>
+                                {topCanvassWardsOpen && (
+                                    <div className="border-t border-[#e0e0e0]">
+                                        {topCanvassWards.length > 0 && (
+                                            <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center">
+                                                <button
+                                                    onClick={exportCanvass}
+                                                    className="ml-auto flex items-center gap-1 text-[10px] text-[#666] hover:text-[#222] transition-colors"
+                                                    title="Download the full ranked list as CSV"
+                                                >
+                                                    <Download className="w-3 h-3" /> CSV
+                                                </button>
                                             </div>
-                                        ))}
+                                        )}
+                                        {topCanvassWards.length === 0 ? (
+                                            <div className="p-3 text-xs text-[#999] text-center">Loading dormant voter data</div>
+                                        ) : (
+                                            <div className="divide-y divide-[#eeeeee]">
+                                                {topCanvassWards.map((ward, i) => (
+                                                    <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                        <span className="text-[10px] text-[#999] num w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-xs text-[#222] truncate">{ward.displayName}</div>
+                                                            <div className="text-[10px] text-[#999] num">
+                                                                ~{ward.dormantPool.toLocaleString()} dormant voters
+                                                            </div>
+                                                        </div>
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[2px] border flex-shrink-0 ${
+                                                            ward.priority === 'HIGH'
+                                                                ? 'border-[#fc4f30] text-[#c73a1d]'
+                                                                : ward.priority === 'MEDIUM'
+                                                                ? 'border-[#e5ae38] text-[#a16207]'
+                                                                : 'border-[#cccccc] text-[#666]'
+                                                        }`}>
+                                                            {ward.priority}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -505,146 +536,198 @@ export default function SimulationsPanel({
                         {/* ── Primary Dropoff Ranked List ── */}
                         {simulateOverlayMode === 'PRIMARY_DROPOFF' && (
                             <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
-                                <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center gap-1.5">
-                                    <TrendingDown className="w-3 h-3 text-[#a16207]" />
-                                    <span className="kicker text-[10px]">Top Dropoff Wards</span>
-                                    {topDropoffWards.length > 0 && (
-                                        <button
-                                            onClick={exportDropoff}
-                                            className="ml-auto flex items-center gap-1 text-[10px] text-[#666] hover:text-[#222] transition-colors"
-                                            title="Download the full ranked list as CSV"
-                                        >
-                                            <Download className="w-3 h-3" /> CSV
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="px-3 py-2 border-b border-[#eeeeee] flex items-center gap-2 text-[10px] text-[#999]">
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 15%, 90%)' }} />
-                                    Low
-                                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, hsl(28,15%,90%), hsl(28,95%,38%))' }} />
-                                    High
-                                    <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 95%, 38%)' }} />
-                                </div>
-                                {topDropoffWards.length === 0 ? (
-                                    <div className="p-3 text-xs text-[#999] text-center">Loading dropoff data</div>
-                                ) : (
-                                    <div className="divide-y divide-[#eeeeee]">
-                                        {topDropoffWards.map((ward, i) => (
-                                            <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
-                                                <span className="text-[10px] text-[#999] num w-4 text-right flex-shrink-0">{i + 1}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-[#222] truncate">{ward.displayName}</div>
-                                                    <div className="text-[10px] text-[#999] num">
-                                                        {ward.general.toLocaleString()} gen · {ward.primary.toLocaleString()} pri
-                                                    </div>
-                                                </div>
-                                                <div className="text-right flex-shrink-0">
-                                                    <div className="text-xs font-bold num text-[#a16207]">−{ward.dropoff.toLocaleString()}</div>
-                                                    <div className="text-[10px] text-[#999] num">{ward.dropoffPct.toFixed(0)}% drop</div>
-                                                </div>
+                                <button
+                                    onClick={() => setTopDropoffWardsOpen(o => !o)}
+                                    className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <TrendingDown className="w-3 h-3 text-[#a16207]" />
+                                        <span className="kicker text-[10px]">Top Dropoff Wards</span>
+                                    </div>
+                                    {topDropoffWardsOpen ? <ChevronUp className="w-4 h-4 text-[#999]" /> : <ChevronDown className="w-4 h-4 text-[#999]" />}
+                                </button>
+                                {topDropoffWardsOpen && (
+                                    <div className="border-t border-[#e0e0e0]">
+                                        {topDropoffWards.length > 0 && (
+                                            <div className="px-3 py-2.5 border-b border-[#e0e0e0] flex items-center">
+                                                <button
+                                                    onClick={exportDropoff}
+                                                    className="ml-auto flex items-center gap-1 text-[10px] text-[#666] hover:text-[#222] transition-colors"
+                                                    title="Download the full ranked list as CSV"
+                                                >
+                                                    <Download className="w-3 h-3" /> CSV
+                                                </button>
                                             </div>
-                                        ))}
+                                        )}
+                                        <div className="px-3 py-2 border-b border-[#eeeeee] flex items-center gap-2 text-[10px] text-[#999]">
+                                            <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 15%, 90%)' }} />
+                                            Low
+                                            <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, hsl(28,15%,90%), hsl(28,95%,38%))' }} />
+                                            High
+                                            <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'hsl(28, 95%, 38%)' }} />
+                                        </div>
+                                        {topDropoffWards.length === 0 ? (
+                                            <div className="p-3 text-xs text-[#999] text-center">Loading dropoff data</div>
+                                        ) : (
+                                            <div className="divide-y divide-[#eeeeee]">
+                                                {topDropoffWards.map((ward, i) => (
+                                                    <div key={ward.wardKey} className="px-3 py-2 flex items-center gap-2">
+                                                        <span className="text-[10px] text-[#999] num w-4 text-right flex-shrink-0">{i + 1}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-xs text-[#222] truncate">{ward.displayName}</div>
+                                                            <div className="text-[10px] text-[#999] num">
+                                                                {ward.general.toLocaleString()} gen · {ward.primary.toLocaleString()} pri
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right flex-shrink-0">
+                                                            <div className="text-xs font-bold num text-[#a16207]">−{ward.dropoff.toLocaleString()}</div>
+                                                            <div className="text-[10px] text-[#999] num">{ward.dropoffPct.toFixed(0)}% drop</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {/* ── Turnout Slider ── */}
-                        <div className="border border-[#e0e0e0] rounded-[3px] p-4 bg-white space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="kicker">Turnout</span>
-                                <div className="flex items-center gap-1">
-                                    <span className="text-[#222] font-bold text-sm num">{turnoutPct}%</span>
-                                    {turnoutPct !== 100 && (
-                                        <button onClick={() => setTurnoutPct(100)} className="text-[#999] hover:text-[#222] transition-colors ml-1" title="Reset to historical avg">
-                                            <RotateCcw className="w-3 h-3" />
-                                        </button>
-                                    )}
+                        <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
+                            <button
+                                onClick={() => setTurnoutOpen(o => !o)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
+                            >
+                                <div className="flex items-center justify-between w-full">
+                                    <span className="kicker">Turnout</span>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[#222] font-bold text-sm num">{turnoutPct}%</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <input
-                                type="range" min={50} max={200} step={5}
-                                value={turnoutPct}
-                                onChange={e => setTurnoutPct(Number(e.target.value))}
-                                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
-                                style={{ accentColor: '#008fd5' }}
-                            />
-                            <div className="flex justify-between text-[10px] text-[#999] num">
-                                <span>50% (low)</span>
-                                <span>100% (avg)</span>
-                                <span>200% (high)</span>
-                            </div>
-                            <div className="text-xs text-[#666] num">
-                                Expected: <span className="text-[#222] font-bold">{expectedTotal.toLocaleString()} votes</span>
-                                {turnoutPct !== 100 && (
-                                    <span className={`ml-2 font-bold ${turnoutPct > 100 ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>
-                                        {turnoutPct > 100 ? '↑' : '↓'} {Math.abs(turnoutPct - 100)}% vs avg
-                                    </span>
-                                )}
-                            </div>
+                                {turnoutOpen ? <ChevronUp className="w-4 h-4 text-[#999] ml-2" /> : <ChevronDown className="w-4 h-4 text-[#999] ml-2" />}
+                            </button>
+                            {turnoutOpen && (
+                                <div className="px-4 pb-4 pt-3 border-t border-[#e0e0e0] space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div />
+                                        <div className="flex items-center gap-1">
+                                            {turnoutPct !== 100 && (
+                                                <button onClick={() => setTurnoutPct(100)} className="text-[#999] hover:text-[#222] transition-colors ml-1" title="Reset to historical avg">
+                                                    <RotateCcw className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="range" min={50} max={200} step={5}
+                                        value={turnoutPct}
+                                        onChange={e => setTurnoutPct(Number(e.target.value))}
+                                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
+                                        style={{ accentColor: '#008fd5' }}
+                                    />
+                                    <div className="flex justify-between text-[10px] text-[#999] num">
+                                        <span>50% (low)</span>
+                                        <span>100% (avg)</span>
+                                        <span>200% (high)</span>
+                                    </div>
+                                    <div className="text-xs text-[#666] num">
+                                        Expected: <span className="text-[#222] font-bold">{expectedTotal.toLocaleString()} votes</span>
+                                        {turnoutPct !== 100 && (
+                                            <span className={`ml-2 font-bold ${turnoutPct > 100 ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>
+                                                {turnoutPct > 100 ? '↑' : '↓'} {Math.abs(turnoutPct - 100)}% vs avg
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* ── Registration Change ── */}
-                        <div className="border border-[#e0e0e0] rounded-[3px] p-4 bg-white space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="kicker">Registration Change</span>
-                                <div className="flex items-center gap-1">
-                                    <span className={`font-bold text-sm num ${regDelta > 0 ? 'text-[#567a3a]' : regDelta < 0 ? 'text-[#c73a1d]' : 'text-[#222]'}`}>
-                                        {regDelta > 0 ? '+' : ''}{regDelta}%
-                                    </span>
-                                    {regDelta !== 0 && (
-                                        <button onClick={() => setRegDelta(0)} className="text-[#999] hover:text-[#222] transition-colors ml-1" title="Reset">
-                                            <RotateCcw className="w-3 h-3" />
-                                        </button>
-                                    )}
+                        <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
+                            <button
+                                onClick={() => setRegChangeOpen(o => !o)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
+                            >
+                                <div className="flex items-center justify-between w-full">
+                                    <span className="kicker">Registration Change</span>
+                                    <div className="flex items-center gap-1">
+                                        <span className={`font-bold text-sm num ${regDelta > 0 ? 'text-[#567a3a]' : regDelta < 0 ? 'text-[#c73a1d]' : 'text-[#222]'}`}>
+                                            {regDelta > 0 ? '+' : ''}{regDelta}%
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                            <input
-                                type="range" min={-20} max={50} step={1}
-                                value={regDelta}
-                                onChange={e => setRegDelta(Number(e.target.value))}
-                                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
-                                style={{ accentColor: regDelta >= 0 ? '#6d904f' : '#fc4f30' }}
-                            />
-                            <div className="flex justify-between text-[10px] text-[#999] num">
-                                <span>−20%</span>
-                                <span>0%</span>
-                                <span>+50%</span>
-                            </div>
-                            <div className="text-xs text-[#999]">
-                                Models voter registration growth/decline since last comparable election.
-                                {regDelta !== 0 && (
-                                    <span className="block mt-0.5 text-[#666] num">
-                                        Adds <span className="text-[#222] font-bold">{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0) > 0 ? '+' : '')}{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0)).toLocaleString()}</span> votes vs turnout-only estimate.
-                                    </span>
-                                )}
-                            </div>
+                                {regChangeOpen ? <ChevronUp className="w-4 h-4 text-[#999] ml-2" /> : <ChevronDown className="w-4 h-4 text-[#999] ml-2" />}
+                            </button>
+                            {regChangeOpen && (
+                                <div className="px-4 pb-4 pt-3 border-t border-[#e0e0e0] space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div />
+                                        <div className="flex items-center gap-1">
+                                            {regDelta !== 0 && (
+                                                <button onClick={() => setRegDelta(0)} className="text-[#999] hover:text-[#222] transition-colors ml-1" title="Reset">
+                                                    <RotateCcw className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="range" min={-20} max={50} step={1}
+                                        value={regDelta}
+                                        onChange={e => setRegDelta(Number(e.target.value))}
+                                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
+                                        style={{ accentColor: regDelta >= 0 ? '#6d904f' : '#fc4f30' }}
+                                    />
+                                    <div className="flex justify-between text-[10px] text-[#999] num">
+                                        <span>−20%</span>
+                                        <span>0%</span>
+                                        <span>+50%</span>
+                                    </div>
+                                    <div className="text-xs text-[#999]">
+                                        Models voter registration growth/decline since last comparable election.
+                                        {regDelta !== 0 && (
+                                            <span className="block mt-0.5 text-[#666] num">
+                                                Adds <span className="text-[#222] font-bold">{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0) > 0 ? '+' : '')}{(applyMultipliers(baseline, turnoutPct, regDelta) - applyMultipliers(baseline, turnoutPct, 0)).toLocaleString()}</span> votes vs turnout-only estimate.
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* ── Race Settings ── */}
-                        <div className="border border-[#e0e0e0] rounded-[3px] p-4 bg-white space-y-3">
-                            <div className="kicker">Race Settings</div>
-                            <div>
-                                <div className="text-[10px] text-[#999] font-bold uppercase tracking-[0.06em] mb-1.5">Candidates in Race</div>
-                                <div className="flex gap-1">
-                                    {[2, 3].map(n => (
-                                        <button
-                                            key={n}
-                                            onClick={() => setNumCandidates(n)}
-                                            className={`px-3 py-1.5 rounded-[3px] text-xs font-bold transition-colors ${
-                                                numCandidates === n
-                                                    ? 'bg-[#222] text-white border border-[#222]'
-                                                    : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'
-                                            }`}
-                                        >
-                                            {n === 2 ? '2-way' : '3-way'}
-                                        </button>
-                                    ))}
+                        <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
+                            <button
+                                onClick={() => setRaceSettingsOpen(o => !o)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
+                            >
+                                <span className="kicker">Race Settings</span>
+                                {raceSettingsOpen ? <ChevronUp className="w-4 h-4 text-[#999]" /> : <ChevronDown className="w-4 h-4 text-[#999]" />}
+                            </button>
+                            {raceSettingsOpen && (
+                                <div className="px-4 pb-4 pt-3 border-t border-[#e0e0e0] space-y-3">
+                                    <div>
+                                        <div className="text-[10px] text-[#999] font-bold uppercase tracking-[0.06em] mb-1.5">Candidates in Race</div>
+                                        <div className="flex gap-1">
+                                            {[2, 3].map(n => (
+                                                <button
+                                                    key={n}
+                                                    onClick={() => setNumCandidates(n)}
+                                                    className={`px-3 py-1.5 rounded-[3px] text-xs font-bold transition-colors ${
+                                                        numCandidates === n
+                                                            ? 'bg-[#222] text-white border border-[#222]'
+                                                            : 'bg-white text-[#666] border border-[#cccccc] hover:text-[#222] hover:border-[#999]'
+                                                    }`}
+                                                >
+                                                    {n === 2 ? '2-way' : '3-way'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="mt-1.5 text-[10px] text-[#999]">
+                                            {numCandidates === 2 ? 'Head-to-head: exact majority required' : '3-way plurality: win threshold is an estimate'}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="mt-1.5 text-[10px] text-[#999]">
-                                    {numCandidates === 2 ? 'Head-to-head: exact majority required' : '3-way plurality: win threshold is an estimate'}
-                                </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* ── Win Number Card ── */}
@@ -673,25 +756,35 @@ export default function SimulationsPanel({
 
                         {/* ── Map Legend (for PROJECTION mode) ── */}
                         {simulateOverlayMode === 'PROJECTION' && (
-                            <div className="border border-[#e0e0e0] rounded-[3px] p-3 bg-white">
-                                <div className="kicker mb-2">Map Legend</div>
-                                <div className="space-y-1.5 text-xs text-[#666]">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 flex-shrink-0 bg-[#6d904f]" />
-                                        High-turnout wards (historically)
+                            <div className="border border-[#e0e0e0] rounded-[3px] bg-white overflow-hidden">
+                                <button
+                                    onClick={() => setMapLegendOpen(o => !o)}
+                                    className="w-full p-3 flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
+                                >
+                                    <div className="kicker">Map Legend</div>
+                                    {mapLegendOpen ? <ChevronUp className="w-4 h-4 text-[#999]" /> : <ChevronDown className="w-4 h-4 text-[#999]" />}
+                                </button>
+                                {mapLegendOpen && (
+                                    <div className="px-3 pb-3 border-t border-[#e0e0e0] pt-2 space-y-2">
+                                        <div className="space-y-1.5 text-xs text-[#666]">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 flex-shrink-0 bg-[#6d904f]" />
+                                                High-turnout wards (historically)
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 flex-shrink-0 bg-[#fc4f30]" />
+                                                Low-turnout wards (historically)
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 flex-shrink-0 bg-[#ececec] border border-[#cccccc]" />
+                                                Outside selected district
+                                            </div>
+                                        </div>
+                                        <div className="text-[10px] text-[#999]">
+                                            Relative turnout within the district across {selectedDistrict.electionsCount} past election{selectedDistrict.electionsCount !== 1 ? 's' : ''}.
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 flex-shrink-0 bg-[#fc4f30]" />
-                                        Low-turnout wards (historically)
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 flex-shrink-0 bg-[#ececec] border border-[#cccccc]" />
-                                        Outside selected district
-                                    </div>
-                                </div>
-                                <div className="mt-2 text-[10px] text-[#999]">
-                                    Relative turnout within the district across {selectedDistrict.electionsCount} past election{selectedDistrict.electionsCount !== 1 ? 's' : ''}.
-                                </div>
+                                )}
                             </div>
                         )}
 

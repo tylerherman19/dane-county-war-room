@@ -65,16 +65,40 @@ export default function Layout({
     // Close mobile sidebar when switching modes
     useEffect(() => { setMobileSidebarOpen(false); }, [viewMode]);
 
-    const modes: Array<{ id: LayoutProps['viewMode']; label: string; short: string }> = [
-        { id: 'LIVE', label: 'Live', short: 'Live' },
-        { id: 'BOARD', label: 'Board', short: 'Board' },
-        { id: 'ARCHIVE', label: 'Archive', short: 'Archive' },
-        { id: 'TRENDS', label: 'Trends', short: 'Trends' },
-        { id: 'COALITION', label: 'Coalition', short: 'Coal' },
-        { id: 'TARGET', label: 'Target', short: 'Target' },
-        { id: 'SIMULATE', label: 'Simulate', short: 'Sim' },
-        { id: 'PRIMARY', label: 'AD76 Primary', short: 'AD76' },
+    const modes: Array<{ id: LayoutProps['viewMode']; label: string; short: string; group: 'results' | 'analysis' | 'simulate' | 'primary' }> = [
+        { id: 'LIVE', label: 'Live', short: 'Live', group: 'results' },
+        { id: 'BOARD', label: 'Board', short: 'Board', group: 'results' },
+        { id: 'ARCHIVE', label: 'Archive', short: 'Archive', group: 'results' },
+        { id: 'TRENDS', label: 'Trends', short: 'Trends', group: 'analysis' },
+        { id: 'COALITION', label: 'Coalition', short: 'Coal', group: 'analysis' },
+        { id: 'TARGET', label: 'Target', short: 'Target', group: 'analysis' },
+        { id: 'SIMULATE', label: 'Simulate', short: 'Sim', group: 'simulate' },
+        { id: 'PRIMARY', label: 'AD76 Primary', short: 'AD76', group: 'primary' },
     ];
+
+    // Group modes for organized rendering
+    const groupedModes = {
+        results: modes.filter(m => m.group === 'results'),
+        analysis: modes.filter(m => m.group === 'analysis'),
+        simulate: modes.filter(m => m.group === 'simulate'),
+        primary: modes.filter(m => m.group === 'primary'),
+    };
+
+    // Helper to render a mode button with optional special styling
+    const renderModeButton = (m: typeof modes[0], isPrimary: boolean = false) => (
+        <button
+            key={m.id}
+            onClick={() => onToggleViewMode(m.id)}
+            className={`${isPrimary ? 'px-3 text-[11px]' : 'px-4 text-[13px]'} font-bold uppercase tracking-[0.05em] border-b-[3px] transition-colors ${
+                viewMode === m.id
+                    ? `border-[#222] ${isPrimary ? 'text-[#666]' : 'text-[#222]'}`
+                    : `border-transparent ${isPrimary ? 'text-[#bbb] hover:text-[#999]' : 'text-[#999] hover:text-[#222]'}`
+            }`}
+            title={isPrimary ? 'Secondary view mode' : undefined}
+        >
+            {m.label}
+        </button>
+    );
 
     return (
         <div className="flex flex-col h-screen bg-white text-[#222] overflow-hidden">
@@ -92,21 +116,30 @@ export default function Layout({
                         </span>
                     )}
 
-                    {/* Desktop: mode tabs centered */}
-                    <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 h-full items-stretch">
-                        {modes.map(m => (
-                            <button
-                                key={m.id}
-                                onClick={() => onToggleViewMode(m.id)}
-                                className={`px-4 text-[13px] font-bold uppercase tracking-[0.05em] border-b-[3px] transition-colors ${
-                                    viewMode === m.id
-                                        ? 'border-[#222] text-[#222]'
-                                        : 'border-transparent text-[#999] hover:text-[#222]'
-                                }`}
-                            >
-                                {m.label}
-                            </button>
-                        ))}
+                    {/* Desktop: mode tabs centered, grouped by category */}
+                    <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 h-full items-stretch gap-0">
+                        {/* Results group */}
+                        <div className="flex items-stretch">
+                            {groupedModes.results.map(m => renderModeButton(m))}
+                        </div>
+                        {/* Divider */}
+                        <div className="w-px bg-[#e0e0e0] mx-1" />
+                        {/* Analysis group */}
+                        <div className="flex items-stretch">
+                            {groupedModes.analysis.map(m => renderModeButton(m))}
+                        </div>
+                        {/* Divider */}
+                        <div className="w-px bg-[#e0e0e0] mx-1" />
+                        {/* Simulate */}
+                        <div className="flex items-stretch">
+                            {groupedModes.simulate.map(m => renderModeButton(m))}
+                        </div>
+                        {/* Spacer before Primary */}
+                        <div className="w-3" />
+                        {/* Primary (demoted) */}
+                        <div className="flex items-stretch border-l border-[#e0e0e0] pl-2">
+                            {groupedModes.primary.map(m => renderModeButton(m, true))}
+                        </div>
                     </nav>
 
                     <div className="flex items-center gap-4 ml-auto">
@@ -133,9 +166,10 @@ export default function Layout({
                     </div>
                 </div>
 
-                {/* Mobile: mode tabs on their own row, full words, scrollable */}
+                {/* Mobile: mode tabs on their own row, grouped and scrollable */}
                 <nav className="md:hidden flex items-stretch border-t border-[#e0e0e0] overflow-x-auto">
-                    {modes.map(m => (
+                    {/* Results group */}
+                    {groupedModes.results.map(m => (
                         <button
                             key={m.id}
                             onClick={() => onToggleViewMode(m.id)}
@@ -144,6 +178,55 @@ export default function Layout({
                                     ? 'border-[#222] text-[#222]'
                                     : 'border-transparent text-[#999]'
                             }`}
+                        >
+                            {m.short}
+                        </button>
+                    ))}
+                    {/* Divider */}
+                    <div className="w-px bg-[#e0e0e0] shrink-0" />
+                    {/* Analysis group */}
+                    {groupedModes.analysis.map(m => (
+                        <button
+                            key={m.id}
+                            onClick={() => onToggleViewMode(m.id)}
+                            className={`flex-1 whitespace-nowrap px-2 py-2 text-[12px] font-bold uppercase tracking-[0.04em] border-b-[3px] transition-colors ${
+                                viewMode === m.id
+                                    ? 'border-[#222] text-[#222]'
+                                    : 'border-transparent text-[#999]'
+                            }`}
+                        >
+                            {m.short}
+                        </button>
+                    ))}
+                    {/* Divider */}
+                    <div className="w-px bg-[#e0e0e0] shrink-0" />
+                    {/* Simulate */}
+                    {groupedModes.simulate.map(m => (
+                        <button
+                            key={m.id}
+                            onClick={() => onToggleViewMode(m.id)}
+                            className={`flex-1 whitespace-nowrap px-2 py-2 text-[12px] font-bold uppercase tracking-[0.04em] border-b-[3px] transition-colors ${
+                                viewMode === m.id
+                                    ? 'border-[#222] text-[#222]'
+                                    : 'border-transparent text-[#999]'
+                            }`}
+                        >
+                            {m.short}
+                        </button>
+                    ))}
+                    {/* Divider */}
+                    <div className="w-px bg-[#e0e0e0] shrink-0" />
+                    {/* Primary (demoted) */}
+                    {groupedModes.primary.map(m => (
+                        <button
+                            key={m.id}
+                            onClick={() => onToggleViewMode(m.id)}
+                            className={`flex-1 whitespace-nowrap px-2 py-2 text-[11px] font-bold uppercase tracking-[0.04em] border-b-[3px] transition-colors ${
+                                viewMode === m.id
+                                    ? 'border-[#222] text-[#666]'
+                                    : 'border-transparent text-[#bbb]'
+                            }`}
+                            title="Secondary view mode"
                         >
                             {m.short}
                         </button>

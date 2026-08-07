@@ -47,6 +47,8 @@ interface MapProps {
     // COALITION mode: combined slate support (0-100) per ward, keyed "City of Madison|46"
     coalitionByWard?: Record<string, number>;
     coalitionLabel?: string | null;
+    // True when in TARGET mode (turnout consistency) vs COALITION mode (slate vote share)
+    targetMode?: boolean;
 }
 
 export interface PlanningWardDatum {
@@ -267,6 +269,7 @@ export default function Map({
     planningByWard,
     coalitionByWard,
     coalitionLabel,
+    targetMode,
 }: MapProps) {
     const [geoJsonData, setGeoJsonData] = useState<any>(null);
     const [candidateColors, setCandidateColors] = useState<Record<string, HSL>>({});
@@ -837,7 +840,7 @@ export default function Map({
                                      overlayMode === 'PRIMARY_DROPOFF' ? 'Primary Dropoff' :
                                      overlayMode === 'SHIFT' ? 'Gained / Lost Ground' :
                                      overlayMode === 'PLANNING' ? 'Expected Primary Vote' :
-                                     overlayMode === 'COALITION' ? (coalitionLabel || 'Coalition Support') :
+                                     overlayMode === 'COALITION' ? (coalitionLabel || (targetMode ? 'Turnout Consistency' : 'Coalition Support')) :
                                      (raceResult?.raceName || 'Election Results')}
                                 </div>
                                 <div style={{ fontWeight: 700, fontSize: '15px', color: '#222222' }}>
@@ -921,14 +924,14 @@ export default function Map({
                             );
                         })()}
 
-                        {/* COALITION body: combined slate support */}
+                        {/* COALITION body: combined slate support or TARGET body: turnout consistency */}
                         {displayWard.coalitionShare !== undefined && (() => {
                             const share = displayWard.coalitionShare!;
                             const strong = share >= 50;
                             return (
                                 <div style={{ padding: '10px 14px 12px' }}>
                                     <div style={{ fontSize: '11px', color: '#666666', marginBottom: '4px' }}>
-                                        Combined slate support
+                                        {targetMode ? 'Turnout Consistency' : 'Combined slate support'}
                                     </div>
                                     <div style={{ fontSize: '24px', fontWeight: 800, color: strong ? '#567a3a' : '#c73a1d' }}>
                                         {share.toFixed(1)}%
@@ -937,7 +940,7 @@ export default function Map({
                                         <div style={{ height: '100%', width: `${Math.min(share, 100)}%`, background: strong ? '#6d904f' : '#fc4f30', borderRadius: '3px' }} />
                                     </div>
                                     <div style={{ fontSize: '10px', color: '#999999', marginTop: '8px' }}>
-                                        Average vote share across the slate&apos;s candidates in this ward
+                                        {targetMode ? 'Green votes consistently, red is presidential-only' : 'Average vote share across the slate\'s candidates in this ward'}
                                     </div>
                                 </div>
                             );

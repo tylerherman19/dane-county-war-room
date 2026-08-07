@@ -628,6 +628,7 @@ export default function Home() {
                 : undefined
           }
           coalitionSubtext={viewMode === 'TARGET' ? 'Green votes consistently · red is presidential-only' : undefined}
+          targetMode={viewMode === 'TARGET'}
           onReset={() => setSelectedWard(null)}
           focusedCandidate={isResultsMode ? focusedCandidate : null}
           onCandidateReset={() => setFocusedCandidate(null)}

@@ -46,9 +46,11 @@ interface MapWrapperProps {
     coalitionLabel?: string | null;
     // Subtext under the coalition/target legend swatch (defaults to the slate copy)
     coalitionSubtext?: string;
+    // True when in TARGET mode to customize copy for turnout consistency scoring
+    targetMode?: boolean;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard, coalitionMode, coalitionByWard, coalitionLabel, coalitionSubtext }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard, coalitionMode, coalitionByWard, coalitionLabel, coalitionSubtext, targetMode }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -124,7 +126,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
         <div className="relative w-full h-full">
             {coalitionMode && (
                 <div className="absolute top-3 md:top-4 right-3 md:right-4 z-[1000] w-56 bg-white border border-[#cccccc] shadow-[0_1px_6px_rgba(0,0,0,0.15)] rounded-[3px] p-3">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#222] mb-1.5 truncate">{coalitionLabel || 'Coalition'}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#222] mb-1.5 truncate">{coalitionLabel || (targetMode ? 'Target' : 'Coalition')}</div>
                     {coalitionByWard && Object.keys(coalitionByWard).length > 0 ? (
                         <>
                             <div className="flex items-center justify-between text-[10px] text-[#999] mb-1">
@@ -136,7 +138,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                             <div className="text-[9px] text-[#999] mt-1.5">{coalitionSubtext || 'Combined slate vote share by ward'}</div>
                         </>
                     ) : (
-                        <div className="text-[11px] text-[#999]">Add candidates in the panel to build a coalition.</div>
+                        <div className="text-[11px] text-[#999]">{targetMode ? 'Loading turnout data...' : 'Add candidates in the panel to build a coalition.'}</div>
                     )}
                 </div>
             )}
@@ -170,6 +172,7 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 planningByWard={planningByWard}
                 coalitionByWard={coalitionMode ? coalitionByWard : undefined}
                 coalitionLabel={coalitionMode ? coalitionLabel : undefined}
+                targetMode={targetMode}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
                 onWardClick={simulateMode ? onWardClick : undefined}
