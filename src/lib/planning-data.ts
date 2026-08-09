@@ -64,7 +64,7 @@ export interface WardPower {
     wardsToHalf: number;
 }
 
-function shortWardName(wardKey: string): string {
+export function shortWardName(wardKey: string): string {
     const [muni, num] = wardKey.split('|');
     const short = muni
         .replace(/^City of /, '')

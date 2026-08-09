@@ -26,6 +26,8 @@ interface MapWrapperProps {
     simulateHighlightedWards?: Set<string> | null;
     onWardClick?: (ward: { name: string; num: string }) => void;
     simulateOverlayMode?: OverlayMode;
+    // PRIMARY "Assign" tab: click-to-select a ward for editing
+    assignClickMode?: boolean;
     // Real turnout (ballots cast) keyed by "City of Madison|46"
     turnoutByWard?: Record<string, number>;
     comparisonTurnoutByWard?: Record<string, number>;
@@ -50,7 +52,7 @@ interface MapWrapperProps {
     targetMode?: boolean;
 }
 
-export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard, coalitionMode, coalitionByWard, coalitionLabel, coalitionSubtext, targetMode }: MapWrapperProps) {
+export default function MapWrapper({ precinctResults, isLoading, selectedWard, raceResult, onReset, focusedCandidate, onCandidateReset, simulateMode, projectionData, simulateHighlightedWards, onWardClick, simulateOverlayMode, turnoutByWard, comparisonTurnoutByWard, comparisonLabel, fitKey, trendsMode, shiftByWard, shiftLabels, benchmarkLabel, planningByWard, coalitionMode, coalitionByWard, coalitionLabel, coalitionSubtext, targetMode, assignClickMode }: MapWrapperProps) {
     const [overlayMode, setOverlayMode] = useState<OverlayMode>('NONE');
     const [debugOpen, setDebugOpen] = useState(false);
     const [debugWardData, setDebugWardData] = useState<HoveredWard | null>(null);
@@ -175,7 +177,8 @@ export default function MapWrapper({ precinctResults, isLoading, selectedWard, r
                 targetMode={targetMode}
                 projectionData={simulateMode ? projectionData : undefined}
                 simulateHighlightedWards={simulateMode ? simulateHighlightedWards : null}
-                onWardClick={simulateMode ? onWardClick : undefined}
+                onWardClick={simulateMode || assignClickMode ? onWardClick : undefined}
+                assignClickMode={assignClickMode}
                 dormantPoolData={simulateMode ? dormantPoolData : undefined}
                 dropoffData={simulateMode ? dropoffData : undefined}
             />

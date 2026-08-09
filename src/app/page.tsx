@@ -216,7 +216,11 @@ export default function Home() {
   useEffect(() => {
     if (viewMode !== 'PRIMARY' || primaryMatchingRaces.length === 0) return;
     if (!selectedRaceId || !primaryMatchingRaces.some(r => r.id === selectedRaceId)) {
-      setSelectedRaceId(primaryMatchingRaces[0].id);
+      // PRIMARY mode's Planning/Assign tabs are built around the Dem primary
+      // (baked planning data is party: 'DEM') — default to that race when
+      // multiple parties field an AD76 primary, not just whichever sorts first.
+      const preferred = primaryMatchingRaces.find(r => /^DEM\b/i.test(r.name)) ?? primaryMatchingRaces[0];
+      setSelectedRaceId(preferred.id);
       setSelectedGroupKey(null);
     }
   }, [viewMode, primaryMatchingRaces, selectedRaceId]);
@@ -396,10 +400,20 @@ export default function Home() {
   // ── PRIMARY mode: pre-election planning (baked AD76 primary history) ─────
   const [primaryTabOverride, setPrimaryTabOverride] = useState<PrimaryTab | null>(null);
   const [planningScenarioId, setPlanningScenarioId] = useState<ScenarioId>('MID');
-  const [planningNumCandidates, setPlanningNumCandidates] = useState(4);
+  // 2026 AD76 Dem primary is a 5-way open-seat field.
+  const [planningNumCandidates, setPlanningNumCandidates] = useState(5);
   useEffect(() => {
     if (viewMode !== 'PRIMARY') setPrimaryTabOverride(null);
   }, [viewMode]);
+
+  // ── PRIMARY "Assign" tab: map-click-driven ward selected for editing ─────
+  const [assignSelectedWardKey, setAssignSelectedWardKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (viewMode !== 'PRIMARY' || primaryTabOverride !== 'ASSIGN') setAssignSelectedWardKey(null);
+  }, [viewMode, primaryTabOverride]);
+  function handleAssignWardClick(ward: { name: string; num: string }) {
+    setAssignSelectedWardKey(`${ward.name}|${parseInt(ward.num) || 0}`);
+  }
 
   const { data: planningData, error: planningError, isLoading: planningLoading } = useSWR(
     viewMode === 'PRIMARY' ? 'ad76-planning' : null,
@@ -419,6 +433,7 @@ export default function Home() {
   // the user's explicit tab choice always wins.
   const primaryHasReturns = primaryMatchingRaces.length > 0 && (raceResult?.totalVotes ?? 0) > 0;
   const primaryTab: PrimaryTab = primaryTabOverride ?? (primaryHasReturns ? 'NIGHT' : 'PLANNING');
+  const assignClickMode = viewMode === 'PRIMARY' && primaryTab === 'ASSIGN';
 
   const planningState: PlanningState = {
     data: planningData ?? null,
@@ -514,6 +529,9 @@ export default function Home() {
             benchmark={benchmark}
             onBenchmarkChange={setBenchmark}
             benchmarkStats={benchmarkData?.stats ?? null}
+            assignSelectedWardKey={assignSelectedWardKey}
+            onSelectAssignWard={setAssignSelectedWardKey}
+            onClearAssignSelection={() => setAssignSelectedWardKey(null)}
           />
         ) : showGroupSidebar ? (
           <RaceGroupSidebar
@@ -635,7 +653,8 @@ export default function Home() {
           simulateMode={viewMode === 'SIMULATE'}
           projectionData={viewMode === 'SIMULATE' ? simUpdate.projectionData : undefined}
           simulateHighlightedWards={viewMode === 'SIMULATE' ? simUpdate.highlightedWardKeys : null}
-          onWardClick={viewMode === 'SIMULATE' ? setSimClickedWard : undefined}
+          onWardClick={viewMode === 'SIMULATE' ? setSimClickedWard : assignClickMode ? handleAssignWardClick : undefined}
+          assignClickMode={assignClickMode}
           simulateOverlayMode={viewMode === 'SIMULATE' ? simulateOverlayMode : undefined}
         />
         </>

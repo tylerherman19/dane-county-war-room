@@ -1,16 +1,25 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Target, TrendingUp, History, Vote, ClipboardList, Radio } from 'lucide-react';
+import { Target, TrendingUp, History, Vote, ClipboardList, Radio, Sliders } from 'lucide-react';
 import { RaceResult, PrecinctResult, Race, Election } from '@/lib/api';
 import { DistrictFilter, districtLabel } from '@/lib/districts';
 import { buildPrimaryModel } from '@/lib/primary-model';
 import { useCandidateTrackRecords } from '@/hooks/useCandidateTrackRecords';
 import BenchmarkCard, { BenchmarkSelection, BenchmarkStats } from './BenchmarkCard';
 import PlanningPanel, { ScenarioId } from './PlanningPanel';
+import AssignPanel from './AssignPanel';
 import { PlanningData, TurnoutScenario, WardPower } from '@/lib/planning-data';
 
-export type PrimaryTab = 'PLANNING' | 'NIGHT';
+export type PrimaryTab = 'PLANNING' | 'ASSIGN' | 'NIGHT';
+
+const FALLBACK_AD76_CANDIDATES = [
+    'Isaia Ben-Ami',
+    'Juliana Bennett',
+    'Tony Castaneda',
+    'Dina Nina Martinez-Rutherford',
+    'Zoe Sullivan',
+];
 
 export interface PlanningState {
     data: PlanningData | null;
@@ -47,6 +56,10 @@ interface PrimaryFocusPanelProps {
     benchmark: BenchmarkSelection | null;
     onBenchmarkChange: (b: BenchmarkSelection | null) => void;
     benchmarkStats: BenchmarkStats | null;
+    /** ASSIGN tab: ward the user has clicked on the map, keyed "City of Madison|46". */
+    assignSelectedWardKey: string | null;
+    onSelectAssignWard: (wardKey: string) => void;
+    onClearAssignSelection: () => void;
 }
 
 function getPartyColor(party: string | undefined): { bg: string; text: string; dot: string } {
@@ -66,6 +79,7 @@ export default function PrimaryFocusPanel({
     districtWardKeys, turnoutByWard, comparisonTurnoutByWard,
     comparisonElection, elections, selectedElectionId, onSelectComparison,
     isLive, benchmark, onBenchmarkChange, benchmarkStats,
+    assignSelectedWardKey, onSelectAssignWard, onClearAssignSelection,
 }: PrimaryFocusPanelProps) {
     const isAssemblyDistrict = districtFilter?.kind === 'asm';
 
@@ -114,6 +128,7 @@ export default function PrimaryFocusPanel({
         <div className="flex border-b border-[#e0e0e0] shrink-0">
             {([
                 { id: 'PLANNING' as const, label: 'Planning', icon: ClipboardList },
+                { id: 'ASSIGN' as const, label: 'Assign', icon: Sliders },
                 { id: 'NIGHT' as const, label: 'Election Night', icon: Radio },
             ]).map(t => (
                 <button
@@ -152,6 +167,29 @@ export default function PrimaryFocusPanel({
                         onNumCandidatesChange={planning.onNumCandidatesChange}
                         districtNum={districtFilter!.num}
                         precinctResults={districtRaceSelected ? precinctResults : undefined}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    if (primaryTab === 'ASSIGN') {
+        const liveCandidates = raceResult?.candidates?.length
+            ? raceResult.candidates.map(c => c.candidateName.trim()).filter(n => n && !/^write-?in/i.test(n))
+            : FALLBACK_AD76_CANDIDATES;
+        return (
+            <div className="h-full bg-white flex flex-col overflow-hidden">
+                {tabBar}
+                <div className="flex-1 overflow-y-auto">
+                    <AssignPanel
+                        data={planning.data}
+                        isLoading={planning.isLoading}
+                        isError={planning.isError}
+                        power2024={planning.power}
+                        candidates={liveCandidates}
+                        selectedWardKey={assignSelectedWardKey}
+                        onSelectWard={onSelectAssignWard}
+                        onClearSelection={onClearAssignSelection}
                     />
                 </div>
             </div>

@@ -29,6 +29,9 @@ interface MapProps {
     // SIMULATE mode
     projectionData?: Record<string, number>;
     onWardClick?: (ward: { name: string; num: string }) => void;
+    // PRIMARY "Assign" tab: clicking a ward selects it for editing instead of
+    // pinning the results tooltip. Uses the same onWardClick callback.
+    assignClickMode?: boolean;
     // SIMULATE overlay data
     dormantPoolData?: Record<string, number>;
     dropoffData?: Record<string, DropoffInfo>;
@@ -257,6 +260,7 @@ export default function Map({
     focusedCandidate,
     projectionData,
     onWardClick,
+    assignClickMode,
     dormantPoolData,
     dropoffData,
     simulateHighlightedWards,
@@ -703,6 +707,7 @@ export default function Map({
         const hasCoalitionData = overlayMode === 'COALITION' && !!coalitionByWard && `${municipality}|${wardNum}` in coalitionByWard;
 
         const isProjectionClickable = overlayMode === 'PROJECTION' && !!onWardClick;
+        const isAssignClickable = !!assignClickMode && !!onWardClick;
         const isInteractive = hasData || hasSimData || hasShiftData || hasPlanningData || hasCoalitionData;
 
         layer.on({
@@ -732,6 +737,11 @@ export default function Map({
                 onWardHover?.(null);
             },
             click: (e: any) => {
+                if (isAssignClickable) {
+                    onWardClick!({ name: municipality, num: wardNum });
+                    L.DomEvent.stopPropagation(e);
+                    return;
+                }
                 if (isProjectionClickable) {
                     onWardClick!({ name: municipality, num: wardNum });
                     return;
@@ -762,10 +772,10 @@ export default function Map({
             },
         });
 
-        if (isProjectionClickable || isInteractive) {
+        if (isProjectionClickable || isAssignClickable || isInteractive) {
             (layer as any).options = { ...((layer as any).options || {}), className: 'cursor-pointer' };
         }
-    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, dormantPoolData, dropoffData, buildWardData, shiftByWard, planningByWard, coalitionByWard]);
+    }, [resultsMap, candidateColors, onWardHover, overlayMode, onWardClick, assignClickMode, dormantPoolData, dropoffData, buildWardData, shiftByWard, planningByWard, coalitionByWard]);
 
     // Which ward to display in the tooltip: pinned takes priority
     const displayWard = pinnedWard ?? hoveredWard;
@@ -808,7 +818,7 @@ export default function Map({
                 {geoJsonData && (
                     <>
                         <GeoJSON
-                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${planningByWard ? Object.values(planningByWard).reduce((s, p) => s + p.expected, 0) : 0}-${dataFingerprint}`}
+                            key={`${selectedWard ? selectedWard.num : 'all'}-${raceResult?.id || 'default'}-${overlayMode}-${Object.keys(candidateColors).length}-${historicalLabel || 'loading'}-${focusedCandidate || 'none'}-${projectionData ? Object.keys(projectionData).length : 0}-${dormantPoolData ? 'dp' : 'ndp'}-${dropoffData ? 'do' : 'ndo'}-${simulateHighlightedWards ? simulateHighlightedWards.size : 0}-${planningByWard ? Object.values(planningByWard).reduce((s, p) => s + p.expected, 0) : 0}-${assignClickMode ? 'assign' : 'noassign'}-${dataFingerprint}`}
                             data={geoJsonData}
                             style={styleForFeature}
                             onEachFeature={onEachFeature}
