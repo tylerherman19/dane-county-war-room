@@ -80,6 +80,9 @@ export function shortWardName(wardKey: string): string {
  */
 export function computeWardPower(data: PlanningData, currentWardKeys: Set<string>): WardPower | null {
     const baseline = data.years.find(y => {
+        // Skip the in-progress cycle itself (0 votes until election night) —
+        // it can otherwise out-rank 2024 as "newest" while carrying no data.
+        if (y.totalVotes === 0) return false;
         const keys = Object.keys(y.wardVotes);
         if (keys.length === 0) return false;
         const overlap = keys.filter(k => currentWardKeys.has(k)).length;

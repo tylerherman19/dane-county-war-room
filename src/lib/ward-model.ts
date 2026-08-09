@@ -82,7 +82,8 @@ export interface TurnoutPreset {
  * cycles (all either uncontested or, in 2020, a smaller field) fully match.
  */
 export function buildTurnoutPresets(data: PlanningData): TurnoutPreset[] {
-    const years = [...data.years].sort((a, b) => a.year - b.year);
+    // Exclude the in-progress cycle itself (0 votes until election night).
+    const years = data.years.filter(y => y.totalVotes > 0).sort((a, b) => a.year - b.year);
     const presets: TurnoutPreset[] = years.map(y => ({
         id: String(y.year),
         label: String(y.year),
