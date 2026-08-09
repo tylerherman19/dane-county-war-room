@@ -115,6 +115,47 @@ export function candidateColor(index: number): string {
     return CANDIDATE_PALETTE[index % CANDIDATE_PALETTE.length];
 }
 
+// ── Neighborhoods (drill-down grouping above wards) ─────────────────────────
+// Wards grouped by real ward-centroid geography (k-means over the AD76 ward
+// polygons in public/dane_wards.geojson, k=5), then hand-labeled by relative
+// position — not official neighborhood-association boundaries. A starting
+// point, not a ground truth: rename groups or move a ward to a different one
+// freely from the Assign tab; edits are saved same as everything else here.
+export const NEIGHBORHOOD_STARTER: Record<string, string> = {
+    "City of Madison|43": "West Isthmus",
+    "City of Madison|44": "West Isthmus",
+    "City of Madison|45": "West Isthmus",
+    "City of Madison|46": "West Isthmus",
+    "City of Madison|51": "West Isthmus",
+    "City of Madison|52": "West Isthmus",
+    "City of Madison|53": "West Isthmus",
+    "City of Madison|55": "West Isthmus",
+    "City of Madison|32": "North Side",
+    "City of Madison|33": "North Side",
+    "City of Madison|36": "North Side",
+    "City of Madison|37": "North Side",
+    "City of Madison|38": "North Side",
+    "City of Madison|29": "Central Isthmus / Maple Bluff",
+    "City of Madison|30": "Central Isthmus / Maple Bluff",
+    "City of Madison|31": "Central Isthmus / Maple Bluff",
+    "City of Madison|40": "Central Isthmus / Maple Bluff",
+    "City of Madison|41": "Central Isthmus / Maple Bluff",
+    "City of Madison|42": "Central Isthmus / Maple Bluff",
+    "Village of Maple Bluff|1": "Central Isthmus / Maple Bluff",
+    "Village of Maple Bluff|2": "Central Isthmus / Maple Bluff",
+    "City of Madison|128": "Near East Side",
+    "City of Madison|18": "Near East Side",
+    "City of Madison|19": "Near East Side",
+    "City of Madison|27": "Near East Side",
+    "City of Madison|28": "Near East Side",
+    "Town of Blooming Grove|1": "Near East Side",
+    "City of Madison|16": "Far East Side",
+    "City of Madison|17": "Far East Side",
+    "Town of Blooming Grove|2": "Far East Side",
+};
+
+const UNGROUPED = "Ungrouped";
+
 // ── Assignment state (topline, ward overrides, per-ward candidate splits) ──
 
 export interface WardAssignState {
@@ -124,6 +165,8 @@ export interface WardAssignState {
     wardWeightOverrides: Record<string, number>;
     /** wardKey -> candidateName -> pct (0-100). */
     pct: Record<string, Record<string, number>>;
+    /** wardKey -> neighborhood name, editable starting from NEIGHBORHOOD_STARTER. */
+    neighborhoodOf: Record<string, string>;
 }
 
 const STORAGE_KEY = 'ad76-2026-ward-assign-v1';
@@ -144,8 +187,12 @@ export function loadAssignState(wardKeys: string[], candidates: string[], fallba
         weightMode: 'y2024',
         wardWeightOverrides: {},
         pct: {},
+        neighborhoodOf: {},
     };
-    wardKeys.forEach(k => { state.pct[k] = evenSplit(candidates); });
+    wardKeys.forEach(k => {
+        state.pct[k] = evenSplit(candidates);
+        state.neighborhoodOf[k] = NEIGHBORHOOD_STARTER[k] ?? UNGROUPED;
+    });
 
     let raw: string | null = null;
     try { raw = localStorage.getItem(STORAGE_KEY); } catch { /* SSR / private mode */ }
@@ -166,6 +213,13 @@ export function loadAssignState(wardKeys: string[], candidates: string[], fallba
                     candidates.forEach(c => {
                         if (typeof parsed.pct[k][c] === 'number') state.pct[k][c] = parsed.pct[k][c];
                     });
+                }
+            });
+        }
+        if (parsed.neighborhoodOf && typeof parsed.neighborhoodOf === 'object') {
+            wardKeys.forEach(k => {
+                if (typeof parsed.neighborhoodOf[k] === 'string' && parsed.neighborhoodOf[k].trim()) {
+                    state.neighborhoodOf[k] = parsed.neighborhoodOf[k];
                 }
             });
         }
@@ -229,6 +283,54 @@ export function computeAssignment(
     });
 
     return { rows, candidateTotals, allocated };
+}
+
+// ── Neighborhood rollups (drill-down above wards) ───────────────────────────
+
+export interface NeighborhoodRow {
+    name: string;
+    wardKeys: string[];
+    weightPct: number;              // sum of member wards' weightPct
+    wardVotes: number;              // sum of member wards' wardVotes
+    candidateVotes: Record<string, number>;
+}
+
+/** Groups computed ward rows by neighborhood, in state.neighborhoodOf order of first appearance. */
+export function computeNeighborhoodRollups(
+    rows: WardRow[],
+    state: WardAssignState,
+    candidates: string[]
+): NeighborhoodRow[] {
+    const byName = new Map<string, NeighborhoodRow>();
+    rows.forEach(r => {
+        const name = state.neighborhoodOf[r.wardKey] ?? UNGROUPED;
+        let n = byName.get(name);
+        if (!n) {
+            n = { name, wardKeys: [], weightPct: 0, wardVotes: 0, candidateVotes: {} };
+            candidates.forEach(c => { n!.candidateVotes[c] = 0; });
+            byName.set(name, n);
+        }
+        n.wardKeys.push(r.wardKey);
+        n.weightPct += r.weightPct;
+        n.wardVotes += r.wardVotes;
+        candidates.forEach(c => { n!.candidateVotes[c] += r.candidateVotes[c] ?? 0; });
+    });
+    return [...byName.values()].sort((a, b) => b.weightPct - a.weightPct);
+}
+
+/** All neighborhood names currently in use, plus the starter set, for the reassignment picker. */
+export function allNeighborhoodNames(state: WardAssignState): string[] {
+    const names = new Set<string>([...Object.values(NEIGHBORHOOD_STARTER), ...Object.values(state.neighborhoodOf)]);
+    return [...names].sort();
+}
+
+export { UNGROUPED };
+
+/** Sets one candidate split for every ward in `wardKeys` — the neighborhood-scoped version of "apply to all wards". */
+export function applySplitToWards(state: WardAssignState, wardKeys: string[], split: Record<string, number>): WardAssignState {
+    const nextPct = { ...state.pct };
+    wardKeys.forEach(k => { nextPct[k] = { ...split }; });
+    return { ...state, pct: nextPct };
 }
 
 export { shortWardName };

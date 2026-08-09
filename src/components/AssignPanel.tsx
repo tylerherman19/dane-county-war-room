@@ -1,17 +1,22 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { MapPin, Sliders, Users, X } from 'lucide-react';
+import { ChevronLeft, Layers, MapPin, Sliders, Users, X } from 'lucide-react';
 import { PlanningData, WardPower } from '@/lib/planning-data';
 import {
     AssignmentResult,
     CANDIDATE_PALETTE,
     computeAssignment,
     computeWardWeights,
+    computeNeighborhoodRollups,
+    allNeighborhoodNames,
+    applySplitToWards,
     buildTurnoutPresets,
     defaultTopline,
     loadAssignState,
     saveAssignState,
+    NeighborhoodRow,
+    UNGROUPED,
     WardAssignState,
     WeightMode,
 } from '@/lib/ward-model';
@@ -71,8 +76,30 @@ export default function AssignPanel({
         [weights, state, candidates]
     );
 
+    const neighborhoods: NeighborhoodRow[] | null = useMemo(
+        () => (result && state ? computeNeighborhoodRollups(result.rows, state, candidates) : null),
+        [result, state, candidates]
+    );
+
     const [fillOpen, setFillOpen] = useState(false);
     const [fillSplit, setFillSplit] = useState<Record<string, number> | null>(null);
+
+    // Drill-down navigation: neighborhood browse is local to this panel;
+    // ward selection is map-driven (selectedWardKey prop) so it survives
+    // switching tabs. Picking a ward via the map or the neighborhood list
+    // remembers its neighborhood so "back" returns to the right group.
+    const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
+    const [flatView, setFlatView] = useState(false);
+    const [neighborhoodFillOpen, setNeighborhoodFillOpen] = useState(false);
+    const [neighborhoodFillSplit, setNeighborhoodFillSplit] = useState<Record<string, number> | null>(null);
+
+    useEffect(() => {
+        if (selectedWardKey && state) {
+            const n = state.neighborhoodOf[selectedWardKey];
+            if (n) setSelectedNeighborhood(n);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedWardKey]);
 
     if (isLoading) {
         return <div className="p-5 space-y-4 animate-pulse"><div className="h-36 bg-[#f0f0f0]" /><div className="h-64 bg-[#f0f0f0]" /></div>;
@@ -264,11 +291,48 @@ export default function AssignPanel({
                 )}
             </div>
 
-            {/* ── Selected ward editor ── */}
+            {/* ── Neighborhood / ward drill-down editor ── */}
             <div className="px-4 py-4 border-b border-[#e0e0e0]">
-                <h3 className="kicker mb-2 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Ward Editor</h3>
-                {!selectedRow ? (
+                <h3 className="kicker mb-2 flex items-center gap-1.5">
+                    {selectedRow ? <MapPin className="w-3.5 h-3.5" /> : <Layers className="w-3.5 h-3.5" />}
+                    {selectedRow ? 'Ward Editor' : selectedNeighborhood ? 'Neighborhood Editor' : 'Neighborhoods'}
+                </h3>
+
+                {!selectedRow && !selectedNeighborhood && !flatView && (
+                    <div>
+                        <p className="text-[11px] text-[#999] leading-relaxed mb-2">
+                            Wards grouped by geography as a starting point — not official boundaries. Click a
+                            group to drill in and set a split for all its wards, or click any ward on the map.
+                        </p>
+                        <div className="border border-[#e0e0e0] rounded-[3px] divide-y divide-[#f0f0f0]">
+                            {(neighborhoods ?? []).map(n => (
+                                <button
+                                    key={n.name}
+                                    onClick={() => setSelectedNeighborhood(n.name)}
+                                    className="w-full text-left px-3 py-2.5 hover:bg-[#f7f7f7] transition-colors flex items-center justify-between gap-2"
+                                >
+                                    <div className="min-w-0">
+                                        <div className="text-[12px] font-bold text-[#222] truncate">{n.name}</div>
+                                        <div className="text-[10px] text-[#999]">{n.wardKeys.length} ward{n.wardKeys.length === 1 ? '' : 's'}</div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <div className="text-[12px] font-bold num text-[#222]">{fmt1(n.weightPct)}%</div>
+                                        <div className="text-[10px] text-[#999] num">~{fmt(n.wardVotes)} votes</div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={() => setFlatView(true)} className="mt-2 text-[11px] text-[#008fd5] hover:text-[#00729c]">
+                            Browse all wards instead →
+                        </button>
+                    </div>
+                )}
+
+                {!selectedRow && !selectedNeighborhood && flatView && (
                     <div className="text-[12px] text-[#999] leading-relaxed">
+                        <button onClick={() => setFlatView(false)} className="flex items-center gap-1 text-[11px] text-[#008fd5] hover:text-[#00729c] mb-2">
+                            <ChevronLeft className="w-3 h-3" /> Neighborhoods
+                        </button>
                         Click a ward on the map to edit it, or pick one:
                         <div className="mt-2 max-h-40 overflow-y-auto border border-[#e0e0e0] rounded-[3px]">
                             {result.rows
@@ -285,8 +349,87 @@ export default function AssignPanel({
                                 ))}
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {!selectedRow && selectedNeighborhood && (() => {
+                    const n = (neighborhoods ?? []).find(x => x.name === selectedNeighborhood);
+                    if (!n) return <div className="text-[12px] text-[#999]">No wards in this group.</div>;
+                    return (
+                        <div>
+                            <button onClick={() => setSelectedNeighborhood(null)} className="flex items-center gap-1 text-[11px] text-[#008fd5] hover:text-[#00729c] mb-2">
+                                <ChevronLeft className="w-3 h-3" /> Neighborhoods
+                            </button>
+                            <div className="text-sm font-bold text-[#222] mb-0.5">{n.name}</div>
+                            <div className="text-[11px] text-[#999] num mb-3">
+                                {fmt1(n.weightPct)}% of district · ~{fmt(n.wardVotes)} votes · {n.wardKeys.length} ward{n.wardKeys.length === 1 ? '' : 's'}
+                            </div>
+
+                            <button
+                                onClick={() => { setNeighborhoodFillSplit(state.pct[n.wardKeys[0]] ?? {}); setNeighborhoodFillOpen(o => !o); }}
+                                className="mb-2 text-[11px] font-bold text-[#008fd5] hover:text-[#00729c] transition-colors text-left"
+                            >
+                                {neighborhoodFillOpen ? 'Cancel' : `Set one split for all ${n.wardKeys.length} wards here →`}
+                            </button>
+                            {neighborhoodFillOpen && neighborhoodFillSplit && (
+                                <div className="mb-3 border border-[#e0e0e0] rounded-[3px] p-3 space-y-2 bg-[#fafafa]">
+                                    {candidates.map((c, i) => (
+                                        <div key={c} className="flex items-center gap-2">
+                                            <span className="w-2 h-2 shrink-0 rounded-[2px]" style={{ background: CANDIDATE_PALETTE[i % CANDIDATE_PALETTE.length] }} />
+                                            <span className="text-[11px] text-[#666] flex-1 truncate">{c}</span>
+                                            <input
+                                                type="range" min={0} max={100} step={0.5}
+                                                value={neighborhoodFillSplit[c] ?? 0}
+                                                onChange={e => setNeighborhoodFillSplit(s => ({ ...(s ?? {}), [c]: Number(e.target.value) }))}
+                                                className="w-20 h-1 rounded-full appearance-none cursor-pointer bg-[#e8e8e8]"
+                                                style={{ accentColor: '#008fd5' }}
+                                            />
+                                            <input
+                                                type="number" min={0} max={100} step={0.5}
+                                                value={neighborhoodFillSplit[c] ?? 0}
+                                                onChange={e => setNeighborhoodFillSplit(s => ({ ...(s ?? {}), [c]: Number(e.target.value) }))}
+                                                className="w-12 text-[11px] num text-right rounded-[3px] px-1 py-0.5 border border-[#cccccc]"
+                                            />
+                                        </div>
+                                    ))}
+                                    <button
+                                        onClick={() => {
+                                            update(s => applySplitToWards(s, n.wardKeys, neighborhoodFillSplit));
+                                            setNeighborhoodFillOpen(false);
+                                        }}
+                                        className="w-full mt-1 px-2 py-1.5 rounded-[3px] bg-[#222] hover:bg-[#444] text-white text-[11px] font-bold transition-colors"
+                                    >
+                                        Apply to {n.wardKeys.length} wards
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="text-[10px] text-[#999] uppercase tracking-[0.05em] mb-1">Wards in this group</div>
+                            <div className="max-h-48 overflow-y-auto border border-[#e0e0e0] rounded-[3px]">
+                                {result.rows
+                                    .filter(r => n.wardKeys.includes(r.wardKey))
+                                    .sort((a, b) => b.weightPct - a.weightPct)
+                                    .map(r => (
+                                        <button
+                                            key={r.wardKey}
+                                            onClick={() => onSelectWard(r.wardKey)}
+                                            className="w-full text-left px-2.5 py-1.5 text-[11px] text-[#666] border-b border-[#f0f0f0] last:border-0 hover:bg-[#f7f7f7] hover:text-[#222] transition-colors"
+                                        >
+                                            {r.displayName} <span className="num text-[#999]">— {fmt1(r.weightPct)}%</span>
+                                        </button>
+                                    ))}
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {selectedRow && (
                     <div>
+                        <button
+                            onClick={onClearSelection}
+                            className="flex items-center gap-1 text-[11px] text-[#008fd5] hover:text-[#00729c] mb-2"
+                        >
+                            <ChevronLeft className="w-3 h-3" /> {selectedNeighborhood ?? 'Neighborhoods'}
+                        </button>
                         <div className="flex items-center justify-between mb-2">
                             <div>
                                 <div className="text-sm font-bold text-[#222]">{selectedRow.displayName}</div>
@@ -294,9 +437,30 @@ export default function AssignPanel({
                                     {fmt1(selectedRow.weightPct)}% of district · ~{fmt(selectedRow.wardVotes)} votes
                                 </div>
                             </div>
-                            <button onClick={onClearSelection} className="text-[#999] hover:text-[#222]" aria-label="Clear selection">
+                            <button
+                                onClick={() => { onClearSelection(); setSelectedNeighborhood(null); }}
+                                className="text-[#999] hover:text-[#222]"
+                                aria-label="Clear selection"
+                            >
                                 <X className="w-4 h-4" />
                             </button>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="text-[10px] text-[#999] uppercase tracking-[0.05em]">Neighborhood</label>
+                            <select
+                                value={state.neighborhoodOf[selectedRow.wardKey] ?? UNGROUPED}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    update(s => ({ ...s, neighborhoodOf: { ...s.neighborhoodOf, [selectedRow.wardKey]: val } }));
+                                    setSelectedNeighborhood(val);
+                                }}
+                                className="mt-1 w-full text-[12px] rounded-[3px] px-2 py-1 border border-[#cccccc] focus:outline-none focus:border-[#008fd5] bg-white"
+                            >
+                                {allNeighborhoodNames(state).map(n => (
+                                    <option key={n} value={n}>{n}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="mb-3">
