@@ -281,6 +281,16 @@ export default function AssignPanel({
                                 />
                             </div>
                         ))}
+                        {(() => {
+                            const sum = candidates.reduce((s, c) => s + (fillSplit[c] ?? 0), 0);
+                            const ok = Math.abs(sum - 100) < 0.3;
+                            return (
+                                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#e0e0e0]">
+                                    <span className="text-[#999]">Total</span>
+                                    <span className={`font-bold num ${ok ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>{fmt1(sum)}%</span>
+                                </div>
+                            );
+                        })()}
                         <button
                             onClick={() => applyFillToAll(fillSplit)}
                             className="w-full mt-1 px-2 py-1.5 rounded-[3px] bg-[#222] hover:bg-[#444] text-white text-[11px] font-bold transition-colors"
@@ -391,6 +401,16 @@ export default function AssignPanel({
                                             />
                                         </div>
                                     ))}
+                                    {(() => {
+                                        const sum = candidates.reduce((s, c) => s + (neighborhoodFillSplit[c] ?? 0), 0);
+                                        const ok = Math.abs(sum - 100) < 0.3;
+                                        return (
+                                            <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#e0e0e0]">
+                                                <span className="text-[#999]">Total</span>
+                                                <span className={`font-bold num ${ok ? 'text-[#567a3a]' : 'text-[#c73a1d]'}`}>{fmt1(sum)}%</span>
+                                            </div>
+                                        );
+                                    })()}
                                     <button
                                         onClick={() => {
                                             update(s => applySplitToWards(s, n.wardKeys, neighborhoodFillSplit));
