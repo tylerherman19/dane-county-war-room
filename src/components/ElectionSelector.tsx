@@ -15,7 +15,7 @@ export default function ElectionSelector({ elections = [], selectedElectionId, o
     return <section className="archive-filters" aria-label="Election archive">
         <div className="archive-filter-grid">
             <label>Year<select value={filters.year} onChange={e => set('year', e.target.value)}><option value="">All years</option>{years.map(y => <option key={y}>{y}</option>)}</select></label>
-            <label>Election type<select value={filters.stage} onChange={e => set('stage', e.target.value)}><option value="">All types</option>{['Primary', 'General', 'Spring election', 'Other'].map(s => <option key={s}>{s}</option>)}</select></label>
+            <label>Election type<select value={filters.stage} onChange={e => set('stage', e.target.value)}><option value="">All types</option>{['Primary', 'General', 'Other'].map(s => <option key={s} value={s}>{s === 'General' ? 'General / spring election' : s}</option>)}</select></label>
             <label>Cycle<select value={filters.cycle} onChange={e => set('cycle', e.target.value)}><option value="">All cycles</option>{['Spring', 'Fall', 'Special', 'Other'].map(s => <option key={s}>{s}</option>)}</select></label>
             <label className="archive-search">Search elections<input type="search" placeholder="Name or date…" value={filters.query} onChange={e => set('query', e.target.value)} /></label>
             <button className="quiet-button" onClick={() => setFilters({year:'',stage:'',cycle:'',query:''})}>Clear filters</button>

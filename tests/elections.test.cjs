@@ -17,9 +17,10 @@ const elections = [
 test('year, primary/general, cycle and text filters intersect correctly',()=>{
  const all={year:'',stage:'',cycle:'',query:''};
  assert.deepEqual(filterElections(elections,{...all,year:'2024',stage:'Primary',cycle:'Fall'}).map(e=>e.electionId),['a']);
- assert.deepEqual(filterElections(elections,{...all,stage:'General'}).map(e=>e.electionId),['b']);
+ assert.deepEqual(filterElections(elections,{...all,stage:'General'}).map(e=>e.electionId),['b','d']);
  assert.deepEqual(filterElections(elections,{...all,year:'2025',query:'spring 04-01'}).map(e=>e.electionId),['d']);
  assert.equal(filterElections(elections,{...all,year:'2024',cycle:'Spring'}).length,0);
+ assert.deepEqual(filterElections(elections,{...all,stage:'General',cycle:'Spring'}).map(e=>e.electionId),['d']);
  assert.equal(electionCycle(elections[4]),'Special');assert.equal(electionStage(elections[4]),'Primary');
 });
 test('offices separate courts, school, county, municipal and referendums',()=>{

@@ -5,8 +5,7 @@ export function electionYear(e: Election): string {
 }
 export function electionStage(e: Election): string {
     if (/primary/i.test(e.electionName)) return 'Primary';
-    if (/general/i.test(e.electionName)) return 'General';
-    if (/spring/i.test(e.electionName)) return 'Spring election';
+    if (/general|spring election|special election/i.test(e.electionName)) return 'General';
     return 'Other';
 }
 export function electionCycle(e: Election): string {
