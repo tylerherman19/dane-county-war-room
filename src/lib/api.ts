@@ -161,6 +161,11 @@ export function extractDistrictNumber(raceName: string): number {
  */
 function expandWardRanges(precinctName: string): number[] {
     const wards: number[] = [];
+    // Some county rows omit 'Wds', e.g. 'V Waunakee 6-16'.
+    precinctName = precinctName.replace(/–/g, '-');
+    if (!/\bWds?\b/i.test(precinctName)) {
+        precinctName = precinctName.replace(/\s+(\d+[\d,\s-]*)$/, ' Wds $1');
+    }
 
     // Check if this is a grouped ward entry (contains "Wds" plural)
     const wdsMatch = precinctName.match(/Wds\s+([\d\s,\-]+)/i);
@@ -320,7 +325,7 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
 
     data.PrecinctVotes.forEach(pv => {
         // Get the base precinct name (municipality)
-        let precinctName = pv.PrecinctName.split(' Wd')[0].trim();
+        let precinctName = pv.PrecinctName.replace(/\s+(?:Wds?\s*)?[\d,\s–-]+$/i, '').trim();
 
         // Map API abbreviations to full municipality names
         // "C Madison" -> "City of Madison"
@@ -489,7 +494,7 @@ export async function getElectionTurnout(electionId: string): Promise<ElectionTu
     data.PrecinctVotes.forEach(pv => {
         totalBallots += pv.TotalVotes;
 
-        let precinctName = pv.PrecinctName.split(' Wd')[0].trim();
+        let precinctName = pv.PrecinctName.replace(/\s+(?:Wds?\s*)?[\d,\s–-]+$/i, '').trim();
         precinctName = precinctName
             .replace(/^C[\s.]+/i, 'City of ')
             .replace(/^T[\s.]+/i, 'Town of ')

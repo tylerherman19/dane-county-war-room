@@ -5,10 +5,11 @@ export function electionYear(e: Election): string {
 }
 export function electionStage(e: Election): string {
     if (/primary/i.test(e.electionName)) return 'Primary';
-    if (/general|spring election|special election/i.test(e.electionName)) return 'General';
+    if (/general|spring.*election|special election/i.test(e.electionName)) return 'General';
     return 'Other';
 }
 export function electionCycle(e: Election): string {
+    if (/recall/i.test(e.electionName)) return 'Recall';
     if (/special/i.test(e.electionName)) return 'Special';
     if (/spring/i.test(e.electionName)) return 'Spring';
     if (/partisan|general|fall/i.test(e.electionName)) return 'Fall';
@@ -17,7 +18,9 @@ export function electionCycle(e: Election): string {
 export function filterElections(elections: Election[], filters: {year: string; stage: string; cycle: string; query: string}) {
     const words = filters.query.toLowerCase().trim().split(/\s+/).filter(Boolean);
     return elections.filter(e => (!filters.year || electionYear(e) === filters.year)
-        && (!filters.stage || electionStage(e) === filters.stage)
+        && (!filters.stage || electionStage(e) === filters.stage
+            || (filters.stage === 'General' && /spring.*election/i.test(e.electionName))
+            || (filters.stage === 'Primary' && /presidential preference/i.test(e.electionName)))
         && (!filters.cycle || electionCycle(e) === filters.cycle)
         && words.every(word => `${e.electionName} ${e.electionDate}`.toLowerCase().includes(word)));
 }
@@ -25,6 +28,7 @@ export function officeCategory(r: Race): string {
     const n = r.name.toLowerCase();
     if (r.type === 'Referendum') return 'Referendums';
     if (/school|education/.test(n)) return 'School board & education';
+    if (/clerk.*circuit court/.test(n)) return 'County';
     if (/justice|judge|court/.test(n)) return 'Courts';
     if (['Presidential', 'Senate', 'Congress'].includes(r.type)) return 'Federal';
     if (['Governor', 'Assembly', 'StateSenate'].includes(r.type) || /attorney general|secretary of state|state treasurer/.test(n)) return 'State';

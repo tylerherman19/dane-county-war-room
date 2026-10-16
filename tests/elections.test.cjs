@@ -45,3 +45,16 @@ test('same-party candidates get distinct map colors',()=>{
  const colors=assignCandidateColors([{candidateName:'Alice',party:'Republican'},{candidateName:'Bob',party:'Republican'}]);
  assert.notDeepEqual(colors.Alice,colors.Bob);
 });
+
+test('mixed spring elections appear in both types and recall cycles are discoverable',()=>{
+ const mixed={electionDate:'2024-04-02',electionName:'2024 Spring Election & Presidential Preference Primary'};
+ const earlier={electionDate:'2020-04-07',electionName:'2020 Spring & Presidential Preference Election'};
+ for(const stage of ['Primary','General'])assert.equal(filterElections([mixed,earlier],{year:'',stage,cycle:'Spring',query:''}).length,2);
+ assert.equal(electionCycle({electionName:'2025 DeForest Recall Primary'}),'Recall');
+ assert.equal(officeCategory({name:'DEM Clerk of Circuit Court Dane County',type:'Other'}),'County');
+});
+test('county precinct names without Wds still join to ward geometry',async()=>{
+ const original=global.fetch;
+ global.fetch=async()=>({ok:true,json:async()=>({PrecinctVotes:[{PrecinctName:'V Waunakee 6-16',CandidateName:'A',TotalVotes:373,Reported:true}]})});
+ try{const rows=await getPrecinctResults('194','0018');assert.equal(rows.length,11);assert.equal(rows[0].precinctName,'Village of Waunakee');assert.equal(rows[10].wardNumber,'16');assert.equal(rows[0].sourceVotes,373);}finally{global.fetch=original;}
+});
