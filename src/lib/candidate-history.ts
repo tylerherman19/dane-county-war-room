@@ -49,14 +49,14 @@ const bulkCache = new Map<string, ApiBulkElection | null>();
 async function fetchBulkResults(electionId: string): Promise<ApiBulkElection | null> {
     if (bulkCache.has(electionId)) return bulkCache.get(electionId)!;
     try {
-        const res = await fetch(`${BASE_PATH}/electionresults/${electionId}`);
+        const res = await fetch(`${BASE_PATH}/electionresults/${electionId}`, {signal: AbortSignal.timeout(15000)});
         if (!res.ok) throw new Error(`${res.status}`);
         const data: ApiBulkElection = await res.json();
         bulkCache.set(electionId, data);
         return data;
     } catch (e) {
         addLog('error', 'API', `bulk results ${electionId} failed: ${String(e)}`);
-        bulkCache.set(electionId, null);
+        // Do not cache failures; a later search can retry.
         return null;
     }
 }
@@ -73,13 +73,15 @@ function isWriteIn(name: string): boolean {
 export async function searchCandidateHistory(
     elections: Election[],
     query: string,
-    onProgress?: (done: number, total: number) => void
+    onProgress?: (done: number, total: number) => void,
+    onUnavailable?: (count: number) => void
 ): Promise<CandidateRaceRecord[]> {
     const q = query.trim().toLowerCase();
     if (q.length < 3) return [];
 
     const records: CandidateRaceRecord[] = [];
     let done = 0;
+    let unavailable = 0;
 
     // Fetch in small batches to stay polite to the county API
     const BATCH = 6;
@@ -90,7 +92,7 @@ export async function searchCandidateHistory(
             const election = batch[j];
             done++;
             onProgress?.(done, elections.length);
-            if (!bulk?.Races) return;
+            if (!bulk?.Races) {unavailable++; onUnavailable?.(unavailable); return;}
             for (const race of bulk.Races) {
                 if (isAdminRace(race.RaceName)) continue;
                 const real = race.Candidates.filter(c => !isWriteIn(c.Name));

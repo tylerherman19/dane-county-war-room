@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/continue-previous-work-bKXAh
-      - claude/continue-election-dashboard-ULML9
 
 permissions:
   contents: read
@@ -31,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Test election filters and result mapping
+        run: npm test
 
       - name: Build with Next.js
         run: npm run build

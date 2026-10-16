@@ -31,6 +31,7 @@ function recordKey(r: CandidateRaceRecord): string {
  */
 export default function TrendsPanel({ elections, onShiftPair }: TrendsPanelProps) {
     const [query, setQuery] = useState('');
+    const [unavailable, setUnavailable] = useState(0);
     const [searching, setSearching] = useState(false);
     const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
     const [records, setRecords] = useState<CandidateRaceRecord[] | null>(null);
@@ -41,11 +42,12 @@ export default function TrendsPanel({ elections, onShiftPair }: TrendsPanelProps
     async function runSearch() {
         if (!elections || query.trim().length < 3 || searching) return;
         setSearching(true);
+        setUnavailable(0);
         setRecords(null);
         setSelectedCandidate(null);
         onShiftPair(null);
         try {
-            const res = await searchCandidateHistory(elections, query, (done, total) => setProgress({ done, total }));
+            const res = await searchCandidateHistory(elections, query, (done, total) => setProgress({ done, total }), setUnavailable);
             setRecords(res);
             const grouped = groupByCandidate(res);
             if (grouped.length === 1) selectCandidate(grouped[0].name, res);
@@ -120,6 +122,7 @@ export default function TrendsPanel({ elections, onShiftPair }: TrendsPanelProps
                             Search
                         </button>
                     </div>
+                    {unavailable > 0 && <p role="status" className="data-note">{unavailable} elections could not be loaded. Results are incomplete; search again to retry.</p>}
                     {searching && progress && (
                         <div className="mt-3">
                             <div className="h-1.5 bg-[#e8e8e8] overflow-hidden">
@@ -168,7 +171,7 @@ export default function TrendsPanel({ elections, onShiftPair }: TrendsPanelProps
                             </button>
                             <div className="text-lg font-bold text-[#222] leading-tight">{selectedCandidate}</div>
                             <div className="text-xs text-[#999] mt-1 num">
-                                {candidateRaces.length} race{candidateRaces.length === 1 ? '' : 's'} · {wins} won ·{' '}
+                                {candidateRaces.length} race{candidateRaces.length === 1 ? '' : 's'} · {wins} first-place finishes ·{' '}
                                 {yearOf(candidateRaces[candidateRaces.length - 1]?.electionDate ?? '')}–{yearOf(candidateRaces[0]?.electionDate ?? '')}
                             </div>
                         </div>
@@ -239,7 +242,7 @@ export default function TrendsPanel({ elections, onShiftPair }: TrendsPanelProps
                                                 </span>
                                             </div>
                                             <div className="text-[11px] text-[#999] num">
-                                                {r.votes.toLocaleString()} votes{r.candidateCount > 1 ? ` · ${r.won ? 'won' : `${r.place}${['th', 'st', 'nd', 'rd'][r.place % 10] && r.place < 4 ? ['th', 'st', 'nd', 'rd'][r.place] : 'th'} of ${r.candidateCount}`}` : ' · uncontested'}
+                                                {r.votes.toLocaleString()} votes{r.candidateCount > 1 ? ` · ${r.won ? 'most votes' : `${r.place}${['th', 'st', 'nd', 'rd'][r.place % 10] && r.place < 4 ? ['th', 'st', 'nd', 'rd'][r.place] : 'th'} of ${r.candidateCount}`}` : ' · uncontested'}
                                             </div>
                                         </div>
                                     </div>

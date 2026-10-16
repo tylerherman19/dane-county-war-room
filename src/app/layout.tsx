@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dane County War Room - Election Results",
+  title: "Dane County Elections",
   description: "Real-time election results dashboard for Dane County, Wisconsin",
 };
 

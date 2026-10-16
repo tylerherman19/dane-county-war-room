@@ -149,7 +149,7 @@ export default function Watchboard({ board, isLoading, isLive, electionName, onS
                 <div className="flex flex-wrap items-center gap-2 px-3 md:px-5 py-2.5">
                     <div className="flex items-center gap-2 mr-1">
                         {isLive
-                            ? <span className="bg-[#fc4f30] text-white text-[10px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 leading-none rounded-[2px]">Live Board</span>
+                            ? <span className="bg-[#fc4f30] text-white text-[10px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 leading-none rounded-[2px]">Latest results</span>
                             : <span className="text-[11px] font-bold text-[#222] uppercase tracking-[0.08em]">Big Board</span>}
                         <span className="text-xs text-[#666] truncate max-w-[40vw]">{electionName}</span>
                     </div>

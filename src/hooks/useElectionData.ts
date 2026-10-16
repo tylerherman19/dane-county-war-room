@@ -55,11 +55,11 @@ export function useRaces(electionId: string | null) {
     };
 }
 
-export function useRaceResults(electionId: string | null, raceId: string | null) {
+export function useRaceResults(electionId: string | null, raceId: string | null, live = true) {
     const { data, error, isLoading } = useSWR<RaceResult>(
         electionId && raceId ? ['raceResults', electionId, raceId] : null,
         ([_, eId, rId]) => getRaceResults(eId as string, rId as string),
-        { refreshInterval: REFRESH_INTERVAL }
+        { refreshInterval: live ? REFRESH_INTERVAL : 0, revalidateOnFocus: live }
     );
     return {
         results: data,
@@ -68,11 +68,11 @@ export function useRaceResults(electionId: string | null, raceId: string | null)
     };
 }
 
-export function usePrecinctResults(electionId: string | null, raceId: string | null) {
+export function usePrecinctResults(electionId: string | null, raceId: string | null, live = true) {
     const { data, error, isLoading } = useSWR<PrecinctResult[]>(
         electionId && raceId ? ['precinctResults', electionId, raceId] : null,
         ([_, eId, rId]) => getPrecinctResults(eId as string, rId as string),
-        { refreshInterval: REFRESH_INTERVAL }
+        { refreshInterval: live ? REFRESH_INTERVAL : 0, revalidateOnFocus: live }
     );
     return {
         precinctResults: data,
@@ -89,7 +89,7 @@ export function useElectionBoard(electionId: string | null, live = false) {
     const { data, error, isLoading } = useSWR<BoardRace[]>(
         electionId ? ['electionBoard', electionId] : null,
         ([_, id]) => getElectionBoard(id as string),
-        live ? { refreshInterval: REFRESH_INTERVAL } : { revalidateOnFocus: false }
+        live ? { refreshInterval: live ? REFRESH_INTERVAL : 0, revalidateOnFocus: live } : { revalidateOnFocus: false }
     );
     return {
         board: data,
@@ -106,7 +106,7 @@ export function useElectionTurnout(electionId: string | null, live = false) {
     const { data, error, isLoading } = useSWR<ElectionTurnout | null>(
         electionId ? ['electionTurnout', electionId] : null,
         ([_, id]) => getElectionTurnout(id as string),
-        live ? { refreshInterval: REFRESH_INTERVAL } : { revalidateOnFocus: false }
+        live ? { refreshInterval: live ? REFRESH_INTERVAL : 0, revalidateOnFocus: live } : { revalidateOnFocus: false }
     );
     return {
         turnout: data ?? undefined,

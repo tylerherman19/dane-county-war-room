@@ -4,12 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/build-historical-data.mjs && node scripts/build-ad76-planning-data.mjs",
     "build": "next build",
-    "build:historical": "node scripts/build-historical-data.mjs",
-    "build:planning": "node scripts/build-ad76-planning-data.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test tests/*.test.cjs"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.8",

@@ -1,58 +1,29 @@
-# Dane County Election War Room
+# Dane County Elections
 
-A real-time election dashboard for Dane County, WI.
+A compact election explorer for Dane County, Wisconsin, published on GitHub Pages.
 
-## Features
-- Live election results from `api.countyofdane.com`
-- Interactive ward-level heatmap (Leaflet)
-- Historical turnout estimation
-- Dark mode premium UI
-- Mobile responsive
+- **Results:** the latest election, official race totals, precinct search, and a clickable ward map. Checks for updated results every 30 seconds while visible.
+- **Board:** all races with search and a saved watchlist.
+- **Archive:** filter elections by year, primary/general/spring election, spring/fall/special cycle, and name/date. Filter races by office, party, municipality, or district.
+- **Trends:** search candidate history and compare vote shares between elections.
 
-## Getting Started
+Coalitions, Targets, Simulate, and the AD76 planning view have been removed.
 
-### Prerequisites
-- Node.js 18+
-- npm
+## Data and map
 
-### Installation
-1. Clone the repo
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+Election data comes directly from `https://api.danecounty.gov/api/v1/elections`. Shared links use `?e=ELECTION_ID&r=RACE_ID`; leading zeroes in race IDs are preserved. Errors are shown with a retry control; failed requests are never presented as successful refreshes.
 
-### Running Locally
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000)
+The street map uses the standard OpenStreetMap tile service, with attribution and normal browser caching. No map API key is required. Street tiles can be disabled without losing the locally hosted ward boundaries or election results. There is no bulk/offline tile download.
 
-### Test Mode
-To run with archived 2024 data instead of live API:
-1. Create `.env.local`:
-   ```
-   NEXT_PUBLIC_TEST_MODE=2024
-   ```
-2. Restart the dev server.
+`public/dane_wards.geojson` supplies the ward geometry. Historical precinct boundaries can differ from that geometry. The map reports how many result wards matched, and unmatched areas remain neutral. A combined precinct's original totals are shown with an explicit combined-wards label; the county does not publish individual ward counts for these precincts. Fractional allocations used internally preserve the combined totals and candidate shares rather than rounding invented ward counts.
 
-## Building for Production
-This project is configured for static export.
+## Development
 
-```bash
-npm run build
-```
-The static files will be generated in the `out/` directory.
+Use Node 20.9+ and run `npm ci`, then `npm run dev`.
 
-## Deployment
+- `npm test`: regression checks for archive filters, office categories, county response parsing, grouped precinct totals, and primary candidate colors.
+- `npx tsc --noEmit`: type checking.
+- `npm run build`: static export to `out/` with the GitHub Pages base path.
+- `npx next build --webpack`: equivalent export for environments where Turbopack cannot start its worker process.
 
-### GitHub Pages
-1. Push to GitHub.
-2. Go to Settings > Pages.
-3. Select `GitHub Actions` as the source.
-4. Use the Next.js static export workflow.
-
-### Netlify
-1. Connect your repo to Netlify.
-2. Build command: `npm run build`
-3. Publish directory: `out`
+Pushes to `main` run the test suite, build, and GitHub Pages deployment. The build does not download historical/planning datasets or rely on the county API being online.

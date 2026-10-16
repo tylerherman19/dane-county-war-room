@@ -47,6 +47,9 @@ export interface PrecinctResult {
     wardNumber: string;
     candidateName: string;
     votes: number;
+    sourcePrecinct?: string;
+    sourceVotes?: number;
+    groupedWards?: boolean;
     registeredVoters: number;
     ballotscast: number;
     reported: boolean;
@@ -334,10 +337,10 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
         const wards = expandWardRanges(pv.PrecinctName);
 
         if (wards.length > 0) {
-            // BUG FIX: Divide votes evenly across expanded wards to avoid duplication.
-            // Grouped precincts report a combined total; we distribute it proportionally.
-            const votesPerWard = Math.round(pv.TotalVotes / wards.length);
-            const ballotsPerWard = Math.round(totalBallots / wards.length);
+            // Fractional allocations preserve totals for comparisons. Display the
+            // original combined precinct totals, explicitly labeled, in the map.
+            const votesPerWard = pv.TotalVotes / wards.length;
+            const ballotsPerWard = totalBallots / wards.length;
 
             for (const wardNum of wards) {
                 results.push({
@@ -345,6 +348,9 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
                     wardNumber: wardNum.toString(),
                     candidateName: pv.CandidateName.trim(),
                     votes: votesPerWard,
+                    sourcePrecinct: pv.PrecinctName,
+                    sourceVotes: pv.TotalVotes,
+                    groupedWards: wards.length > 1,
                     registeredVoters: 0,
                     ballotscast: ballotsPerWard,
                     reported: pv.Reported
@@ -491,7 +497,7 @@ export async function getElectionTurnout(electionId: string): Promise<ElectionTu
 
         const wards = expandWardRanges(pv.PrecinctName);
         if (wards.length > 0) {
-            const perWard = Math.round(pv.TotalVotes / wards.length);
+            const perWard = pv.TotalVotes / wards.length;
             for (const wardNum of wards) {
                 byWard.push({ precinctName, wardNumber: wardNum.toString(), ballotsCast: perWard });
             }
