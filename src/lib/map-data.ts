@@ -1,6 +1,6 @@
 import type { PrecinctResult } from './api';
 export function wardKey(name: string, num: string | number) {
-    return `${name.trim().toLowerCase()}|${Number(num)}`;
+    return `${name.trim().toLowerCase().replace(/\s+/g,' ')}|${String(num).trim().toLowerCase().replace(/^0+(?=\d)/,'')}`;
 }
 export interface WardData {
     name: string; num: string; source: string; grouped: boolean; reported: boolean;

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { Election } from '@/lib/api';
 import { electionYear, electionStage, electionCycle, filterElections } from '@/lib/archive-filters';
 import SelectorDialog from './SelectorDialog';
-import { candidateMatches } from '@/lib/archive-search';
+import CandidateRaceMatches from './CandidateRaceMatches';
 import { useArchiveRaceSearch } from '@/hooks/useArchiveRaceSearch';
 export default function ElectionSelector({elections=[],selectedElectionId,onSelectElection,onSelectArchiveRace}:{elections?:Election[];selectedElectionId:string|null;onSelectElection:(id:string)=>void;onSelectArchiveRace:(e:string,r:string)=>void}) {
     const [open,setOpen]=useState(false);
@@ -25,11 +25,7 @@ export default function ElectionSelector({elections=[],selectedElectionId,onSele
             <div className="election-list">
                 {searchCandidates && <section className="candidate-race-results" aria-label="Candidate race matches">
                     <div className="candidate-search-status" role="status">{candidates.loading?`Finding candidate races… ${candidates.done} of ${searchElections.length} elections`:`${candidates.rows.length} races matching “${filters.query}”`}</div>
-                    {candidates.rows.map(r=><button className="candidate-race-option" key={`${r.electionId}|${r.id}`} onClick={()=>{onSelectArchiveRace(r.electionId,r.id);setOpen(false);}}>
-                        <strong>{candidateMatches(r,filters.query).join(' · ')}</strong>
-                        <span>{r.name}</span>
-                        <span className="candidate-race-election">{r.electionName} · {r.electionDate.slice(0,10)}</span>
-                    </button>)}
+                    <CandidateRaceMatches rows={candidates.rows} query={filters.query} onSelect={(e,r)=>{onSelectArchiveRace(e,r);setOpen(false);}}/>
                     {candidates.failed>0 && <p className="data-note">{candidates.failed} elections could not be loaded. Reopen the search to retry.</p>}
                 </section>}
                 {searchCandidates && matches.length>0 && <h3 className="election-search-label">Matching elections</h3>}

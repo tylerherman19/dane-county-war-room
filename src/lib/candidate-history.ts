@@ -48,13 +48,13 @@ const bulkCache = new Map<string, ApiBulkElection | null>();
 
 const pendingBulk = new Map<string, Promise<ApiBulkElection | null>>();
 
-async function loadBulkResults(electionId: string): Promise<ApiBulkElection | null> {
-    if (bulkCache.has(electionId)) return bulkCache.get(electionId)!;
+async function loadBulkResults(electionId: string, cacheKey= electionId): Promise<ApiBulkElection | null> {
+    if (bulkCache.has(cacheKey)) return bulkCache.get(cacheKey)!;
     try {
         const res = await fetch(`${BASE_PATH}/electionresults/${electionId}`, {signal: AbortSignal.timeout(15000)});
         if (!res.ok) throw new Error(`${res.status}`);
         const data: ApiBulkElection = await res.json();
-        bulkCache.set(electionId, data);
+        bulkCache.set(cacheKey, data);
         return data;
     } catch (e) {
         addLog('error', 'API', `bulk results ${electionId} failed: ${String(e)}`);
@@ -63,12 +63,13 @@ async function loadBulkResults(electionId: string): Promise<ApiBulkElection | nu
     }
 }
 
-export async function fetchBulkResults(electionId: string): Promise<ApiBulkElection | null> {
-    if (bulkCache.has(electionId)) return bulkCache.get(electionId)!;
-    const pending=pendingBulk.get(electionId);
+export async function fetchBulkResults(electionId: string, revision?:string): Promise<ApiBulkElection | null> {
+    const cacheKey=revision===undefined?electionId:`${electionId}|${revision}`;
+    if (bulkCache.has(cacheKey)) return bulkCache.get(cacheKey)!;
+    const pending=pendingBulk.get(cacheKey);
     if(pending)return pending;
-    const request=loadBulkResults(electionId).finally(()=>pendingBulk.delete(electionId));
-    pendingBulk.set(electionId,request);
+    const request=loadBulkResults(electionId,cacheKey).finally(()=>pendingBulk.delete(cacheKey));
+    pendingBulk.set(cacheKey,request);
     return request;
 }
 
