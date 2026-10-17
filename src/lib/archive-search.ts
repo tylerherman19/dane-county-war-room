@@ -31,9 +31,17 @@ export function candidateScore(name:string,query:string) {
     if(n.startsWith(q))return 2;
     return 3;
 }
+function candidateGroupName(name:string,query:string) {
+    const ballotName=name.replace(/^(?:DEM|REP|LIB|GRN|CON|IND)\s+/i,'').trim();
+    const people=ballotName.split(/\s*\/\s*/).filter(p=>!/^no candidate$/i.test(p));
+    const words=normalizeSearch(query).split(' ').filter(w=>w.length>1&&!/^\d+$/.test(w)&&people.some(p=>normalizeSearch(p).includes(w)));
+    const matches=words.length?people.filter(p=>words.every(w=>normalizeSearch(p).includes(w))):[];
+    return matches.length===1?matches[0]:ballotName;
+}
 export function groupCandidateRaces(rows:ArchiveRace[],query:string) {
     const groups=new Map<string,{name:string;races:ArchiveRace[]}>();
-    for(const race of rows)for(const name of candidateMatches(race,query)){
+    for(const race of rows)for(const ballotName of candidateMatches(race,query)){
+        const name=candidateGroupName(ballotName,query);
         const key=normalizeSearch(name),group=groups.get(key)??{name,races:[]};
         group.races.push(race);groups.set(key,group);
     }
