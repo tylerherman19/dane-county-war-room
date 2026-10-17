@@ -367,3 +367,11 @@ html, body {
 .leaflet-tooltip.ward-hover-card { padding:0; border:1px solid #b8c7d3; border-radius:6px; background:white; color:#203448; white-space:normal; width:280px; box-shadow:0 3px 16px #1937492a; pointer-events:none; }
 .ward-hover-card .ward-popup { max-height:360px; padding:12px 14px; }
 .ward-hover-card .ward-popup p { margin:6px 0; }
+.election-phase-toggle { display:flex; border:1px solid #b8c7d3; border-radius:5px; overflow:hidden; flex-shrink:0; }
+.election-phase-toggle button { padding:9px 14px; font-size:13px; background:#fff; color:#52677a; min-height:38px; }
+.election-phase-toggle button + button { border-left:1px solid #b8c7d3; }
+.election-phase-toggle button[aria-pressed=true] { background:#165d86; color:#fff; font-weight:650; }
+.election-pending { max-width:480px; padding:28px 22px; color:#52677a; }
+.election-pending h2 { font-size:22px; line-height:1.25; font-weight:650; color:#203448; margin-bottom:14px; }
+.election-pending p { font-size:14px; line-height:1.6; margin:10px 0; }
+@media(max-width:767px) { .election-phase-toggle button { font-size:12px; padding:8px 10px; } .selection-bar:has(.election-phase-toggle) { flex-wrap:wrap; } .selection-bar:has(.election-phase-toggle) .race-picker { flex:1 1 100%; max-width:100%; } }

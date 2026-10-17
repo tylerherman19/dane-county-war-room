@@ -77,3 +77,16 @@ test('archive search finds candidates across elections and retains the selected 
   const controller=new AbortController();controller.abort();await assert.rejects(searchArchiveRaces(fixture,'Evers',{signal:controller.signal}));
  }finally{global.fetch=original;}
 });
+const {getCycleElections,currentFallCycleYear}=require('../src/lib/election-cycle.ts');
+test('November and partisan primary resolve independently within the same cycle',()=>{
+ const primary={electionId:'194',electionName:'2026 Partisan Primary',electionDate:'2026-08-11'};
+ const spring={electionId:'190',electionName:'2026 Spring Election',electionDate:'2026-04-07'};
+ const older={electionId:'172',electionName:'2024 General Election',electionDate:'2024-11-05'};
+ let cycle=getCycleElections([primary,spring,older],2026);
+ assert.equal(cycle.PRIMARY.electionId,'194');assert.equal(cycle.NOVEMBER,undefined);
+ const november={electionId:'new-id',electionName:'2026 General Election',electionDate:'2026-11-03'};
+ cycle=getCycleElections([november,primary,spring,older],2026);
+ assert.equal(cycle.NOVEMBER.electionId,'new-id');assert.equal(cycle.PRIMARY.electionId,'194');
+ assert.equal(getCycleElections([spring,older],2026).PRIMARY,undefined);
+ assert.equal(currentFallCycleYear(2026),2026);assert.equal(currentFallCycleYear(2027),2026);
+});

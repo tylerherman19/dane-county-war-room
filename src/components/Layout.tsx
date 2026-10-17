@@ -2,10 +2,10 @@
 import { ReactNode, useState } from 'react';
 import type { Election } from '@/lib/api';
 export type ViewMode = 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS';
-export default function Layout({children, sidebar, elections, selectedElectionId, viewMode, onToggleViewMode, hasError, onRetry, lastUpdated, selectors}: {
+export default function Layout({children, sidebar, elections, selectedElectionId, viewMode, onToggleViewMode, hasError, onRetry, lastUpdated, selectors, electionLabel}: {
     children: ReactNode; sidebar: ReactNode; elections?: Election[]; selectedElectionId: string | null;
     onSelectElection: (id: string) => void; viewMode: ViewMode; onToggleViewMode: (mode: ViewMode) => void;
-    selectors?: ReactNode;
+    selectors?: ReactNode; electionLabel?:string;
     hasError?: boolean; onRetry: () => void; lastUpdated?: string;
 }) {
     const [mobilePanel, setMobilePanel] = useState(false);
@@ -20,7 +20,7 @@ export default function Layout({children, sidebar, elections, selectedElectionId
             <a href="https://elections.danecounty.gov/Election-Result" target="_blank" rel="noreferrer">County source ↗</a>
         </header>
         {selectors && <div className="selection-bar">{selectors}</div>}
-        {viewMode !== 'TRENDS' && <div className="election-context"><strong>{selected?.electionName ?? 'Loading elections…'}</strong><span>{stamp ? `County published ${stamp}` : 'Dane County election results'}{viewMode === 'LIVE' || viewMode === 'BOARD' ? ' · Checks every 30 seconds' : ''}</span></div>}
+        {viewMode !== 'TRENDS' && <div className="election-context"><strong>{selected?.electionName ?? electionLabel ?? 'Loading elections…'}</strong><span>{stamp ? `County published ${stamp}` : 'Dane County election results'}{viewMode === 'LIVE' || viewMode === 'BOARD' ? ' · Checks every 30 seconds' : ''}</span></div>}
         {hasError && <div className="data-error" role="alert">Could not load the county data. Any displayed results may be out of date. <button onClick={onRetry}>Retry</button></div>}
         <div className="workspace">
             {sidebar && <aside className={`results-panel ${mobilePanel ? 'panel-open' : ''}`} aria-label="Results and search">
