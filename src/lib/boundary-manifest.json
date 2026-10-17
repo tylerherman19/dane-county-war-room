@@ -1,0 +1,116 @@
+{
+  "snapshots": [
+    {
+      "id": "2011",
+      "date": "2011-12-01",
+      "label": "2011 wards \u00b7 LTSB reference",
+      "file": "/data/boundaries/2011.geojson",
+      "source": "https://services1.arcgis.com/FDsAtKBk8Hy4cAH0/arcgis/rest/services/2012_to_2018_Election_Data_with_2011_Wards/FeatureServer/0"
+    },
+    {
+      "id": "2018-07",
+      "date": "2018-07-01",
+      "label": "July 2018 \u00b7 LTSB",
+      "file": "/data/boundaries/2018-07.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Fall_2018.zip"
+    },
+    {
+      "id": "2019-01",
+      "date": "2019-01-01",
+      "label": "January 2019 \u00b7 LTSB",
+      "file": "/data/boundaries/2019-01.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Spring_2019.zip"
+    },
+    {
+      "id": "2020-01",
+      "date": "2020-01-01",
+      "label": "January 2020 \u00b7 LTSB",
+      "file": "/data/boundaries/2020-01.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Spring_2020.zip"
+    },
+    {
+      "id": "2020-07",
+      "date": "2020-07-01",
+      "label": "July 2020 \u00b7 LTSB",
+      "file": "/data/boundaries/2020-07.geojson",
+      "source": "https://services1.arcgis.com/FDsAtKBk8Hy4cAH0/arcgis/rest/services/2012_to_2020_Election_Data_with_2020_Wards/FeatureServer/0"
+    },
+    {
+      "id": "2021-01",
+      "date": "2021-01-01",
+      "label": "January 2021 \u00b7 LTSB",
+      "file": "/data/boundaries/2021-01.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Spring_2021.zip"
+    },
+    {
+      "id": "2022-01",
+      "date": "2022-01-01",
+      "label": "January 2022 \u00b7 LTSB",
+      "file": "/data/boundaries/2022-01.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Spring_2022.zip"
+    },
+    {
+      "id": "2022-07",
+      "date": "2022-07-01",
+      "label": "July 2022 \u00b7 LTSB",
+      "file": "/data/boundaries/2022-07.geojson",
+      "source": "https://services1.arcgis.com/FDsAtKBk8Hy4cAH0/arcgis/rest/services/2022_Election_Data_wtih_2022_Wards/FeatureServer/0"
+    },
+    {
+      "id": "2023-01",
+      "date": "2023-01-01",
+      "label": "January 2023 \u00b7 LTSB",
+      "file": "/data/boundaries/2023-01.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Spring_2023.zip"
+    },
+    {
+      "id": "2023-07",
+      "date": "2023-07-01",
+      "label": "July 2023 \u00b7 LTSB",
+      "file": "/data/boundaries/2023-07.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Fall_2023.zip"
+    },
+    {
+      "id": "2024-01",
+      "date": "2024-01-01",
+      "label": "January 2024 \u00b7 LTSB",
+      "file": "/data/boundaries/2024-01.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Spring_2024.zip"
+    },
+    {
+      "id": "2024-07",
+      "date": "2024-07-01",
+      "label": "July 2024 \u00b7 LTSB",
+      "file": "/data/boundaries/2024-07.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Fall_2024.zip"
+    },
+    {
+      "id": "2025-01",
+      "date": "2025-01-01",
+      "label": "January 2025 \u00b7 LTSB",
+      "file": "/data/boundaries/2025-01.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Spring_2025.zip"
+    },
+    {
+      "id": "2025-07",
+      "date": "2025-07-01",
+      "label": "July 2025 \u00b7 LTSB",
+      "file": "/data/boundaries/2025-07.geojson",
+      "source": "https://web.s3.wisc.edu/rml-gisdata/WI_MunicipalWards_Fall_2025.zip"
+    },
+    {
+      "id": "2026-01",
+      "date": "2026-01-01",
+      "label": "January 2026 \u00b7 LTSB",
+      "file": "/data/boundaries/2026-01.geojson",
+      "source": "https://services1.arcgis.com/FDsAtKBk8Hy4cAH0/arcgis/rest/services/WI_Municipal_Wards_January/FeatureServer/0"
+    },
+    {
+      "id": "2026-07",
+      "date": "2026-07-01",
+      "label": "July 2026 \u00b7 LTSB",
+      "file": "/data/boundaries/2026-07.geojson",
+      "source": "https://services1.arcgis.com/FDsAtKBk8Hy4cAH0/arcgis/rest/services/WI_Municipal_Wards_July/FeatureServer/0"
+    }
+  ]
+}

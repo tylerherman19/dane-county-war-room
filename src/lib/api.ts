@@ -9,6 +9,7 @@ export interface Election {
     electionName: string;
     electionDate: string;
     lastPublished: string;
+    finalizedDate?: string | null;
 }
 
 export interface Candidate {
@@ -66,6 +67,7 @@ interface ApiElection {
     ElectionName: string;
     ElectionDate: string;
     LastPublished: string;
+    FinalizedDate?: string | null;
 }
 
 interface ApiRace {
@@ -159,47 +161,18 @@ export function extractDistrictNumber(raceName: string): number {
  *   "V DeForest Wds 1-5, 11, 18-19" -> [1, 2, 3, 4, 5, 11, 18, 19]
  *   "C Madison Wd 001" -> [1]
  */
-function expandWardRanges(precinctName: string): number[] {
-    const wards: number[] = [];
-    // Some county rows omit 'Wds', e.g. 'V Waunakee 6-16'.
-    precinctName = precinctName.replace(/–/g, '-');
-    if (!/\bWds?\b/i.test(precinctName)) {
-        precinctName = precinctName.replace(/\s+(\d+[\d,\s-]*)$/, ' Wds $1');
+function expandWardRanges(precinctName: string): string[] {
+    const name=precinctName.replace(/[–—]/g,'-');
+    const match=name.match(/\bW(?:ar)?ds?\.?\s*(.+)$/i) ?? name.match(/\s+(\d+[\dA-Za-z,\s-]*)$/);
+    if(!match)return [];
+    const wards:string[]=[];
+    for(const part of match[1].split(',').map(p=>p.trim())) {
+        const range=part.match(/^(\d+)\s*-\s*(\d+)$/);
+        if(range){const start=Number(range[1]),end=Number(range[2]);if(end-start<1000)for(let n=start;n<=end;n++)wards.push(String(n));}
+        // An unfinished range such as '18-' cannot safely be inferred.
+        else if(/^\d+[a-z]?$/i.test(part))wards.push(part.replace(/^0+(?=\d)/,'').toUpperCase());
     }
-
-    // Check if this is a grouped ward entry (contains "Wds" plural)
-    const wdsMatch = precinctName.match(/Wds\s+([\d\s,\-]+)/i);
-    if (wdsMatch) {
-        const rangeString = wdsMatch[1].trim();
-        // Split by comma to get individual ranges or numbers
-        const parts = rangeString.split(',').map(p => p.trim());
-
-        for (const part of parts) {
-            // Check if it's a range (e.g., "1-5")
-            const rangeMatch = part.match(/^(\d+)-(\d+)$/);
-            if (rangeMatch) {
-                const start = parseInt(rangeMatch[1]);
-                const end = parseInt(rangeMatch[2]);
-                for (let i = start; i <= end; i++) {
-                    wards.push(i);
-                }
-            } else {
-                // Single ward number
-                const num = parseInt(part);
-                if (!isNaN(num)) {
-                    wards.push(num);
-                }
-            }
-        }
-    } else {
-        // Single ward entry (e.g., "C Madison Wd 001")
-        const singleMatch = precinctName.match(/Wd\s+(\d+)/i);
-        if (singleMatch) {
-            wards.push(parseInt(singleMatch[1]));
-        }
-    }
-
-    return wards;
+    return [...new Set(wards)];
 }
 
 // --- Fetch Helper ---
@@ -242,6 +215,7 @@ export async function getElections(): Promise<Election[]> {
             electionName: e.ElectionName,
             electionDate: e.ElectionDate,
             lastPublished: e.LastPublished,
+            finalizedDate: e.FinalizedDate,
         }))
         .sort((a, b) => new Date(b.electionDate).getTime() - new Date(a.electionDate).getTime());
 }
@@ -325,7 +299,7 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
 
     data.PrecinctVotes.forEach(pv => {
         // Get the base precinct name (municipality)
-        let precinctName = pv.PrecinctName.replace(/\s+(?:Wds?\s*)?[\d,\s–-]+$/i, '').trim();
+        let precinctName = pv.PrecinctName.replace(/\s+(?:W(?:ar)?ds?\.?\s*)?\d[\dA-Za-z,\s–—-]*$/i, '').trim();
 
         // Map API abbreviations to full municipality names
         // "C Madison" -> "City of Madison"
@@ -366,6 +340,8 @@ export async function getPrecinctResults(electionId: string, raceId: string): Pr
             results.push({
                 precinctName,
                 wardNumber: '0',
+                sourcePrecinct: pv.PrecinctName,
+                sourceVotes: pv.TotalVotes,
                 candidateName: pv.CandidateName.trim(),
                 votes: pv.TotalVotes,
                 registeredVoters: 0,
@@ -494,7 +470,7 @@ export async function getElectionTurnout(electionId: string): Promise<ElectionTu
     data.PrecinctVotes.forEach(pv => {
         totalBallots += pv.TotalVotes;
 
-        let precinctName = pv.PrecinctName.replace(/\s+(?:Wds?\s*)?[\d,\s–-]+$/i, '').trim();
+        let precinctName = pv.PrecinctName.replace(/\s+(?:W(?:ar)?ds?\.?\s*)?\d[\dA-Za-z,\s–—-]*$/i, '').trim();
         precinctName = precinctName
             .replace(/^C[\s.]+/i, 'City of ')
             .replace(/^T[\s.]+/i, 'Town of ')

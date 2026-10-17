@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useSWRConfig } from 'swr';
 import Layout, { ViewMode } from '@/components/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -14,11 +14,15 @@ import type { PrecinctResult } from '@/lib/api';
 import { currentFallCycleYear, getCycleElections, ElectionPhase } from '@/lib/election-cycle';
 import ElectionPhaseToggle from '@/components/ElectionPhaseToggle';
 import ElectionPending from '@/components/ElectionPending';
+import MobileRaceSummary from '@/components/MobileRaceSummary';
+import { getResultStatus,oldestCheck } from '@/lib/result-status';
+import { wardKey } from '@/lib/map-data';
 
+const subscribeOnline=(notify:()=>void)=>{window.addEventListener('online',notify);window.addEventListener('offline',notify);return()=>{window.removeEventListener('online',notify);window.removeEventListener('offline',notify);};};
 function shares(rows: PrecinctResult[], candidate: string) {
     const tally: Record<string, {votes: number; total: number}> = {};
     for (const row of rows) {
-        const key = `${row.precinctName}|${Number(row.wardNumber)}`;
+        const key = wardKey(row.precinctName,row.wardNumber);
         const entry = tally[key] ??= {votes:0,total:0};
         entry.total += row.votes;
         if (row.candidateName === candidate) entry.votes += row.votes;
@@ -27,6 +31,7 @@ function shares(rows: PrecinctResult[], candidate: string) {
 }
 
 export default function Home() {
+    const online=useSyncExternalStore(subscribeOnline,()=>navigator.onLine,()=>true);
     const [mode, setMode] = useState<ViewMode>('LIVE');
     const [phase,setPhase]=useState<ElectionPhase>('NOVEMBER');
     const cycleYear=currentFallCycleYear(new Date().getFullYear());
@@ -35,7 +40,7 @@ export default function Home() {
     const [focus, setFocus] = useState<string | null>(null);
     const [pair, setPair] = useState<ShiftPair | null>(null);
     const {mutate} = useSWRConfig();
-    const {elections, isError: electionError} = useElections();
+    const {elections, isError: electionError,checkedAt:electionsChecked,isValidating:electionsChecking} = useElections();
     const isResults = mode === 'LIVE' || mode === 'ARCHIVE';
     const isCycleMode=mode==='LIVE'||mode==='BOARD';
     const cycleElections=useMemo(()=>getCycleElections(elections??[],cycleYear),[elections,cycleYear]);
@@ -45,9 +50,9 @@ export default function Home() {
     const {races, isError: racesError, isLoading: racesLoading} = useRaces(isResults ? electionId : null);
     // Never query a stale race ID against a newly selected election.
     const raceId = races?.some(r => r.id === selection.r) ? selection.r : races?.[0]?.id ?? null;
-    const {results, isLoading: resultLoading, isError: resultError} = useRaceResults(isResults ? electionId : null, raceId, mode === 'LIVE');
-    const {precinctResults, isLoading: precinctLoading, isError: precinctError} = usePrecinctResults(isResults ? electionId : null, raceId, mode === 'LIVE');
-    const {board, isLoading: boardLoading, isError: boardError} = useElectionBoard(mode === 'BOARD' ? electionId : null, mode === 'BOARD');
+    const {results, isLoading: resultLoading, isError: resultError,checkedAt:resultsChecked,isValidating:resultsChecking} = useRaceResults(isResults ? electionId : null, raceId, mode === 'LIVE');
+    const {precinctResults, isLoading: precinctLoading, isError: precinctError,checkedAt:precinctsChecked,isValidating:precinctsChecking} = usePrecinctResults(isResults ? electionId : null, raceId, mode === 'LIVE');
+    const {board, isLoading: boardLoading, isError: boardError,checkedAt:boardChecked,isValidating:boardChecking} = useElectionBoard(mode === 'BOARD' ? electionId : null, mode === 'BOARD');
     const {precinctResults: from, isError: fromError} = usePrecinctResults(mode === 'TRENDS' ? pair?.from.electionId ?? null : null, pair?.from.raceId ?? null, false);
     const {precinctResults: to, isError: toError} = usePrecinctResults(mode === 'TRENDS' ? pair?.to.electionId ?? null : null, pair?.to.raceId ?? null, false);
 
@@ -90,10 +95,13 @@ export default function Home() {
         if ((next === 'LIVE' || next === 'BOARD') && !isCycleMode) setSelection(s=>({...s,r:null}));
     }
     const election = elections?.find(e => e.electionId === electionId);
-    const error = !!electionError || (isResults && (!!racesError || !!resultError || !!precinctError)) || (mode === 'BOARD' && !!boardError) || (mode === 'TRENDS' && (!!fromError || !!toError));
+    const error = !online || !!electionError || (isResults && (!!racesError || !!resultError || !!precinctError)) || (mode === 'BOARD' && !!boardError) || (mode === 'TRENDS' && (!!fromError || !!toError));
     const loading = racesLoading || resultLoading || precinctLoading;
+    const checkedAt=pendingElection?electionsChecked:mode==='BOARD'?oldestCheck([electionsChecked,boardChecked]):isResults?oldestCheck([electionsChecked,resultsChecked,precinctsChecked]):undefined;
+    const status=getResultStatus({error,pending:pendingElection,checkedAt,finalized:!!election?.finalizedDate,live:isCycleMode,validating:mode==='BOARD'?boardChecking:resultsChecking||precinctsChecking||electionsChecking,reporting:isResults?results?.precinctsReporting:board?.reduce((n,r)=>n+r.precinctsReporting,0)});
     return <Layout viewMode={mode} onToggleViewMode={chooseMode} elections={elections} selectedElectionId={electionId} onSelectElection={chooseElection}
         electionLabel={isCycleMode?`${phase==='NOVEMBER'?'November election':'Partisan primary'} ${cycleYear}`:undefined}
+        status={status} checkedAt={checkedAt} mobileSummary={isResults && !pendingElection ? <MobileRaceSummary result={results} rows={precinctResults} ward={ward}/> : undefined}
         lastUpdated={election?.lastPublished} hasError={error} onRetry={() => {void mutate(() => true);}}
         selectors={isResults||mode==='BOARD' ? <>
             {isCycleMode ? <ElectionPhaseToggle phase={phase} year={cycleYear} onChange={choosePhase}/> : <ElectionSelector elections={elections} selectedElectionId={electionId} onSelectElection={chooseElection} onSelectArchiveRace={chooseArchiveRace}/>}
@@ -106,7 +114,7 @@ export default function Home() {
         </ErrorBoundary>}>
         <ErrorBoundary key={mode} label="Map">
             {mode==='BOARD' && pendingElection ? <ElectionPending year={cycleYear} primary={phase==='PRIMARY'}/> : mode === 'BOARD' ? <Watchboard key={electionId} board={board} isLoading={boardLoading} isLive={true} electionName={election?.electionName} onSelectRace={r => {setMode('LIVE');chooseRace(r);}} /> :
-                <MapWrapper precinctResults={mode === 'TRENDS' ? to ?? [] : precinctResults ?? []} isLoading={isResults && loading}
+                <MapWrapper electionDate={mode==='TRENDS'?pair?.to.electionDate:election?.electionDate} comparisonDate={pair?.from.electionDate} comparisonRows={from} precinctResults={mode === 'TRENDS' ? to ?? [] : precinctResults ?? []} isLoading={isResults && loading}
                     selectedWard={ward} raceResult={isResults ? results : undefined} focusedCandidate={focus} onCandidateReset={() => setFocus(null)}
                     fitKey={`${mode}|${electionId}|${raceId}|${pair?.from.electionId ?? ''}|${pair?.to.electionId ?? ''}|${pair?.to.raceId ?? ''}`} onSelectWard={setWard}
                     trendsMode={mode === 'TRENDS'} shiftByWard={shifts} shiftLabel={pair ? `${pair.candidateName}: ${pair.from.electionDate.slice(0,10)} to ${pair.to.electionDate.slice(0,10)}` : undefined} />}

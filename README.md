@@ -27,3 +27,29 @@ Use Node 20.9+ and run `npm ci`, then `npm run dev`.
 - `npx next build --webpack`: equivalent export for environments where Turbopack cannot start its worker process.
 
 Pushes to `main` run the test suite, build, and GitHub Pages deployment. The build does not download historical/planning datasets or rely on the county API being online.
+
+### Archive search and map sources
+
+Candidate search uses `public/data/archive-index.json` (names and race IDs only).
+Run `node scripts/build-archive-index.mjs` to refresh it. Search checks each
+entry against the county's current `LastPublished`; new or changed elections
+fall back to the county API. An unavailable index also falls back to the API.
+Actual vote totals always come from the county, never from the search index.
+
+Dated LTSB ward snapshots and their original source links are recorded in
+`src/lib/boundary-manifest.json`. The map chooses the latest snapshot on or
+before the election date. Where no same-year snapshot exists, it explicitly
+labels the layer as a reference. Unmatched precincts remain in official race
+totals and are listed below the map. Combined precinct totals are labeled;
+individual ward vote counts are not inferred for display. Lettered wards
+remain distinct. Trends excludes combined precincts and changed geometries.
+
+To rebuild boundary assets, install `pyshp pyproj shapely fiona` and run
+`python scripts/build-boundaries.py`. This extracts only Dane County geometry,
+merges separate pieces of each ward, repairs invalid polygon topology, and
+simplifies lines by approximately one meter for web display. No redistributed
+LTSB vote estimates are imported. These refresh scripts are deliberately not
+build dependencies, so a county/GIS outage cannot break deployment.
+
+The connection badge uses successful fetch timestamps and the county's explicit
+`FinalizedDate`; 100% precinct reporting alone does not mark a race final.

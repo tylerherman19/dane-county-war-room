@@ -5,6 +5,7 @@ import type { Election, Race } from '@/lib/api';
 import { officeCategory, raceParty } from '@/lib/archive-filters';
 import { ArchiveRace, candidateMatches, getArchiveBallot, matchesArchiveRace, searchArchiveRaces } from '@/lib/archive-search';
 import SelectorDialog from './SelectorDialog';
+import CandidateRaceMatches from './CandidateRaceMatches';
 interface SearchState {query:string;rows:ArchiveRace[];done:number;failed:number;loading:boolean;}
 export default function RaceSelector({races,selectedRaceId,onSelectRace,elections=[],election,onSelectArchiveRace,archive=false}:{
     races?:Race[];selectedRaceId:string|null;onSelectRace:(id:string)=>void;elections?:Election[];election?:Election;onSelectArchiveRace:(e:string,r:string)=>void;archive?:boolean;
@@ -20,7 +21,7 @@ export default function RaceSelector({races,selectedRaceId,onSelectRace,election
     const currentRaces=ballot ?? races ?? [];
     const parties=[...new Set(currentRaces.map(raceParty))];
     const globalSearch=archive && scope==='archive' && query.trim().length>=2;
-    const electionIds=elections.map(e=>e.electionId).join('|');
+    const electionIds=elections.map(e=>`${e.electionId}:${e.lastPublished}`).join('|');
     useEffect(()=>{
         if(!open || !globalSearch)return;
         const controller=new AbortController();
@@ -32,7 +33,7 @@ export default function RaceSelector({races,selectedRaceId,onSelectRace,election
                 .catch(()=>{if(!controller.signal.aborted)setSearch(s=>({...s,loading:false,failed:s.failed+1}));});
         },300);
         return ()=>{clearTimeout(timer);controller.abort();};
-        // Election objects refresh every 30 seconds; only restart for a different ID list.
+        // Election objects refresh every 30 seconds; restart only when IDs or publication revisions change.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[open,globalSearch,query,electionIds,election?.electionId]);
     const localMatches=currentRaces.filter(r=>(!party||raceParty(r)===party)&&matchesArchiveRace(r,query));
@@ -43,6 +44,8 @@ export default function RaceSelector({races,selectedRaceId,onSelectRace,election
         return [...map];
     },[found,globalSearch,election?.electionName]);
     function choose(r:Race){if('electionId' in r && r.electionId && r.electionId!==election?.electionId)onSelectArchiveRace(r.electionId,r.id);else onSelectRace(r.id);setOpen(false);setQuery('');}
+    const candidateRows=globalSearch ? (found as ArchiveRace[]).filter(r=>candidateMatches(r,query).length>0) : [];
+    const candidateKeys=new Set(candidateRows.map(r=>`${r.electionId}|${r.id}`));
     const busy=globalSearch && (search.query!==query || search.loading);
     return <div className="race-picker">
         <button className="selection-chip race-chip" aria-haspopup="dialog" aria-expanded={open} onClick={()=>setOpen(true)}><span>{selected?.name ?? 'Choose a race or candidate'}</span><span aria-hidden="true">⌄</span></button>
@@ -55,7 +58,7 @@ export default function RaceSelector({races,selectedRaceId,onSelectRace,election
             </div>
             {(ballotError||ballot===null) && !globalSearch && <p className="picker-empty">Candidate names could not load. Office search still works. <button onClick={()=>void mutate()}>Retry</button></p>}
             {globalSearch && <p className="search-progress" role="status">{busy?`Searching elections… ${search.query===query?search.done:0} of ${elections.length}`:`${found.length} matching races`}{search.query===query && search.failed>0?` · ${search.failed} elections unavailable; reopen search to retry`:''}</p>}
-            <div className={`race-menu-list ${globalSearch?'search-results-list':''}`}>{groups.map(([group,items])=><section className="race-menu-group" key={group}><h3>{group}</h3>{items.map(r=>{
+            <div className={`race-menu-list ${globalSearch?'search-results-list':''}`}>{globalSearch && <CandidateRaceMatches rows={candidateRows} query={query} onSelect={(e,r)=>{onSelectArchiveRace(e,r);setOpen(false);setQuery('');}}/>}{groups.filter(([,items])=>items.some(r=>!candidateKeys.has(`${r.electionId}|${r.id}`))).map(([group,items])=><section className="race-menu-group" key={group}><h3>{group}</h3>{items.filter(r=>!candidateKeys.has(`${r.electionId}|${r.id}`)).map(r=>{
                 const names=query ? candidateMatches(r,query) : [];
                 return <button key={`${r.electionId??election?.electionId}|${r.id}`} className="race-option" aria-current={r.id===selectedRaceId && (!r.electionId || r.electionId===election?.electionId)?'true':undefined} onClick={()=>choose(r)}><span className="race-option-title">{r.id===selectedRaceId && (!r.electionId||r.electionId===election?.electionId)?'✓ ':''}{r.name}</span>{names.length>0 && <span className="race-option-candidates">{names.join(' · ')}</span>}</button>;
             })}</section>)}</div>

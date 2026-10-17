@@ -63,7 +63,7 @@ test('archive search finds candidates across elections and retains the selected 
  const original=global.fetch;
  const fixture=[{electionId:'search-2022',electionName:'2022 General Election',electionDate:'2022-11-08',lastPublished:''},{electionId:'search-2024',electionName:'2024 General Election',electionDate:'2024-11-05',lastPublished:''}];
  let requests=0;
- global.fetch=async url=>{requests++;return {ok:true,json:async()=>({Races:[{RaceNumber:'0018',RaceName:'Governor',Candidates:[{Name:'Tony Evers',Votes:100,Percentage:60,PartyName:'Democratic'}],TotalPrecincts:1,PrecinctsReported:1},{RaceNumber:'0100',RaceName:'C. Madison Ref (Increase levy limit)',Candidates:[{Name:'Yes',Votes:100,Percentage:57,PartyName:''}],TotalPrecincts:1,PrecinctsReported:1}]})};};
+ global.fetch=async url=>{if(String(url).includes("archive-index.json"))return {ok:false};requests++;return {ok:true,json:async()=>({Races:[{RaceNumber:'0018',RaceName:'Governor',Candidates:[{Name:'Tony Evers',Votes:100,Percentage:60,PartyName:'Democratic'}],TotalPrecincts:1,PrecinctsReported:1},{RaceNumber:'0100',RaceName:'C. Madison Ref (Increase levy limit)',Candidates:[{Name:'Yes',Votes:100,Percentage:57,PartyName:''}],TotalPrecincts:1,PrecinctsReported:1}]})};};
  try{
   const [a,b]=await Promise.all([getArchiveBallot(fixture[0]),getArchiveBallot(fixture[0])]);
   assert.equal(requests,1);assert.equal(a[0].candidates[0].candidateName,'Tony Evers');assert.deepEqual(a,b);
@@ -89,4 +89,66 @@ test('November and partisan primary resolve independently within the same cycle'
  assert.equal(cycle.NOVEMBER.electionId,'new-id');assert.equal(cycle.PRIMARY.electionId,'194');
  assert.equal(getCycleElections([spring,older],2026).PRIMARY,undefined);
  assert.equal(currentFallCycleYear(2026),2026);assert.equal(currentFallCycleYear(2027),2026);
+});
+const {normalizeSearch,candidateMatches,groupCandidateRaces}=require('../src/lib/archive-search.ts');
+const {getResultStatus,oldestCheck}=require('../src/lib/result-status.ts');
+const {selectBoundary,sameBoundary,boundaryIsReference}=require('../src/lib/boundaries.ts');
+test('candidate grouping ranks exact names and preserves each election/race link',()=>{
+ const race=(name,date,id,candidates)=>({name:'Governor',electionName:'General Election',electionDate:date,electionId:id,id:'0018',candidates:candidates.map(candidateName=>({candidateName}))});
+ const rows=[race('', '2018-11-06','old',['Tony Evers','John Everson']),race('','2022-11-08','new',['TONY EVERS'])];
+ const groups=groupCandidateRaces(rows,'Evers');
+ assert.equal(groups[0].name,'Tony Evers');assert.equal(groups[0].races.length,2);assert.equal(groups[0].races[0].electionId,'new');assert.equal(groups[1].name,'John Everson');
+ assert.deepEqual(candidateMatches(rows[0],'Tony Evers'),['Tony Evers']);
+ assert.equal(normalizeSearch('José O’Neil-Smith'),'jose o neil smith');
+ assert.deepEqual(candidateMatches({candidates:[{candidateName:'Tony Smith'},{candidateName:'John Evers'}]},'Tony Evers'),[]);
+});
+test('status requires county finalization and preserves the last complete successful check',()=>{
+ const base={error:false,pending:false,checkedAt:'2026-11-04T02:00:00Z',live:true,reporting:100};
+ assert.equal(getResultStatus(base).kind,'connected');
+ assert.equal(getResultStatus({...base,finalized:true}).kind,'finalized');
+ assert.equal(getResultStatus({...base,error:true,finalized:true}).kind,'interrupted');
+ assert.equal(getResultStatus({...base,pending:true}).kind,'waiting');
+ assert.equal(getResultStatus({...base,reporting:0}).label,'Awaiting returns');
+ assert.equal(oldestCheck(['2026-11-04T02:00:00Z','2026-11-04T02:00:15Z']),'2026-11-04T02:00:00Z');
+ assert.equal(oldestCheck([base.checkedAt,undefined]),undefined);
+});
+test('boundaries follow election dates; identical ward numbers do not imply identical geometry',()=>{
+ const snapshots=[{id:'old',date:'2021-01-01'},{id:'new',date:'2022-01-01'},{id:'fall',date:'2024-07-01'}];
+ assert.equal(selectBoundary(snapshots,'2021-04-06').id,'old');assert.equal(selectBoundary(snapshots,'2022-04-05').id,'new');
+ assert.equal(selectBoundary(snapshots,'2024-04-02').id,'new');assert.equal(selectBoundary(snapshots,'2024-11-05').id,'fall');
+ assert.equal(boundaryIsReference(snapshots[1],'2023-04-04'),true);
+ assert.equal(selectBoundary(snapshots,'2020-11-03'),undefined);
+ assert.notEqual(wardKey('City of Madison','004A'),wardKey('City of Madison','4'));
+ assert.equal(wardKey('City of Madison','004A'),wardKey('city of madison','4a'));
+ assert.equal(sameBoundary({type:'Polygon',coordinates:[1]},{type:'Polygon',coordinates:[2]}),false);
+});
+test('the static search index avoids county scans, but changed elections refresh from the county',async()=>{
+ const original=global.fetch;let indexCalls=0,bulkCalls=0;
+ const fixture=[{electionId:'index-1',electionName:'2022 General',electionDate:'2022-11-08',lastPublished:'same'},{electionId:'index-2',electionName:'2024 General',electionDate:'2024-11-05',lastPublished:'updated'}];
+ global.fetch=async url=>{
+  if(String(url).includes('archive-index.json')){indexCalls++;return {ok:true,json:async()=>({version:1,entries:[{id:'index-1',published:'same',races:[{id:'0018',name:'Governor',candidates:['Tony Evers']}]},{id:'index-2',published:'old',races:[]}]})};}
+  bulkCalls++;return {ok:true,json:async()=>({Races:[{RaceNumber:'0099',RaceName:'Governor',Candidates:[{Name:'Tony Evers',Votes:1,Percentage:100}],TotalPrecincts:1,PrecinctsReported:1}]})};
+ };
+ try{
+  const progress=[];const found=await searchArchiveRaces(fixture,'Evers',{onProgress:(r,done)=>progress.push({count:r.length,done})});
+  assert.equal(found.length,2);assert.equal(indexCalls,1);assert.equal(bulkCalls,1);assert.equal(found.find(r=>r.electionId==='index-2').id,'0099');assert.deepEqual(progress[0],{count:1,done:1});
+  await searchArchiveRaces(fixture,'Tony Evers');assert.equal(indexCalls,1);assert.equal(bulkCalls,1);
+ }finally{global.fetch=original;}
+});
+test('lettered wards survive county parsing and truncated ranges are never guessed',async()=>{
+ const original=global.fetch;global.fetch=async()=>({ok:true,json:async()=>({PrecinctVotes:[{PrecinctName:'C Madison Wd 004A',CandidateName:'A',TotalVotes:10,Reported:true},{PrecinctName:'V DeForest Wds 1-2, 18-',CandidateName:'A',TotalVotes:20,Reported:true}]})});
+ try{const rows=await getPrecinctResults('test','0018');assert.equal(rows[0].wardNumber,'4A');assert.equal(rows[0].precinctName,'City of Madison');assert.equal(rows.some(r=>r.wardNumber==='18'),false);}finally{global.fetch=original;}
+});
+test('committed boundary snapshots are complete, dated and uniquely keyed',()=>{
+ const manifest=JSON.parse(fs.readFileSync(require('path').join(__dirname,'../src/lib/boundary-manifest.json'),'utf8'));
+ assert.ok(manifest.snapshots.length>=10);
+ for(const snapshot of manifest.snapshots){
+  const geo=JSON.parse(fs.readFileSync(require('path').join(__dirname,'../public',snapshot.file),'utf8'));
+  assert.equal(geo.type,'FeatureCollection');assert.ok(geo.features.length>=350);
+  const keys=geo.features.map(f=>wardKey(f.properties.NAME,f.properties.WardNumber));assert.equal(new Set(keys).size,keys.length);
+  assert.match(snapshot.date,/^\d{4}-\d{2}-\d{2}$/);assert.match(snapshot.source,/^https:\/\//);
+ }
+ const index=JSON.parse(fs.readFileSync(require('path').join(__dirname,'../public/data/archive-index.json'),'utf8'));
+ assert.equal(index.version,1);assert.ok(index.entries.length>=40);
+ for(const entry of index.entries)for(const race of entry.races){assert.equal(typeof race.id,'string');assert.ok(Array.isArray(race.candidates));assert.equal('votes' in race,false);}
 });
