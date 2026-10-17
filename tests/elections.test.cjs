@@ -152,3 +152,9 @@ test('committed boundary snapshots are complete, dated and uniquely keyed',()=>{
  assert.equal(index.version,1);assert.ok(index.entries.length>=40);
  for(const entry of index.entries)for(const race of entry.races){assert.equal(typeof race.id,'string');assert.ok(Array.isArray(race.candidates));assert.equal('votes' in race,false);}
 });
+test('governor tickets group under either searched candidate across races',()=>{
+ const row=(id,name)=>({id:'0018',electionId:id,electionDate:id,name:'Governor',candidates:[{candidateName:name}]});
+ const rows=[row('2013','Tony Evers'),row('2018','Tony Evers / Mandela Barnes'),row('2022','DEM Tony Evers /Sara Rodriguez')];
+ const grouped=groupCandidateRaces(rows,'Tony Evers');assert.equal(grouped.length,1);assert.equal(grouped[0].name,'Tony Evers');assert.equal(grouped[0].races.length,3);
+ assert.equal(groupCandidateRaces(rows,'Mandela Barnes')[0].name,'Mandela Barnes');
+});
