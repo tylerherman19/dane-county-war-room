@@ -99,8 +99,14 @@ export default function ElectionMap({precinctResults,isLoading,selectedWard,race
                     eventHandlers={{tileerror:()=>setTileError(true)}} />}
                 {data && <><GeoJSON key={`${fitKey}|${precinctResults.length}|${JSON.stringify(precinctResults.map(r=>[r.votes,r.reported]))}|${JSON.stringify(shiftByWard)}`} ref={geoRef} data={data} style={style}
                     onEachFeature={(f,l)=>{const feature=f as Feature<Geometry,WardProps>;const key=wardKey(feature.properties.NAME,feature.properties.WardNumber);
-                        l.bindPopup(()=>popup(feature,wards.get(key),shifts.get(key)),{maxWidth:300});
-                        l.on('click',()=>onSelectWard({name:feature.properties.NAME,num:String(feature.properties.WardNumber)}));
+                        const content=()=>popup(feature,wards.get(key),shifts.get(key));
+                        if(window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+                            l.bindTooltip(content,{sticky:true,direction:'auto',opacity:1,className:'ward-hover-card',offset:[14,0]});
+                            // Hover previews do not select a ward or move the camera.
+                        } else {
+                            l.bindPopup(content,{maxWidth:300});
+                            l.on('click',()=>onSelectWard({name:feature.properties.NAME,num:String(feature.properties.WardNumber)}));
+                        }
                     }} /><Camera data={data} selectedWard={selectedWard} fitKey={fitKey} wards={wards}/></>}
                 <ResetMap/>
             </MapContainer>

@@ -71,6 +71,8 @@ test('archive search finds candidates across elections and retains the selected 
   assert.equal((await searchArchiveRaces(fixture,'2024 Evers')).length,1);
   assert.equal(matchesArchiveRace(rows[0],'governor Tony'),true);
   assert.equal((await searchArchiveRaces(fixture,'Madison')).length,2);
+  assert.equal((await searchArchiveRaces(fixture,'Evers',{candidateOnly:true})).length,2);
+  assert.equal((await searchArchiveRaces(fixture,'General',{candidateOnly:true})).length,0);
   assert.equal(requests,2);
   const controller=new AbortController();controller.abort();await assert.rejects(searchArchiveRaces(fixture,'Evers',{signal:controller.signal}));
  }finally{global.fetch=original;}

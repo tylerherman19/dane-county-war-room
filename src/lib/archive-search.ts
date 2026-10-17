@@ -19,14 +19,14 @@ export function candidateMatches(race:Race,query:string) {
     const words=query.toLowerCase().trim().split(/\s+/).filter(w=>w.length>1 && !/^\d+$/.test(w));
     return race.candidates.filter(c=>words.some(w=>c.candidateName.toLowerCase().includes(w))).map(c=>c.candidateName);
 }
-export async function searchArchiveRaces(elections:Election[],query:string,options:{signal?:AbortSignal;onProgress?:(races:ArchiveRace[],done:number,failed:number)=>void}={}) {
+export async function searchArchiveRaces(elections:Election[],query:string,options:{candidateOnly?:boolean;signal?:AbortSignal;onProgress?:(races:ArchiveRace[],done:number,failed:number)=>void}={}) {
     const matches:ArchiveRace[]=[];
     let done=0,failed=0;
     for(let i=0;i<elections.length;i+=4) {
         options.signal?.throwIfAborted();
         const batch=await Promise.all(elections.slice(i,i+4).map(getArchiveBallot));
         options.signal?.throwIfAborted();
-        for(const races of batch){done++;if(!races){failed++;continue;}matches.push(...races.filter(r=>matchesArchiveRace(r,query,`${r.electionName} ${r.electionDate}`)));}
+        for(const races of batch){done++;if(!races){failed++;continue;}matches.push(...races.filter(r=>matchesArchiveRace(r,query,`${r.electionName} ${r.electionDate}`) && (!options.candidateOnly || candidateMatches(r,query).length>0)));}
         options.onProgress?.([...matches],done,failed);
     }
     return matches;

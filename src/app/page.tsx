@@ -76,7 +76,7 @@ export default function Home() {
     return <Layout viewMode={mode} onToggleViewMode={chooseMode} elections={elections} selectedElectionId={selection.e} onSelectElection={chooseElection}
         lastUpdated={election?.lastPublished} hasError={error} onRetry={() => {void mutate(() => true);}}
         selectors={isResults ? <>
-            {mode === 'ARCHIVE' ? <ElectionSelector elections={elections} selectedElectionId={selection.e} onSelectElection={chooseElection}/> : <span className="latest-election-label">{election?.electionName ?? 'Latest election'}</span>}
+            {mode === 'ARCHIVE' ? <ElectionSelector elections={elections} selectedElectionId={selection.e} onSelectElection={chooseElection} onSelectArchiveRace={chooseArchiveRace}/> : <span className="latest-election-label">{election?.electionName ?? 'Latest election'}</span>}
             <RaceSelector key={selection.e} races={races} selectedRaceId={raceId} onSelectRace={chooseRace} elections={elections} election={election} onSelectArchiveRace={chooseArchiveRace} archive={mode === 'ARCHIVE'}/>
         </> : null}
         sidebar={mode === 'BOARD' ? null : <ErrorBoundary key={mode} label="Results">

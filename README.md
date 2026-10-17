@@ -4,7 +4,7 @@ A compact election explorer for Dane County, Wisconsin, published on GitHub Page
 
 - **Results:** the latest election, official race totals, precinct search, and a clickable ward map. Checks for updated results every 30 seconds while visible.
 - **Board:** all races with search and a saved watchlist.
-- **Archive:** two compact election/race controls open searchable menus. Elections are grouped by year, with optional type/cycle controls. Race search matches candidate names, offices, districts, and places across the full archive. Matching races open their election and map together.
+- **Archive:** two compact election/race controls open searchable menus. Elections are grouped by year, with optional type/cycle controls. Race search matches candidate names, offices, districts, and places across the full archive. Matching races open their election and map together. Both the election and race search boxes accept candidate names. Desktop ward details open on hover; touchscreen users tap.
 - **Trends:** search candidate history and compare vote shares between elections.
 
 Coalitions, Targets, Simulate, and the AD76 planning view have been removed.
