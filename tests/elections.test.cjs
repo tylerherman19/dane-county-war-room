@@ -38,8 +38,8 @@ test('combined precinct allocations preserve votes and expose original totals',a
  }finally{global.fetch=original;}
 });
 test('race list removes administrative rows and preserves zero-padded IDs',async()=>{
- const original=global.fetch;global.fetch=async()=>({ok:true,json:async()=>[{RaceNumber:'0001',RaceName:'BALLOTS CAST - TOTAL'},{RaceNumber:'0018',RaceName:'REP Governor'}]});
- try{const races=await getRaces('194');assert.equal(races.length,1);assert.equal(races[0].id,'0018');assert.equal(races[0].type,'Governor');}finally{global.fetch=original;}
+ const original=global.fetch;global.fetch=async()=>({ok:true,json:async()=>[{RaceNumber:'0001',RaceName:'BALLOTS CAST - TOTAL'},{RaceNumber:'0018',RaceName:'REP Governor'},{RaceNumber:'0100',RaceName:'C. Madison Ref (Increase levy limit)'}]});
+ try{const races=await getRaces('194');assert.equal(races.length,2);assert.equal(races[0].id,'0018');assert.equal(races[0].type,'Governor');assert.equal(races[1].type,'Referendum');assert.equal(officeCategory(races[1]),'Referendums');}finally{global.fetch=original;}
 });
 test('same-party candidates get distinct map colors',()=>{
  const colors=assignCandidateColors([{candidateName:'Alice',party:'Republican'},{candidateName:'Bob',party:'Republican'}]);
@@ -57,4 +57,21 @@ test('county precinct names without Wds still join to ward geometry',async()=>{
  const original=global.fetch;
  global.fetch=async()=>({ok:true,json:async()=>({PrecinctVotes:[{PrecinctName:'V Waunakee 6-16',CandidateName:'A',TotalVotes:373,Reported:true}]})});
  try{const rows=await getPrecinctResults('194','0018');assert.equal(rows.length,11);assert.equal(rows[0].precinctName,'Village of Waunakee');assert.equal(rows[10].wardNumber,'16');assert.equal(rows[0].sourceVotes,373);}finally{global.fetch=original;}
+});
+const {getArchiveBallot,searchArchiveRaces,matchesArchiveRace}=require('../src/lib/archive-search.ts');
+test('archive search finds candidates across elections and retains the selected race IDs',async()=>{
+ const original=global.fetch;
+ const fixture=[{electionId:'search-2022',electionName:'2022 General Election',electionDate:'2022-11-08',lastPublished:''},{electionId:'search-2024',electionName:'2024 General Election',electionDate:'2024-11-05',lastPublished:''}];
+ let requests=0;
+ global.fetch=async url=>{requests++;return {ok:true,json:async()=>({Races:[{RaceNumber:'0018',RaceName:'Governor',Candidates:[{Name:'Tony Evers',Votes:100,Percentage:60,PartyName:'Democratic'}],TotalPrecincts:1,PrecinctsReported:1},{RaceNumber:'0100',RaceName:'C. Madison Ref (Increase levy limit)',Candidates:[{Name:'Yes',Votes:100,Percentage:57,PartyName:''}],TotalPrecincts:1,PrecinctsReported:1}]})};};
+ try{
+  const [a,b]=await Promise.all([getArchiveBallot(fixture[0]),getArchiveBallot(fixture[0])]);
+  assert.equal(requests,1);assert.equal(a[0].candidates[0].candidateName,'Tony Evers');assert.deepEqual(a,b);
+  const rows=await searchArchiveRaces(fixture,'Evers');assert.equal(rows.length,2);assert.equal(rows[0].id,'0018');assert.equal(rows[1].electionId,'search-2024');
+  assert.equal((await searchArchiveRaces(fixture,'2024 Evers')).length,1);
+  assert.equal(matchesArchiveRace(rows[0],'governor Tony'),true);
+  assert.equal((await searchArchiveRaces(fixture,'Madison')).length,2);
+  assert.equal(requests,2);
+  const controller=new AbortController();controller.abort();await assert.rejects(searchArchiveRaces(fixture,'Evers',{signal:controller.signal}));
+ }finally{global.fetch=original;}
 });

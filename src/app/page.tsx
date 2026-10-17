@@ -5,6 +5,7 @@ import Layout, { ViewMode } from '@/components/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import MapWrapper from '@/components/MapWrapper';
 import RaceSelector from '@/components/RaceSelector';
+import ElectionSelector from '@/components/ElectionSelector';
 import ResultsPanel from '@/components/ResultsPanel';
 import Watchboard from '@/components/Watchboard';
 import TrendsPanel, { ShiftPair } from '@/components/TrendsPanel';
@@ -62,6 +63,7 @@ export default function Home() {
         return Object.fromEntries(Object.keys(b).filter(k => a[k] !== undefined).map(k => [k,{from:a[k],to:b[k]}]));
     }, [pair,from,to]);
     function chooseElection(e: string) {setSelection({e,r:null,ready:true});setWard(null);setFocus(null);}
+    function chooseArchiveRace(e: string,r: string) {setMode('ARCHIVE');setSelection({e,r,ready:true});setWard(null);setFocus(null);}
     function chooseRace(r: string) {setSelection(s => ({...s,r}));setWard(null);setFocus(null);}
     function chooseMode(next: ViewMode) {
         setMode(next);setWard(null);setFocus(null);
@@ -73,9 +75,12 @@ export default function Home() {
     const loading = racesLoading || resultLoading || precinctLoading;
     return <Layout viewMode={mode} onToggleViewMode={chooseMode} elections={elections} selectedElectionId={selection.e} onSelectElection={chooseElection}
         lastUpdated={election?.lastPublished} hasError={error} onRetry={() => {void mutate(() => true);}}
+        selectors={isResults ? <>
+            {mode === 'ARCHIVE' ? <ElectionSelector elections={elections} selectedElectionId={selection.e} onSelectElection={chooseElection}/> : <span className="latest-election-label">{election?.electionName ?? 'Latest election'}</span>}
+            <RaceSelector key={selection.e} races={races} selectedRaceId={raceId} onSelectRace={chooseRace} elections={elections} election={election} onSelectArchiveRace={chooseArchiveRace} archive={mode === 'ARCHIVE'}/>
+        </> : null}
         sidebar={mode === 'BOARD' ? null : <ErrorBoundary key={mode} label="Results">
             {mode === 'TRENDS' ? <TrendsPanel elections={elections} onShiftPair={setPair} /> : <>
-                <RaceSelector key={selection.e} races={races} selectedRaceId={raceId} onSelectRace={chooseRace} />
                 <ResultsPanel result={results} rows={precinctResults} loading={loading} selectedWard={ward} onSelectWard={setWard} focusedCandidate={focus} onFocusCandidate={setFocus} />
             </>}
         </ErrorBoundary>}>

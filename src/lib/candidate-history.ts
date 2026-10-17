@@ -21,7 +21,7 @@ interface ApiBulkRace {
     PrecinctsReported: number;
 }
 
-interface ApiBulkElection {
+export interface ApiBulkElection {
     ElectionId: number;
     ElectionName: string;
     ElectionDate: string;
@@ -46,7 +46,9 @@ export interface CandidateRaceRecord {
 
 const bulkCache = new Map<string, ApiBulkElection | null>();
 
-async function fetchBulkResults(electionId: string): Promise<ApiBulkElection | null> {
+const pendingBulk = new Map<string, Promise<ApiBulkElection | null>>();
+
+async function loadBulkResults(electionId: string): Promise<ApiBulkElection | null> {
     if (bulkCache.has(electionId)) return bulkCache.get(electionId)!;
     try {
         const res = await fetch(`${BASE_PATH}/electionresults/${electionId}`, {signal: AbortSignal.timeout(15000)});
@@ -59,6 +61,15 @@ async function fetchBulkResults(electionId: string): Promise<ApiBulkElection | n
         // Do not cache failures; a later search can retry.
         return null;
     }
+}
+
+export async function fetchBulkResults(electionId: string): Promise<ApiBulkElection | null> {
+    if (bulkCache.has(electionId)) return bulkCache.get(electionId)!;
+    const pending=pendingBulk.get(electionId);
+    if(pending)return pending;
+    const request=loadBulkResults(electionId).finally(()=>pendingBulk.delete(electionId));
+    pendingBulk.set(electionId,request);
+    return request;
 }
 
 function isWriteIn(name: string): boolean {

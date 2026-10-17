@@ -1,32 +1,66 @@
 'use client';
-import { useState } from 'react';
-import type { Race } from '@/lib/api';
+import { useEffect, useMemo, useState } from 'react';
+import useSWR from 'swr';
+import type { Election, Race } from '@/lib/api';
 import { officeCategory, raceParty } from '@/lib/archive-filters';
-
-export default function RaceSelector({races, selectedRaceId, onSelectRace}: {
-    races?: Race[]; selectedRaceId: string | null; onSelectRace: (id: string) => void;
+import { ArchiveRace, candidateMatches, getArchiveBallot, matchesArchiveRace, searchArchiveRaces } from '@/lib/archive-search';
+import SelectorDialog from './SelectorDialog';
+interface SearchState {query:string;rows:ArchiveRace[];done:number;failed:number;loading:boolean;}
+export default function RaceSelector({races,selectedRaceId,onSelectRace,elections=[],election,onSelectArchiveRace,archive=false}:{
+    races?:Race[];selectedRaceId:string|null;onSelectRace:(id:string)=>void;elections?:Election[];election?:Election;onSelectArchiveRace:(e:string,r:string)=>void;archive?:boolean;
 }) {
-    const [query, setQuery] = useState('');
-    const [office, setOffice] = useState('');
-    const [party, setParty] = useState('');
-    const offices = [...new Set((races ?? []).map(officeCategory))].sort();
-    const parties = [...new Set((races ?? []).map(raceParty))].sort();
-    const matches = (races ?? []).filter(r => (!office || officeCategory(r) === office) && (!party || raceParty(r) === party)
-        && query.toLowerCase().trim().split(/\s+/).every(w => r.name.toLowerCase().includes(w)));
-    const selected = races?.find(r => r.id === selectedRaceId);
-    const visible = matches.some(r => r.id === selectedRaceId);
-    return <section className="race-browser" aria-label="Find a race">
-        <div className="race-filter-grid">
-            <label>Find a race<input type="search" placeholder="Office, district, municipality…" value={query} onChange={e => setQuery(e.target.value)} /></label>
-            <label>Office<select value={office} onChange={e => setOffice(e.target.value)}><option value="">All offices</option>{offices.map(o => <option key={o}>{o}</option>)}</select></label>
-            {parties.length > 1 && <label>Party<select value={party} onChange={e => setParty(e.target.value)}><option value="">All parties</option>{parties.map(p => <option key={p}>{p}</option>)}</select></label>}
-        </div>
-        <label className="race-selection">Race <select value={visible ? selectedRaceId ?? '' : ''} onChange={e => e.target.value && onSelectRace(e.target.value)} disabled={!matches.length}>
-            <option value="" disabled>{!races ? 'Loading races…' : matches.length ? 'Choose a race' : 'No matching races'}</option>
-            {matches.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-        </select></label>
-        <div className="filter-summary"><span role="status">{matches.length} races{!visible && selected ? ` · Viewing ${selected.name}` : ''}</span>
-            {(query || office || party) && <button onClick={() => {setQuery('');setOffice('');setParty('');}}>Clear race filters</button>}
-        </div>
-    </section>;
+    const [open,setOpen]=useState(false);
+    const [query,setQuery]=useState('');
+    const [party,setParty]=useState('');
+    const [scope,setScope]=useState<'current'|'archive'>('archive');
+    const [search,setSearch]=useState<SearchState>({query:'',rows:[],done:0,failed:0,loading:false});
+    const {data:ballot,isLoading:ballotLoading,error:ballotError,mutate}=useSWR(open && election ? ['archiveBallot',election.electionId] : null,()=>getArchiveBallot(election!),{revalidateOnFocus:false});
+    const selected=races?.find(r=>r.id===selectedRaceId);
+    const activeIndex=races?.findIndex(r=>r.id===selectedRaceId) ?? -1;
+    const currentRaces=ballot ?? races ?? [];
+    const parties=[...new Set(currentRaces.map(raceParty))];
+    const globalSearch=archive && scope==='archive' && query.trim().length>=2;
+    const electionIds=elections.map(e=>e.electionId).join('|');
+    useEffect(()=>{
+        if(!open || !globalSearch)return;
+        const controller=new AbortController();
+        const timer=setTimeout(()=>{
+            setSearch({query,rows:[],done:0,failed:0,loading:true});
+            // Search the selected election first, then continue newest to oldest.
+            const ordered=[...elections].sort((a,b)=>Number(b.electionId===election?.electionId)-Number(a.electionId===election?.electionId));
+            void searchArchiveRaces(ordered,query,{signal:controller.signal,onProgress:(rows,done,failed)=>setSearch({query,rows,done,failed,loading:done<ordered.length})})
+                .catch(()=>{if(!controller.signal.aborted)setSearch(s=>({...s,loading:false,failed:s.failed+1}));});
+        },300);
+        return ()=>{clearTimeout(timer);controller.abort();};
+        // Election objects refresh every 30 seconds; only restart for a different ID list.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[open,globalSearch,query,electionIds,election?.electionId]);
+    const localMatches=currentRaces.filter(r=>(!party||raceParty(r)===party)&&matchesArchiveRace(r,query));
+    const found=globalSearch && search.query===query ? search.rows.filter(r=>!party||raceParty(r)===party) : localMatches;
+    const groups=useMemo(()=>{
+        const map=new Map<string,Race[]>();
+        for(const race of found){const key=globalSearch?'electionName' in race?String(race.electionName):election?.electionName??'This election':officeCategory(race);const group=map.get(key)??[];group.push(race);map.set(key,group);}
+        return [...map];
+    },[found,globalSearch,election?.electionName]);
+    function choose(r:Race){if('electionId' in r && r.electionId && r.electionId!==election?.electionId)onSelectArchiveRace(r.electionId,r.id);else onSelectRace(r.id);setOpen(false);setQuery('');}
+    const busy=globalSearch && (search.query!==query || search.loading);
+    return <div className="race-picker">
+        <button className="selection-chip race-chip" aria-haspopup="dialog" aria-expanded={open} onClick={()=>setOpen(true)}><span>{selected?.name ?? 'Choose a race or candidate'}</span><span aria-hidden="true">⌄</span></button>
+        <div className="race-stepper"><button aria-label="Previous race" disabled={activeIndex<=0} onClick={()=>onSelectRace(races![activeIndex-1].id)}>‹</button><button aria-label="Next race" disabled={activeIndex<0||activeIndex>=(races?.length??0)-1} onClick={()=>onSelectRace(races![activeIndex+1].id)}>›</button></div>
+        <SelectorDialog open={open} onClose={()=>setOpen(false)} title="Find a race or candidate" wide>
+            <div className="picker-search"><label className="sr-only" htmlFor="race-search">Find a race or candidate</label><input id="race-search" type="search" placeholder="Candidate, office, district, or place…" value={query} onChange={e=>setQuery(e.target.value)}/></div>
+            <div className="picker-tabs race-tabs">
+                {archive && query.trim().length>=2 ? <><button aria-pressed={scope==='archive'} onClick={()=>setScope('archive')}>All elections</button><button aria-pressed={scope==='current'} onClick={()=>setScope('current')}>This election</button></> : <span>{election?.electionName} · {currentRaces.length} races</span>}
+                {parties.length>1 && <details className="picker-more"><summary>{party ? `${party} ballot`:'Party ballot'}</summary><div className="party-options"><button aria-pressed={!party} onClick={()=>setParty('')}>All parties</button>{parties.map(p=><button key={p} aria-pressed={party===p} onClick={()=>setParty(p)}>{p}</button>)}</div></details>}
+            </div>
+            {(ballotError||ballot===null) && !globalSearch && <p className="picker-empty">Candidate names could not load. Office search still works. <button onClick={()=>void mutate()}>Retry</button></p>}
+            {globalSearch && <p className="search-progress" role="status">{busy?`Searching elections… ${search.query===query?search.done:0} of ${elections.length}`:`${found.length} matching races`}{search.query===query && search.failed>0?` · ${search.failed} elections unavailable; reopen search to retry`:''}</p>}
+            <div className={`race-menu-list ${globalSearch?'search-results-list':''}`}>{groups.map(([group,items])=><section className="race-menu-group" key={group}><h3>{group}</h3>{items.map(r=>{
+                const names=query ? candidateMatches(r,query) : [];
+                return <button key={`${r.electionId??election?.electionId}|${r.id}`} className="race-option" aria-current={r.id===selectedRaceId && (!r.electionId || r.electionId===election?.electionId)?'true':undefined} onClick={()=>choose(r)}><span className="race-option-title">{r.id===selectedRaceId && (!r.electionId||r.electionId===election?.electionId)?'✓ ':''}{r.name}</span>{names.length>0 && <span className="race-option-candidates">{names.join(' · ')}</span>}</button>;
+            })}</section>)}</div>
+            {!found.length && <p className="picker-empty">{busy?'Looking for matching races…':ballotLoading?'Loading candidate names…':'No matching races. Try a surname, an office, or a district.'}</p>}
+            <footer className="picker-footer"><span>{query ? 'Select a race to open its map and results.' : 'Races follow the county’s ballot order.'}</span>{query||party?<button onClick={()=>{setQuery('');setParty('');}}>Clear search</button>:null}</footer>
+        </SelectorDialog>
+    </div>;
 }

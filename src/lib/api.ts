@@ -108,7 +108,7 @@ interface ApiPrecinctResultResponse {
 /**
  * Detect race type from a race name string.
  */
-function detectRaceType(raceName: string): RaceType {
+export function detectRaceType(raceName: string): RaceType {
     const name = raceName.toLowerCase();
     // Local "president"/chair offices must not match the Presidential check below
     if (/(village|school board|county board)\s+president/.test(name) || name.includes('chairperson') || name.includes('town chair')) return 'Other';
@@ -118,7 +118,7 @@ function detectRaceType(raceName: string): RaceType {
     if (name.includes('senator') || name.includes('senate')) return 'Senate';
     if (name.includes('congress') || name.includes('u.s. representative') || name.includes('representative in congress')) return 'Congress';
     if (name.includes('assembly')) return 'Assembly';
-    if (name.includes('referendum') || name.includes('question') || name.includes('advisory')) return 'Referendum';
+    if (/\bref\b|referendum|referenda|question|advisory/.test(name)) return 'Referendum';
     if (name.includes('mayor')) return 'Mayor';
     if (name.includes('governor')) return 'Governor';
     if (name.includes('alder')) return 'Alder';
