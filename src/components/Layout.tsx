@@ -2,7 +2,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import type { ResultStatus } from '@/lib/result-status';
 import type { Election } from '@/lib/api';
-export type ViewMode = 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS';
+export type ViewMode = 'LIVE' | 'BOARD' | 'ARCHIVE' | 'TRENDS' | 'STATE';
 export default function Layout({children, sidebar, elections, selectedElectionId, viewMode, onToggleViewMode, hasError, onRetry, lastUpdated, selectors, electionLabel, mobileSummary, status, checkedAt}: {
     children: ReactNode; sidebar: ReactNode; elections?: Election[]; selectedElectionId: string | null;
     onSelectElection: (id: string) => void; viewMode: ViewMode; onToggleViewMode: (mode: ViewMode) => void;
@@ -19,12 +19,12 @@ export default function Layout({children, sidebar, elections, selectedElectionId
     return <div className="app-shell">
         <header className="app-header">
             <h1>Dane County <span>Elections</span></h1>
-            <nav aria-label="Main navigation">{([['LIVE','Results'],['BOARD','Board'],['ARCHIVE','Archive'],['TRENDS','Trends']] as const).map(([id,label]) =>
-                <button key={id} aria-current={viewMode === id ? 'page' : undefined} onClick={() => {setMobilePanel(false);onToggleViewMode(id);}}>{label}</button>)}</nav>
+            <nav aria-label="Main navigation">{([['LIVE','Results'],['BOARD','Board'],['ARCHIVE','Archive'],['TRENDS','Trends'],['STATE','State & Battleground']] as const).map(([id,label]) =>
+                <button key={id} aria-current={viewMode === id ? 'page' : undefined} onClick={() => {setMobilePanel(false);onToggleViewMode(id);}}>{id==='STATE'?<><span className="nav-long">{label}</span><span className="nav-short">State</span></>:label}</button>)}</nav>
             <a href="https://elections.danecounty.gov/Election-Result" target="_blank" rel="noreferrer">County source ↗</a>
         </header>
         {selectors && <div className="selection-bar">{selectors}</div>}
-        {viewMode !== 'TRENDS' && <div className="election-context"><div><strong>{selected?.electionName ?? electionLabel ?? 'Loading elections…'}</strong><span>{stamp ? `County published ${stamp}` : 'Dane County election results'}</span></div><div className="connection-status"><strong data-status={status?.kind} role="status">{status?.label}</strong><span>{checked ? `Last successful check ${checked}` : 'Waiting for a successful check'}{viewMode==='LIVE'||viewMode==='BOARD'?' · Every 30 sec':''}</span></div></div>}
+        {viewMode !== 'TRENDS' && viewMode !== 'STATE' && <div className="election-context"><div><strong>{selected?.electionName ?? electionLabel ?? 'Loading elections…'}</strong><span>{stamp ? `County published ${stamp}` : 'Dane County election results'}</span></div><div className="connection-status"><strong data-status={status?.kind} role="status">{status?.label}</strong><span>{checked ? `Last successful check ${checked}` : 'Waiting for a successful check'}{viewMode==='LIVE'||viewMode==='BOARD'?' · Every 30 sec':''}</span></div></div>}
         {mobileSummary && <div className="mobile-summary-area">{mobileSummary}</div>}
         {hasError && <div className="data-error" role="alert">Could not load the county data. Any displayed results may be out of date. <button onClick={onRetry}>Retry</button></div>}
         <div className="workspace">
