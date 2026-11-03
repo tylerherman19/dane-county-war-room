@@ -412,3 +412,5 @@ html, body {
 /* State & Battleground tab label: full on desktop, short on phones */
 .app-header nav .nav-short { display:none; }
 @media(max-width:767px) { .app-header nav .nav-long { display:none; } .app-header nav .nav-short { display:inline; } }
+@media(max-width:767px) { .app-header nav button { padding:10px 6px; } }
+@media(max-width:360px) { .app-header nav button { padding:10px 3px; font-size:13px; } }

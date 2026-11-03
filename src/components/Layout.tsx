@@ -20,7 +20,7 @@ export default function Layout({children, sidebar, elections, selectedElectionId
         <header className="app-header">
             <h1>Dane County <span>Elections</span></h1>
             <nav aria-label="Main navigation">{([['LIVE','Results'],['BOARD','Board'],['ARCHIVE','Archive'],['TRENDS','Trends'],['STATE','State & Battleground']] as const).map(([id,label]) =>
-                <button key={id} aria-current={viewMode === id ? 'page' : undefined} onClick={() => {setMobilePanel(false);onToggleViewMode(id);}}>{id==='STATE'?<><span className="nav-long">{label}</span><span className="nav-short">State</span></>:label}</button>)}</nav>
+                <button key={id} aria-current={viewMode === id ? 'page' : undefined} onClick={() => {setMobilePanel(false);onToggleViewMode(id);}}>{id==='STATE'?<><span className="nav-long">{label}</span><span className="nav-short">State/BG</span></>:label}</button>)}</nav>
             <a href="https://elections.danecounty.gov/Election-Result" target="_blank" rel="noreferrer">County source ↗</a>
         </header>
         {selectors && <div className="selection-bar">{selectors}</div>}
