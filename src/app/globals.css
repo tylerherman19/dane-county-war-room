@@ -408,3 +408,7 @@ html, body {
 .boundary-coverage summary { cursor:pointer; color:#165d86; }
 .boundary-coverage ul { max-height:100px; overflow-y:auto; padding:8px 0 0 18px; list-style:disc; }
 .map-footer a { text-decoration:underline; }
+
+/* State & Battleground tab label: full on desktop, short on phones */
+.app-header nav .nav-short { display:none; }
+@media(max-width:767px) { .app-header nav .nav-long { display:none; } .app-header nav .nav-short { display:inline; } }

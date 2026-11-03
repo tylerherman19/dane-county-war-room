@@ -8,6 +8,7 @@ import RaceSelector from '@/components/RaceSelector';
 import ElectionSelector from '@/components/ElectionSelector';
 import ResultsPanel from '@/components/ResultsPanel';
 import Watchboard from '@/components/Watchboard';
+import StateBattleground from '@/components/StateBattleground';
 import TrendsPanel, { ShiftPair } from '@/components/TrendsPanel';
 import { useElections, useRaces, useRaceResults, usePrecinctResults, useElectionBoard } from '@/hooks/useElectionData';
 import type { PrecinctResult } from '@/lib/api';
@@ -62,7 +63,7 @@ export default function Home() {
         const requested = elections.find(e => e.electionId === params.get('e'));
         const requestedView=params.get('view');
         const isCurrent=requested && [cycleElections.NOVEMBER?.electionId,cycleElections.PRIMARY?.electionId].includes(requested.electionId);
-        const initialMode:ViewMode=requestedView==='archive'||(requested&&!isCurrent)?'ARCHIVE':requestedView==='board'?'BOARD':'LIVE';
+        const initialMode:ViewMode=requestedView==='state'?'STATE':requestedView==='archive'||(requested&&!isCurrent)?'ARCHIVE':requestedView==='board'?'BOARD':'LIVE';
         const initialPhase:ElectionPhase=params.get('phase')==='primary'||(isCurrent && requested?.electionId===cycleElections.PRIMARY?.electionId)?'PRIMARY':'NOVEMBER';
         // Synchronize initial state with the externally supplied shared URL.
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -72,6 +73,7 @@ export default function Home() {
     }, [elections, selection.ready, cycleElections]);
     useEffect(() => {
         if (!selection.ready || mode==='TRENDS') return;
+        if (mode==='STATE') {window.history.replaceState(null,'',`${window.location.pathname}?view=state`);return;}
         const params=new URLSearchParams();
         params.set('view',mode==='BOARD'?'board':mode==='ARCHIVE'?'archive':'results');
         if(isCycleMode)params.set('phase',phase==='PRIMARY'?'primary':'november');
@@ -95,7 +97,7 @@ export default function Home() {
         if ((next === 'LIVE' || next === 'BOARD') && !isCycleMode) setSelection(s=>({...s,r:null}));
     }
     const election = elections?.find(e => e.electionId === electionId);
-    const error = !online || !!electionError || (isResults && (!!racesError || !!resultError || !!precinctError)) || (mode === 'BOARD' && !!boardError) || (mode === 'TRENDS' && (!!fromError || !!toError));
+    const error = mode !== 'STATE' && (!online || !!electionError || (isResults && (!!racesError || !!resultError || !!precinctError)) || (mode === 'BOARD' && !!boardError) || (mode === 'TRENDS' && (!!fromError || !!toError)));
     const loading = racesLoading || resultLoading || precinctLoading;
     const checkedAt=pendingElection?electionsChecked:mode==='BOARD'?oldestCheck([electionsChecked,boardChecked]):isResults?oldestCheck([electionsChecked,resultsChecked,precinctsChecked]):undefined;
     const status=getResultStatus({error,pending:pendingElection,checkedAt,finalized:!!election?.finalizedDate,live:isCycleMode,validating:mode==='BOARD'?boardChecking:resultsChecking||precinctsChecking||electionsChecking,reporting:isResults?results?.precinctsReporting:board?.reduce((n,r)=>n+r.precinctsReporting,0)});
@@ -107,13 +109,13 @@ export default function Home() {
             {isCycleMode ? <ElectionPhaseToggle phase={phase} year={cycleYear} onChange={choosePhase}/> : <ElectionSelector elections={elections} selectedElectionId={electionId} onSelectElection={chooseElection} onSelectArchiveRace={chooseArchiveRace}/>}
             {isResults && !pendingElection && electionId && <RaceSelector key={electionId} races={races} selectedRaceId={raceId} onSelectRace={chooseRace} elections={elections} election={election} onSelectArchiveRace={chooseArchiveRace} archive={mode==='ARCHIVE'}/>}
         </> : null}
-        sidebar={mode === 'BOARD' ? null : <ErrorBoundary key={mode} label="Results">
+        sidebar={mode === 'BOARD' || mode === 'STATE' ? null : <ErrorBoundary key={mode} label="Results">
             {pendingElection ? <ElectionPending year={cycleYear} primary={phase==='PRIMARY'}/> : mode === 'TRENDS' ? <TrendsPanel elections={elections} onShiftPair={setPair} /> : <>
                 <ResultsPanel result={results} rows={precinctResults} loading={loading} selectedWard={ward} onSelectWard={setWard} focusedCandidate={focus} onFocusCandidate={setFocus} />
             </>}
         </ErrorBoundary>}>
         <ErrorBoundary key={mode} label="Map">
-            {mode==='BOARD' && pendingElection ? <ElectionPending year={cycleYear} primary={phase==='PRIMARY'}/> : mode === 'BOARD' ? <Watchboard key={electionId} board={board} isLoading={boardLoading} isLive={true} electionName={election?.electionName} onSelectRace={r => {setMode('LIVE');chooseRace(r);}} /> :
+            {mode === 'STATE' ? <StateBattleground /> : mode==='BOARD' && pendingElection ? <ElectionPending year={cycleYear} primary={phase==='PRIMARY'}/> : mode === 'BOARD' ? <Watchboard key={electionId} board={board} isLoading={boardLoading} isLive={true} electionName={election?.electionName} onSelectRace={r => {setMode('LIVE');chooseRace(r);}} /> :
                 <MapWrapper electionDate={mode==='TRENDS'?pair?.to.electionDate:election?.electionDate} comparisonDate={pair?.from.electionDate} comparisonRows={from} precinctResults={mode === 'TRENDS' ? to ?? [] : precinctResults ?? []} isLoading={isResults && loading}
                     selectedWard={ward} raceResult={isResults ? results : undefined} focusedCandidate={focus} onCandidateReset={() => setFocus(null)}
                     fitKey={`${mode}|${electionId}|${raceId}|${pair?.from.electionId ?? ''}|${pair?.to.electionId ?? ''}|${pair?.to.raceId ?? ''}`} onSelectWard={setWard}
